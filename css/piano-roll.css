@@ -1,0 +1,125 @@
+.piano-roll-wrapper { position: relative; }
+.piano-roll-wrapper.fullscreen {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  background: var(--bg);
+}
+.piano-roll-wrapper.fullscreen .pr-zoom-controls { border-radius: 0 0 0 6px; border-top: none; }
+.piano-roll-wrapper.fullscreen .piano-roll {
+  height: 100% !important; max-height: none; border-radius: 0; resize: none;
+}
+.piano-roll { overflow: auto; border: 1px solid var(--section-border); border-radius: 6px; background: var(--subtle-bg); height: 400px; resize: vertical; min-height: 150px; max-height: 90vh; }
+.piano-roll-inner { position: relative; min-width: 100%; }
+.pr-labels { position: sticky; left: 0; z-index: 3; display: flex; flex-direction: column; position: absolute; top: 0; left: 0; }
+.pr-label {
+  width: 50px; height: 20px; display: flex; align-items: center; justify-content: flex-end;
+  padding-right: 6px; font-size: 0.65em; color: var(--muted); background: var(--bg);
+  border-bottom: 1px solid var(--section-border); border-right: 1px solid var(--input-border); box-sizing: border-box;
+  flex-shrink: 0; user-select: none; cursor: pointer;
+}
+.pr-label:hover { background: var(--section-border); }
+.pr-label.black-key-row:hover { background: #b4b8c2; }
+.pr-label.octave-c:hover { background: #c4c0dc; }
+.pr-labels-sticky {
+  position: sticky; left: 0; z-index: 5; width: 50px; height: 100%;
+  flex-shrink: 0; pointer-events: auto;
+}
+.pr-label.octave-c { background: var(--accent-bg); color: var(--accent); font-weight: bold; }
+.pr-label.black-key-row { background: #d2d4da; }
+.pr-row-bg { position: absolute; left: 50px; height: 20px; pointer-events: none; }
+.pr-row-bg.black-key-row { background: rgba(0,0,0,0.04); }
+.pr-grid { position: absolute; top: 0; left: 50px; }
+.pr-gridline-h {
+  position: absolute; left: 0; height: 1px; background: var(--section-border); pointer-events: none;
+}
+.pr-gridline-h.octave-c { background: #bab2dc; height: 2px; }
+.pr-gridline-v {
+  position: absolute; top: 0; width: 1px; background: var(--section-border); pointer-events: none;
+}
+.pr-gridline-v.measure { background: var(--input-border); width: 2px; }
+.pr-note {
+  position: absolute; height: 18px; border-radius: 3px; cursor: grab;
+  background: var(--accent); color: #fff; font-size: 0.6em; line-height: 18px;
+  padding-left: 4px; overflow: hidden; white-space: nowrap; user-select: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15); min-width: 8px; z-index: 2;
+}
+.pr-note:hover { filter: brightness(1.15); }
+.pr-note.selected { outline: 2px solid #d4a030; outline-offset: -1px; }
+.pr-note-label { pointer-events: none; }
+.pr-note .pr-resize {
+  position: absolute; right: 0; top: 0; width: 6px; height: 100%;
+  cursor: ew-resize; background: rgba(255,255,255,0.35); border-radius: 0 3px 3px 0;
+  opacity: 1;
+}
+.pr-note .pr-resize:hover { background: rgba(255,255,255,0.7); }
+.piano-roll .pr-empty { padding: 20px; text-align: center; color: var(--muted); font-size: 0.85em; }
+.pr-timeline {
+  position: sticky; top: 0; z-index: 11; height: 20px; background: var(--bg);
+  border-bottom: 1px solid var(--input-border); cursor: pointer; user-select: none; display: flex;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.pr-timeline-label {
+  position: absolute; width: 50px; height: 20px; background: var(--bg);
+  border-right: 1px solid var(--input-border); border-bottom: 1px solid var(--input-border);
+  z-index: 12; left: 0; top: 0; display: flex; align-items: center;
+  justify-content: center; font-size: 0.6em; color: var(--muted);
+}
+.pr-timeline-inner {
+  position: relative; height: 20px; margin-left: 50px; overflow: hidden;
+}
+.pr-timeline-beat {
+  position: absolute; top: 0; height: 20px; display: flex; align-items: center;
+  padding-left: 3px; font-size: 0.55em; color: var(--muted); border-left: 1px solid var(--input-border);
+  box-sizing: border-box;
+}
+.pr-timeline-beat.measure { font-weight: bold; color: var(--text); border-left: 2px solid var(--muted); }
+.pr-select-rect {
+  position: absolute; border: 1px dashed var(--accent); background: rgba(112,93,207,0.1);
+  pointer-events: none; z-index: 9;
+}
+.pr-zoom-controls { position: absolute; top: 0; right: 0; z-index: 15; display: flex; align-items: center; gap: 4px; padding: 2px 4px; background: rgba(243,242,240,0.9); border-radius: 0 6px 0 6px; border-left: 1px solid var(--section-border); border-bottom: 1px solid var(--section-border); }
+.pr-zoom-input {
+  width: 42px; font-size: 0.75em; color: var(--muted); text-align: center;
+  border: 1px solid transparent; border-radius: 3px; background: transparent;
+  font-family: monospace; padding: 1px 2px;
+}
+.pr-zoom-input:hover { border-color: var(--input-border); }
+.pr-zoom-input:focus { border-color: var(--accent); outline: none; background: var(--section-bg); color: var(--text); }
+.pr-playhead {
+  position: absolute; top: 0; width: 2px; background: var(--error); z-index: 10;
+  pointer-events: none; box-shadow: 0 0 4px rgba(181,64,58,0.5);
+}
+.pr-hover-line {
+  position: absolute; top: 0; width: 1px; background: var(--accent); z-index: 9;
+  pointer-events: none; opacity: 0.6;
+}
+.pr-edge-handle {
+  position: absolute; width: 6px; cursor: ew-resize; z-index: 8;
+  background: transparent; border-right: 2px solid var(--input-border);
+}
+.pr-edge-handle:hover { border-right-color: var(--accent); background: rgba(112,93,207,0.08); }
+
+.pr-transpose-overlay {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+  font-size: 2.5em; color: var(--accent); pointer-events: none;
+  opacity: 0; z-index: 12; font-family: monospace; font-weight: bold;
+}
+.pr-transpose-overlay.show.dir-up { animation: transpose-up 0.6s ease-out forwards; }
+.pr-transpose-overlay.show.dir-down { animation: transpose-down 0.6s ease-out forwards; }
+@keyframes transpose-up {
+  0% { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -80%) scale(0.8); }
+}
+@keyframes transpose-down {
+  0% { opacity: 0.9; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -20%) scale(0.8); }
+}
+.pr-measure-highlight {
+  position: absolute; top: 0; pointer-events: none; z-index: 1;
+  background: rgba(112,93,207,0.08);
+}
+
+.pr-note.transpose-flash { animation: note-flash 0.4s ease-out; }
+@keyframes note-flash {
+  0% { filter: brightness(1.6); }
+  100% { filter: brightness(1); }
+}

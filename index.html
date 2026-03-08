@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BuzzCraft</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#127925;</text></svg>">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/controls.css">
+<link rel="stylesheet" href="css/keyboard.css">
+<link rel="stylesheet" href="css/piano-roll.css">
+<link rel="stylesheet" href="css/chips.css">
+<link rel="stylesheet" href="css/dark.css">
+</head>
+<body>
+
+<div class="top-bar" id="top-bar">
+  <canvas id="dance-cat" width="32" height="32"></canvas>
+  <h1>BuzzCraft</h1>
+  <span class="preset-search-wrap">
+    <input type="text" class="melody-search" id="melody-search" placeholder="Search presets..." autocomplete="off">
+    <div class="preset-dropdown" id="preset-dropdown"></div>
+  </span>
+  <select class="melody-select" id="melody-select" style="display:none">
+    <option value="">-- Load Preset --</option>
+  </select>
+  <input type="file" id="rtttl-dir-input" webkitdirectory multiple style="display:none">
+  <input type="file" id="rtttl-file-input" multiple accept=".rtttl,.txt" style="display:none">
+  <button class="btn btn-clear btn-sm tip-down" id="btn-load-rtttls" data-tip="Load .rtttl or .txt files (click for files, Shift+click for folder)">Load RTTLs</button>
+  <span class="tip-down" data-tip="Time signature (beats per measure) — affects grid lines and metronome accent"><select class="time-sig-select" id="time-sig">
+    <option value="4/4" selected>4/4</option>
+    <option value="3/4">3/4</option>
+    <option value="6/8">6/8</option>
+    <option value="2/4">2/4</option>
+    <option value="5/4">5/4</option>
+    <option value="7/8">7/8</option>
+  </select></span>
+  <span class="top-bar-bpm tip-down" data-tip="Beats per minute — click to edit, scroll to adjust"><span class="bpm-label">BPM</span><span class="bpm-wrap"><span class="led-display" id="led-display">100</span><input type="number" class="bpm-input" id="bpm" value="100" min="40" max="300"><span class="bpm-arrows"><button class="bpm-arrow" id="bpm-up">&#9650;</button><button class="bpm-arrow" id="bpm-down">&#9660;</button></span></span> <button class="btn btn-clear btn-sm tip-down" id="btn-tap-tempo" data-tip="Tap repeatedly to set BPM">Tap</button></span>
+  <button class="btn btn-play btn-sm tip-down" id="btn-play" data-tip="Play / Stop (Space)">&#9654; Play</button>
+  <button class="btn btn-loop btn-sm tip-down active" id="btn-loop" data-tip="Loop playback">&#8635; Loop</button>
+  <button class="btn btn-record btn-sm tip-down" id="btn-record" data-tip="Record mode — auto-detect gaps between notes">&#9898; Rec</button>
+  <button class="btn btn-metronome btn-sm tip-down" id="btn-metronome" data-tip="Metronome — audible beat click (M)">&#9201; Metronome</button>
+  <span class="rec-indicator" id="rec-indicator" style="display:none">REC</span>
+  <span class="metro-indicator" id="metro-indicator" style="display:none">&#9201;</span>
+  <button class="btn btn-clear btn-sm tip-down" id="btn-midi" data-tip="Connect MIDI keyboard">&#127929; MIDI</button>
+  <span class="top-bar-group" id="serial-group">
+    <span class="top-bar-group-label"><span style="font-size:1.3em">&#12336;</span> Serial</span>
+    <span class="tip-down" data-tip="Buzzer GPIO pin number on your board"><input type="text" class="pin-input" id="buzzer-pin" value="5" maxlength="3"></span>
+    <span class="tip-down" data-tip="Serial baud rate — must match your Arduino sketch"><select class="baud-select" id="baud-select">
+      <option value="9600">9600</option>
+      <option value="19200">19200</option>
+      <option value="38400">38400</option>
+      <option value="57600">57600</option>
+      <option value="115200" selected>115200</option>
+      <option value="230400">230400</option>
+      <option value="460800">460800</option>
+      <option value="921600">921600</option>
+    </select></span>
+    <button class="btn btn-clear btn-sm tip-down" id="btn-serial" data-tip="Connect to serial port (Chromium only)">Connect</button>
+    <button class="btn btn-clear btn-sm tip-down" id="btn-serial-setup" data-tip="Show Arduino receiver sketch and setup instructions">Setup</button>
+  </span>
+  <button class="theme-toggle tip-down" id="theme-toggle" data-tip="Toggle theme">&#9790;</button>
+  <button class="btn-help tip-down tip-right" id="btn-help" data-tip="Keyboard shortcuts (?)">?</button>
+</div>
+
+<div class="section collapsible-section">
+  <button class="collapsible-toggle open" id="input-settings-toggle">Input Settings <span class="arrow">&#9654;</span></button>
+  <div class="collapsible-content" id="input-settings-content">
+    <div class="mode-row">
+      <label><input type="checkbox" id="auto-mode" checked> Auto-detect duration (hold key longer = longer note)</label>
+      <span class="hold-hint" id="hold-hint">Hold piano keys to set duration</span>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div>
+        <h3 class="subsection-label">Manual Note Duration</h3>
+        <div class="durations" id="dur-btns">
+          <button class="dur-btn" data-dur="1">&#9711; Whole</button>
+          <button class="dur-btn" data-dur="2">&#9700; Half</button>
+          <button class="dur-btn active" data-dur="4">&#9833; Quarter</button>
+          <button class="dur-btn" data-dur="8">&#9834; Eighth</button>
+          <button class="dur-btn" data-dur="16">&#9835; 16th</button>
+          <button class="dur-btn" data-dur="32">&#9836; 32nd</button>
+          <button class="dur-btn" data-dur="64">&#9836; 64th</button>
+          <button class="dur-btn" data-dur="128">&#9836; 128th</button>
+        </div>
+      </div>
+      <div>
+        <h3 class="subsection-label">Add Pause (Gap)</h3>
+        <div class="pauses">
+          <button class="pause-btn" data-dur="1">&#9711; Whole</button>
+          <button class="pause-btn" data-dur="2">&#9700; Half</button>
+          <button class="pause-btn" data-dur="4">&#9833; Quarter</button>
+          <button class="pause-btn" data-dur="8">&#9834; Eighth</button>
+          <button class="pause-btn" data-dur="16">&#9835; 16th</button>
+          <button class="pause-btn" data-dur="32">&#9836; 32nd</button>
+          <button class="pause-btn" data-dur="64">&#9836; 64th</button>
+          <button class="pause-btn" data-dur="128">&#9836; 128th</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="keyboard-wrap" id="keyboard-wrap">
+    <div class="keyboard" id="keyboard"></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="seq-header">
+    <div class="seq-header-left">
+      <div class="view-tabs" style="margin-bottom:0;">
+        <button class="view-tab" data-view="chips">Chips</button>
+        <button class="view-tab active" data-view="roll">Piano Roll</button>
+      </div>
+      <button class="btn btn-clear btn-sm" id="btn-undo" disabled data-tip="Undo (Mod+Z)">&#8630;</button>
+      <button class="btn btn-clear btn-sm" id="btn-redo" disabled data-tip="Redo (Mod+Y / Mod+Shift+Z)">&#8631;</button>
+      <button class="btn btn-clear btn-sm" id="btn-octave-down" data-tip="Octave down (Z)">&#9660;&#9660;</button>
+      <button class="btn btn-clear btn-sm" id="btn-pitch-down" data-tip="Pitch down (Arrow Down)">&#9660;</button>
+      <span class="octave-badge" id="octave-badge" data-tip="Current keyboard octave">C4</span>
+      <button class="btn btn-clear btn-sm" id="btn-pitch-up" data-tip="Pitch up (Arrow Up)">&#9650;</button>
+      <button class="btn btn-clear btn-sm" id="btn-octave-up" data-tip="Octave up (X)">&#9650;&#9650;</button>
+      <span class="info" id="note-count" style="margin:0">0 notes</span>
+      <span class="info" id="melody-stats" style="margin:0"></span>
+    </div>
+    <span class="melody-name" id="melody-name" data-tip="Click to rename"></span>
+    <div class="seq-header-right">
+      <button class="btn btn-danger btn-sm" id="btn-clear" data-tip="Clear all notes (C)">&#10005; Clear</button>
+    </div>
+  </div>
+  <div id="chips-view" style="display:none">
+    <div class="sequence" id="sequence">
+      <span class="empty-msg">No notes yet &mdash; click piano keys above</span>
+    </div>
+  </div>
+  <div id="roll-view">
+    <div class="piano-roll-wrapper">
+      <div class="pr-zoom-controls tip-down tip-right" data-tip="Zoom — use +/- keys or scroll here">
+        <button class="btn btn-clear btn-sm" id="btn-zoom-out">-</button>
+        <input type="text" class="pr-zoom-input" id="pr-zoom-input" value="100%">
+        <button class="btn btn-clear btn-sm" id="btn-zoom-in">+</button>
+        <button class="btn btn-clear btn-sm active tip-down tip-right" id="btn-snap" data-tip="Snap notes to grid when dragging">Snap</button>
+        <button class="btn btn-clear btn-sm tip-down tip-right" id="btn-pr-fullscreen" data-tip="Toggle fullscreen piano roll (Mod+Enter)">&#x26F6;</button>
+      </div>
+      <div class="piano-roll" id="piano-roll"></div>
+    </div>
+  </div>
+  <p class="info" id="midi-info" style="display:none"></p>
+</div>
+
+<div class="section">
+  <div class="view-tabs output-tabs" style="margin-bottom:0;">
+    <button class="view-tab active" data-output="rtttl">RTTTL</button>
+    <button class="view-tab" data-output="arduino">C++ (Arduino)</button>
+  </div>
+  <div id="output-rtttl" style="margin-top:8px">
+    <textarea id="rtttl-output" class="rtttl-textarea" placeholder="Add notes, drop .rtttl files, or paste RTTTL here..."></textarea>
+    <div class="rtttl-actions">
+      <button class="copy-btn" id="rtttl-copy-btn">&#128203; Copy</button>
+      <button class="copy-btn" id="rtttl-save-btn" data-tip="Download as .rtttl file">&#128190; Save .rtttl</button>
+      <button class="copy-btn" id="midi-save-btn" data-tip="Download as Standard MIDI file">&#128190; Save .midi</button>
+    </div>
+  </div>
+  <div id="output-arduino" style="display:none; margin-top:8px">
+    <p class="info" style="margin:0 0 4px">Works on any Arduino-compatible board: ESP32, STM32, nRF52, ATmega, RP2040, etc.</p>
+    <textarea id="output" readonly placeholder="Add some notes to generate code..."></textarea>
+    <button class="copy-btn" id="copy-btn">&#128203; Copy to clipboard</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="hotkey-modal" style="display:none">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Keyboard Shortcuts</h3>
+      <button class="modal-close" id="hotkey-modal-close">&times;</button>
+    </div>
+    <table class="hotkey-table">
+      <tr><td><kbd>Space</kbd></td><td>Play / Stop</td></tr>
+      <tr><td><kbd>Backspace</kbd></td><td>Remove last note</td></tr>
+      <tr><td><kbd>Delete</kbd></td><td>Delete selected note</td></tr>
+      <tr><td><kbd>Mod+Z</kbd></td><td>Undo</td></tr>
+      <tr><td><kbd>Mod+Y</kbd> / <kbd>Mod+Shift+Z</kbd></td><td>Redo</td></tr>
+      <tr><td><kbd>Mod+A</kbd></td><td>Select all notes</td></tr>
+      <tr><td><kbd>Mod+C</kbd></td><td>Copy selected notes</td></tr>
+      <tr><td><kbd>Mod+X</kbd></td><td>Cut selected notes</td></tr>
+      <tr><td><kbd>Mod+V</kbd></td><td>Paste notes</td></tr>
+      <tr><td><kbd>Z</kbd></td><td>Octave down (transpose)</td></tr>
+      <tr><td><kbd>X</kbd></td><td>Octave up (transpose)</td></tr>
+      <tr><td><kbd>C</kbd></td><td>Clear all notes</td></tr>
+      <tr><td><kbd>&#9650;</kbd> / <kbd>&#9660;</kbd></td><td>Pitch up / down (semitone)</td></tr>
+      <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td>Zoom piano roll in / out</td></tr>
+      <tr><td><kbd>A S D F G H J K L ; '</kbd></td><td>White piano keys</td></tr>
+      <tr><td><kbd>W E T Y U I O [</kbd></td><td>Black piano keys</td></tr>
+      <tr><td><kbd>Right-click</kbd></td><td>Remove note (piano roll)</td></tr>
+      <tr><td><kbd>Shift</kbd> + drag</td><td>Clone note(s)</td></tr>
+      <tr><td><kbd>M</kbd></td><td>Toggle metronome</td></tr>
+      <tr><td><kbd>Mod+Enter</kbd></td><td>Fullscreen piano roll</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Exit fullscreen / close modal</td></tr>
+      <tr><td><kbd>?</kbd></td><td>Toggle this help</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="modal-overlay" id="serial-setup-modal" style="display:none">
+  <div class="modal-content" style="max-width:580px">
+    <div class="modal-header">
+      <h3>Arduino Serial Setup</h3>
+      <button class="modal-close" id="serial-setup-close">&times;</button>
+    </div>
+    <div class="serial-setup-steps">
+      <p><strong>1.</strong> Upload this sketch to your Arduino board:</p>
+      <textarea id="serial-sketch" readonly class="serial-sketch-textarea"></textarea>
+      <button class="copy-btn" id="serial-sketch-copy">&#128203; Copy sketch</button>
+      <p style="margin-top:12px"><strong>2.</strong> Close Arduino Serial Monitor (only one app can use a COM port)</p>
+      <p><strong>3.</strong> Set the baud rate and pin above to match your sketch</p>
+      <p><strong>4.</strong> Click <strong>Serial</strong> to connect, then <strong>Play</strong> to send notes</p>
+    </div>
+  </div>
+</div>
+
+<footer class="app-footer">
+  <span>BuzzCraft {{VERSION}}</span>
+  <span>by Mike Rotnik</span>
+  <span>GPLv3 License</span>
+  <a href="https://github.com/mrotnik/buzzcraft" target="_blank" rel="noopener">GitHub</a>
+</footer>
+
+<div class="toast" id="toast"></div>
+<script src="js/state.js"></script>
+<script src="js/constants.js"></script>
+<script src="js/duration.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/rtttl.js"></script>
+<script src="js/codegen.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/dancing-cat.js"></script>
+<script src="js/playback.js"></script>
+<script src="js/keyboard.js"></script>
+<script src="js/piano-roll.js"></script>
+<script src="js/chips.js"></script>
+<script src="js/midi.js"></script>
+<script src="js/serial.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

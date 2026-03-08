@@ -1,0 +1,8 @@
+*.md
+!README.md
+rtttl*/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+Desktop.ini
