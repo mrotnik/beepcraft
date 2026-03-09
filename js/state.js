@@ -1,4 +1,5 @@
 window.MP = window.MP || {};
+MP.VERSION = 'v0.0.3';
 
 MP.appState = {
   seq: [],

@@ -597,6 +597,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('kbd').forEach(function(el) {
     el.textContent = el.textContent.replace(/Mod\+/g, MP.MOD_KEY + '+');
   });
+  document.getElementById('app-version').textContent = 'BuzzCraft ' + MP.VERSION;
   MP.initKeyboard();
   MP.dancingCat.init();
   setupDurationControls();

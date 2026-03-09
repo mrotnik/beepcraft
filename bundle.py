@@ -28,10 +28,7 @@ js = re.sub(
     js
 )
 
-version = read('.version').strip()
-
 html = read('index.html')
-html = html.replace('{{VERSION}}', version)
 html = re.sub(r'<link\s+rel="stylesheet"\s+href="css/[^"]+"\s*/?>\s*\n?', '', html)
 html = re.sub(r'<script\s+src="js/[^"]+"\s*>\s*</script>\s*\n?', '', html)
 
