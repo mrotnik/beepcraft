@@ -73,7 +73,7 @@
 .btn-clear { background: var(--subtle-bg); color: var(--muted); border-color: var(--section-border); }
 .btn-danger { background: var(--subtle-bg); color: var(--error); border-color: var(--error); }
 .btn-danger:hover { background: var(--error); color: #fff; opacity: 1; }
-.btn-record { background: var(--error); color: #fff; border-color: var(--error); }
+.btn-record { background: var(--subtle-bg); color: var(--muted); border-color: var(--section-border); }
 .btn-metronome { background: var(--subtle-bg); color: var(--muted); border-color: var(--section-border); min-width: 105px; text-align: center; }
 .btn-metronome.active { background: var(--warning); color: #fff; border-color: var(--warning); }
 .btn-loop { background: var(--subtle-bg); color: var(--muted); border: 1px solid var(--section-border); }

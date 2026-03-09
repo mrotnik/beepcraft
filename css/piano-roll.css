@@ -12,19 +12,19 @@
 .pr-labels { position: sticky; left: 0; z-index: 3; display: flex; flex-direction: column; position: absolute; top: 0; left: 0; }
 .pr-label {
   width: 50px; height: 20px; display: flex; align-items: center; justify-content: flex-end;
-  padding-right: 6px; font-size: 0.65em; color: var(--muted); background: var(--bg);
+  padding-right: 6px; font-size: 0.65em; color: #555; background: #dddfe3;
   border-bottom: 1px solid var(--section-border); border-right: 1px solid var(--input-border); box-sizing: border-box;
   flex-shrink: 0; user-select: none; cursor: pointer;
 }
-.pr-label:hover { background: var(--section-border); }
-.pr-label.black-key-row:hover { background: #b4b8c2; }
-.pr-label.octave-c:hover { background: #c4c0dc; }
+.pr-label:hover { background: #e0e0e0; }
+.pr-label.black-key-row:hover { background: #555; }
+.pr-label.octave-c:hover { background: #d0ccec; }
 .pr-labels-sticky {
   position: sticky; left: 0; z-index: 5; width: 50px; height: 100%;
   flex-shrink: 0; pointer-events: auto;
 }
-.pr-label.octave-c { background: var(--accent-bg); color: var(--accent); font-weight: bold; }
-.pr-label.black-key-row { background: #d2d4da; }
+.pr-label.octave-c { background: var(--accent-bg); color: var(--accent); font-weight: 700; font-size: 0.75em; }
+.pr-label.black-key-row { background: #b0b4bc; color: #666; }
 .pr-row-bg { position: absolute; left: 50px; height: 20px; pointer-events: none; }
 .pr-row-bg.black-key-row { background: rgba(0,0,0,0.04); }
 .pr-grid { position: absolute; top: 0; left: 50px; }
@@ -43,7 +43,7 @@
   box-shadow: 0 1px 2px rgba(0,0,0,0.15); min-width: 8px; z-index: 2;
 }
 .pr-note:hover { filter: brightness(1.15); }
-.pr-note.selected { outline: 2px solid #d4a030; outline-offset: -1px; }
+.pr-note.selected { outline: 2px solid #c06000; outline-offset: -1px; box-shadow: 0 0 0 1px #c06000, 0 1px 6px rgba(192,96,0,0.5); z-index: 3; }
 .pr-note-label { pointer-events: none; }
 .pr-note .pr-resize {
   position: absolute; right: 0; top: 0; width: 6px; height: 100%;
@@ -94,9 +94,23 @@
 }
 .pr-edge-handle {
   position: absolute; width: 6px; cursor: ew-resize; z-index: 8;
-  background: transparent; border-right: 2px solid var(--input-border);
+  background: transparent; border-right: 2px solid var(--muted);
 }
 .pr-edge-handle:hover { border-right-color: var(--accent); background: rgba(112,93,207,0.08); }
+.pr-edge-expand {
+  position: absolute; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--section-border); border: 1px solid var(--input-border);
+  cursor: ew-resize; z-index: 9; user-select: none;
+  display: flex; align-items: center; justify-content: center; gap: 2px;
+  color: var(--muted); transition: background 0.15s, color 0.15s;
+}
+.pr-edge-expand::before, .pr-edge-expand::after {
+  content: ''; width: 0; height: 0;
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+}
+.pr-edge-expand::before { border-right: 5px solid currentColor; }
+.pr-edge-expand::after { border-left: 5px solid currentColor; }
+.pr-edge-expand:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 .pr-transpose-overlay {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);

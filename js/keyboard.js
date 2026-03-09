@@ -223,6 +223,11 @@ function setupComputerKeyboard() {
       if (wrapper && wrapper.classList.contains('fullscreen')) { MP.togglePrFullscreen(); return; }
       const m = document.getElementById('hotkey-modal');
       if (m.style.display !== 'none') { m.style.display = 'none'; return; }
+      if (MP.appState.selectedNoteIdxs.size > 0) {
+        MP.appState.selectedNoteIdxs.clear();
+        MP.appState.selectedNoteIdx = null;
+        document.querySelectorAll('.pr-note.selected').forEach(function(b) { b.classList.remove('selected'); });
+      }
       return;
     }
     if (e.key === 'F11' || (MP.modKey(e) && e.key === 'Enter')) { e.preventDefault(); MP.togglePrFullscreen(); return; }

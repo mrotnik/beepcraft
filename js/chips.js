@@ -30,7 +30,7 @@ MP.renderChips = function() {
       buildChipContent(chip, n.name, durLabel);
       chip.querySelector('.remove').addEventListener('click', () => {
         MP.pushUndo(); MP.appState.seq.splice(origIdx, 1);
-        MP.resetNextNoteStart();
+        MP.ensureNextNoteStart();
         MP.updateSequence();
       });
     } else {
@@ -41,7 +41,7 @@ MP.renderChips = function() {
         const currentFlat = MP.seqToFlat();
         currentFlat.splice(restFlatIdx, 1);
         MP.appState.seq = MP.rebuildSeqFromFlat(currentFlat);
-        MP.resetNextNoteStart();
+        MP.ensureNextNoteStart();
         MP.updateSequence();
       });
     }
@@ -73,7 +73,7 @@ MP.renderChips = function() {
       if (toIdx > fromIdx) toIdx--;
       flat.splice(toIdx, 0, item);
       MP.appState.seq = MP.rebuildSeqFromFlat(flat);
-      MP.resetNextNoteStart();
+      MP.ensureNextNoteStart();
       MP.updateSequence();
     });
     el.appendChild(chip);

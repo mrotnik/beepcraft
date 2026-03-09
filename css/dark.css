@@ -68,12 +68,12 @@
 [data-theme="dark"] .pr-timeline-label { background: #2c313a; border-color: #4b5263; color: #636d83; }
 [data-theme="dark"] .pr-timeline-beat { color: #636d83; border-left-color: #4b5263; }
 [data-theme="dark"] .pr-timeline-beat.measure { color: #abb2bf; border-left-color: #636d83; }
-[data-theme="dark"] .pr-label { background: #21252b; color: #636d83; border-color: #3e4451; border-right-color: #4b5263; }
-[data-theme="dark"] .pr-label.octave-c { background: #2c313a; color: #61afef; }
-[data-theme="dark"] .pr-label:hover { background: #3e4451; }
-[data-theme="dark"] .pr-label.black-key-row:hover { background: #353a44; }
-[data-theme="dark"] .pr-label.octave-c:hover { background: #3a4555; }
-[data-theme="dark"] .pr-label.black-key-row { background: #262a31; }
+[data-theme="dark"] .pr-label { background: #3a3f4a; color: #bbb; border-color: #2a2e36; border-right-color: #4b5263; }
+[data-theme="dark"] .pr-label.octave-c { background: #424856; color: #61afef; }
+[data-theme="dark"] .pr-label:hover { background: #4a5060; }
+[data-theme="dark"] .pr-label.black-key-row:hover { background: #252830; }
+[data-theme="dark"] .pr-label.octave-c:hover { background: #4e5a6a; }
+[data-theme="dark"] .pr-label.black-key-row { background: #2a2e36; color: #636d83; }
 [data-theme="dark"] .pr-row-bg.black-key-row { background: rgba(0,0,0,0.15); }
 [data-theme="dark"] .pr-gridline-h { background: #3e4451; }
 [data-theme="dark"] .pr-gridline-h.octave-c { background: #4b5263; }
@@ -81,6 +81,9 @@
 [data-theme="dark"] .pr-gridline-v.measure { background: #636d83; }
 [data-theme="dark"] .pr-select-rect { border-color: #61afef; background: rgba(97,175,239,0.1); }
 [data-theme="dark"] .pr-note { background: #61afef; color: #282c34; }
+[data-theme="dark"] .pr-note.selected { outline-color: #e5c07b; box-shadow: 0 0 0 1px #e5c07b, 0 1px 6px rgba(229,192,123,0.5); }
+[data-theme="dark"] .pr-edge-expand { background: #3e4451; border-color: #4b5263; color: #636d83; }
+[data-theme="dark"] .pr-edge-expand:hover { background: #61afef; color: #282c34; border-color: #61afef; }
 [data-theme="dark"] .pr-playhead { background: #e06c75; box-shadow: 0 0 4px rgba(224,108,117,0.5); }
 [data-theme="dark"] .pr-hover-line { background: #61afef; }
 
@@ -94,7 +97,7 @@
 [data-theme="dark"] .btn-metronome.active { background: #e65100; color: #fff; border-color: #e65100; }
 [data-theme="dark"] .btn-loop { background: #3e4451; color: #abb2bf; border-color: #4b5263; }
 [data-theme="dark"] .btn-loop.active { background: #61afef; color: #282c34; border-color: #61afef; }
-[data-theme="dark"] .btn-record { background: #e06c75; color: #fff; border-color: #e06c75; }
+[data-theme="dark"] .btn-record { background: #3e4451; color: #abb2bf; border-color: #4b5263; }
 [data-theme="dark"] .melody-select,
 [data-theme="dark"] .melody-search,
 [data-theme="dark"] .time-sig-select,

@@ -229,9 +229,11 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
     if (MP.appState.selectedNoteIdxs.size > 1 && isSelected) {
       startX = e.clientX; startY = e.clientY;
       var origPositions = {};
+      var primaryOrig;
       MP.appState.selectedNoteIdxs.forEach(function(idx) {
         origPositions[idx] = { start: MP.appState.seq[idx].start, midi: MP.midiFromName(MP.appState.seq[idx].name) };
       });
+      primaryOrig = origPositions[i];
       var ghostBlocks = [];
       var onMove = function(e2) {
         var dx = e2.clientX - startX, dy = e2.clientY - startY;
@@ -252,7 +254,8 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
             });
           }
         }
-        var dBeat = MP.snapBeats(Math.abs(dx / beatW)) * Math.sign(dx / beatW);
+        var snappedPrimaryStart = MP.snapBeats(primaryOrig.start + dx / beatW);
+        var dBeat = snappedPrimaryStart - primaryOrig.start;
         var dMidi = -Math.round(dy / MP.PR_ROW_H);
         var targets = isClone ? ghostBlocks.map(function(g) { return g.ghost; }) : null;
         var ti = 0;
@@ -273,6 +276,14 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
       };
       var onUp = function() {
         ghostBlocks.forEach(function(g) { g.ghost.remove(); });
+        if (!dragMode && !e.shiftKey && !MP.modKey(e)) {
+          MP.appState.selectedNoteIdxs.clear();
+          document.querySelectorAll('.pr-note.selected').forEach(function(b) { b.classList.remove('selected'); });
+          MP.appState.selectedNoteIdxs.add(i);
+          block.classList.add('selected');
+          MP.appState.selectedNoteIdx = i;
+          return;
+        }
         if (dragMode === 'free') {
           var diffs = [];
           var ti = 0;
@@ -407,11 +418,99 @@ function buildPrNoteBlocks(inner, minMidi, maxMidi, beatW, noteBlocks) {
     setupPrResize(resizeHandle, n, i, beatW, noteBlocks);
     setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, noteBlocks);
 
-    block.addEventListener('contextmenu', function(e) {
-      e.preventDefault(); MP.pushUndo(); MP.appState.seq.splice(i, 1); MP.resetNextNoteStart(); MP.updateSequence();
-    });
+    block.addEventListener('contextmenu', function(e) { e.preventDefault(); });
     inner.appendChild(block);
   });
+}
+
+function setupPrRmbDelete(inner, noteBlocks) {
+  var deleting = false, deletedIdxs = new Set(), undoPushed = false;
+
+  function markNote(el) {
+    var idx = parseInt(el.dataset.seqIdx);
+    if (isNaN(idx) || deletedIdxs.has(idx)) return;
+    if (!undoPushed) { MP.pushUndo(); undoPushed = true; }
+    deletedIdxs.add(idx);
+    el.style.opacity = '0.25';
+    el.style.pointerEvents = 'none';
+  }
+
+  function getNoteEl(e) {
+    var t = e.target;
+    if (t.classList.contains('pr-note')) return t;
+    if (t.parentElement && t.parentElement.classList.contains('pr-note')) return t.parentElement;
+    return null;
+  }
+
+  inner.addEventListener('mousedown', function(e) {
+    if (e.button !== 2) return;
+    e.preventDefault();
+    deleting = true; deletedIdxs = new Set(); undoPushed = false;
+    inner.style.cursor = 'crosshair';
+    var noteEl = getNoteEl(e);
+    if (noteEl) markNote(noteEl);
+  });
+
+  inner.addEventListener('mousemove', function(e) {
+    if (!deleting) return;
+    var el = document.elementFromPoint(e.clientX, e.clientY);
+    if (!el) return;
+    if (el.classList.contains('pr-note')) markNote(el);
+    else if (el.parentElement && el.parentElement.classList.contains('pr-note')) markNote(el.parentElement);
+  });
+
+  function finish() {
+    if (!deleting) return;
+    deleting = false;
+    inner.style.cursor = '';
+    if (deletedIdxs.size === 0) return;
+    var idxs = Array.from(deletedIdxs).sort(function(a, b) { return b - a; });
+    idxs.forEach(function(idx) { MP.appState.seq.splice(idx, 1); });
+    MP.appState.selectedNoteIdxs.clear();
+    MP.appState.selectedNoteIdx = null;
+    MP.ensureNextNoteStart();
+    MP.updateSequence();
+  }
+
+  inner.addEventListener('mouseup', function(e) { if (e.button === 2) finish(); });
+  inner.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+}
+
+function edgeDragHandler(inner, edgeHandle, expandBtn, beatW, e) {
+  e.preventDefault(); e.stopPropagation();
+  var startX = e.clientX;
+  var origEnd = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
+  var minEnd = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
+  var lastEnd = origEnd;
+  var onMove = function(e2) {
+    var dx = e2.clientX - startX;
+    lastEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
+    var newW = lastEnd * beatW;
+    inner.style.width = (MP.PR_LABEL_W + newW) + 'px';
+    edgeHandle.style.left = (MP.PR_LABEL_W + newW - 3) + 'px';
+    expandBtn.style.left = (MP.PR_LABEL_W + newW - 11) + 'px';
+  };
+  var onUp = function() {
+    if (Math.abs(lastEnd - origEnd) > 0.001) {
+      MP.pushUndo();
+      var newEnd = lastEnd;
+      for (var j = MP.appState.seq.length - 1; j >= 0; j--) {
+        var s = MP.appState.seq[j];
+        if (s.start >= newEnd) {
+          MP.appState.seq.splice(j, 1);
+        } else if (s.start + s.dur > newEnd) {
+          s.dur = newEnd - s.start;
+        }
+      }
+      MP.appState.nextNoteStart = newEnd;
+      MP.updateSequence();
+    } else {
+      inner.style.width = (MP.PR_LABEL_W + origEnd * beatW) + 'px';
+      edgeHandle.style.left = (MP.PR_LABEL_W + origEnd * beatW - 3) + 'px';
+      expandBtn.style.left = (MP.PR_LABEL_W + origEnd * beatW - 11) + 'px';
+    }
+  };
+  startDrag(onMove, onUp);
 }
 
 function buildPrEdgeHandle(inner, gridH, totalW, beatW) {
@@ -422,36 +521,55 @@ function buildPrEdgeHandle(inner, gridH, totalW, beatW) {
   edgeHandle.style.height = gridH + 'px';
   inner.appendChild(edgeHandle);
 
-  edgeHandle.addEventListener('mousedown', function(e) {
+  var expandBtn = document.createElement('div');
+  expandBtn.className = 'pr-edge-expand';
+  expandBtn.style.left = (MP.PR_LABEL_W + totalW - 11) + 'px';
+  expandBtn.style.top = (MP.PR_TIMELINE_H + gridH / 2 - 11) + 'px';
+  inner.appendChild(expandBtn);
+
+  function onEdgeDown(e) {
+    edgeDragHandler(inner, edgeHandle, expandBtn, beatW, e);
+  }
+  edgeHandle.addEventListener('mousedown', onEdgeDown);
+  expandBtn.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  expandBtn.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
     e.preventDefault(); e.stopPropagation();
-    var startX = e.clientX;
+    var startX = e.clientX, dragged = false;
     var origEnd = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
     var minEnd = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
     var lastEnd = origEnd;
+    var shiftHeld = e.shiftKey;
     var onMove = function(e2) {
+      if (!dragged && Math.abs(e2.clientX - startX) < 4) return;
+      dragged = true;
       var dx = e2.clientX - startX;
       lastEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
       var newW = lastEnd * beatW;
       inner.style.width = (MP.PR_LABEL_W + newW) + 'px';
       edgeHandle.style.left = (MP.PR_LABEL_W + newW - 3) + 'px';
+      expandBtn.style.left = (MP.PR_LABEL_W + newW - 11) + 'px';
     };
     var onUp = function() {
-      if (Math.abs(lastEnd - origEnd) > 0.001) {
+      if (!dragged) {
+        var tsBeats = MP.getTimeSigBeats();
+        var step = shiftHeld ? tsBeats * 2 : tsBeats;
         MP.pushUndo();
-        var newEnd = lastEnd;
+        MP.appState.nextNoteStart = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart) + step;
+        MP.updateSequence();
+      } else if (Math.abs(lastEnd - origEnd) > 0.001) {
+        MP.pushUndo();
         for (var j = MP.appState.seq.length - 1; j >= 0; j--) {
           var s = MP.appState.seq[j];
-          if (s.start >= newEnd) {
-            MP.appState.seq.splice(j, 1);
-          } else if (s.start + s.dur > newEnd) {
-            s.dur = newEnd - s.start;
-          }
+          if (s.start >= lastEnd) MP.appState.seq.splice(j, 1);
+          else if (s.start + s.dur > lastEnd) s.dur = lastEnd - s.start;
         }
-        MP.appState.nextNoteStart = newEnd;
+        MP.appState.nextNoteStart = lastEnd;
         MP.updateSequence();
       } else {
         inner.style.width = (MP.PR_LABEL_W + origEnd * beatW) + 'px';
         edgeHandle.style.left = (MP.PR_LABEL_W + origEnd * beatW - 3) + 'px';
+        expandBtn.style.left = (MP.PR_LABEL_W + origEnd * beatW - 11) + 'px';
       }
     };
     startDrag(onMove, onUp);
@@ -472,20 +590,19 @@ function buildPrEmptySpace(inner, minMidi, maxMidi, totalW, beatW, noteBlocks) {
     var clickedMidi = maxMidi - Math.floor(y / MP.PR_ROW_H);
     if (clickedMidi < minMidi || clickedMidi > maxMidi) return;
     var clickBeat = MP.snapBeats((x - MP.PR_LABEL_W) / beatW);
-    if (!MP.modKey(e) && !e.shiftKey) {
-      document.querySelectorAll('.pr-note.selected').forEach(function(b) { b.classList.remove('selected'); });
-      MP.appState.selectedNoteIdx = null;
-      MP.appState.selectedNoteIdxs.clear();
-    }
+    var hadSelection = MP.appState.selectedNoteIdxs.size > 0;
+    var noMod = !MP.modKey(e) && !e.shiftKey;
+    var shiftHeld = e.shiftKey;
+    var preservedIdxs = shiftHeld ? new Set(MP.appState.selectedNoteIdxs) : new Set();
     emptySpaceMidi = clickedMidi; emptySpaceDragged = false;
     var startClientX = e.clientX, startClientY = e.clientY;
     var anchorX = x, anchorY = y + MP.PR_TIMELINE_H;
-    emptySpacePreview = MP.playNotePreview(MP.freqFromMidi(clickedMidi));
+    if (!shiftHeld) emptySpacePreview = MP.playNotePreview(MP.freqFromMidi(clickedMidi));
 
     var onMove = function(e2) {
       if (!emptySpaceDragged && Math.abs(e2.clientX - startClientX) < 4 && Math.abs(e2.clientY - startClientY) < 4) return;
       if (!emptySpaceDragged) {
-        MP.stopNotePreview(emptySpacePreview); emptySpacePreview = null;
+        if (emptySpacePreview) { MP.stopNotePreview(emptySpacePreview); emptySpacePreview = null; }
         selRect = document.createElement('div');
         selRect.className = 'pr-select-rect';
         inner.appendChild(selRect);
@@ -498,7 +615,7 @@ function buildPrEmptySpace(inner, minMidi, maxMidi, totalW, beatW, noteBlocks) {
       selRect.style.left = sx + 'px'; selRect.style.top = sy + 'px';
       selRect.style.width = sw + 'px'; selRect.style.height = sh + 'px';
 
-      MP.appState.selectedNoteIdxs.clear();
+      MP.appState.selectedNoteIdxs = new Set(preservedIdxs);
       MP.appState.seq.forEach(function(sn, si) {
         var sMidi = MP.midiFromName(sn.name);
         var noteLeft = MP.PR_LABEL_W + sn.start * beatW;
@@ -508,14 +625,18 @@ function buildPrEmptySpace(inner, minMidi, maxMidi, totalW, beatW, noteBlocks) {
         var hit = noteRight > sx && noteLeft < sx + sw && noteBottom > sy && noteTop < sy + sh;
         var b = noteBlocks[si];
         if (hit) { MP.appState.selectedNoteIdxs.add(si); if (b) b.classList.add('selected'); }
-        else { if (b) b.classList.remove('selected'); }
+        else if (!preservedIdxs.has(si)) { if (b) b.classList.remove('selected'); }
       });
     };
     var onUp = function() {
+      if (emptySpacePreview) { MP.stopNotePreview(emptySpacePreview); emptySpacePreview = null; }
       if (selRect) { selRect.remove(); selRect = null; }
-      if (!emptySpaceDragged) {
-        MP.stopNotePreview(emptySpacePreview); emptySpacePreview = null;
-        if (emptySpaceMidi !== null) {
+      if (!emptySpaceDragged && !shiftHeld) {
+        if (noMod && hadSelection) {
+          document.querySelectorAll('.pr-note.selected').forEach(function(b) { b.classList.remove('selected'); });
+          MP.appState.selectedNoteIdx = null;
+          MP.appState.selectedNoteIdxs.clear();
+        } else if (emptySpaceMidi !== null) {
           var placeDur = MP.appState.lastNoteDur || (MP.appState.seq.length > 0 ? MP.appState.seq[MP.appState.seq.length - 1].dur : 1);
           MP.pushUndo();
           MP.appState.seq.push({ name: MP.nameFromMidi(emptySpaceMidi), freq: MP.freqFromMidi(emptySpaceMidi), start: clickBeat, dur: placeDur });
@@ -560,6 +681,7 @@ MP.renderPianoRoll = function() {
 
   var noteBlocks = {};
   buildPrNoteBlocks(inner, minMidi, maxMidi, beatW, noteBlocks);
+  setupPrRmbDelete(inner, noteBlocks);
   buildPrEdgeHandle(inner, gridH, totalW, beatW);
   buildPrEmptySpace(inner, minMidi, maxMidi, totalW, beatW, noteBlocks);
 

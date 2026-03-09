@@ -89,6 +89,9 @@ MP.autoLoad = function() {
 };
 
 MP.startMetronome = function() {
+  clearTimeout(MP.appState.metronomeTimer);
+  MP.appState.metronomeTimer = null;
+  MP.appState._metroExpectedTime = null;
   MP.appState.metronomeOn = true;
   MP.appState.metronomeBeat = 0;
   var btn = document.getElementById('btn-metronome');
@@ -140,7 +143,14 @@ MP.tickMetronome = function() {
   playMetroTick(ctx, ctx.currentTime, isDownbeat);
   flashMetroIndicator(isDownbeat);
   MP.appState.metronomeBeat++;
-  MP.appState.metronomeTimer = setTimeout(MP.tickMetronome, 60000 / bpm);
+  var interval = 60000 / bpm;
+  if (!MP.appState._metroExpectedTime) {
+    MP.appState._metroExpectedTime = performance.now() + interval;
+  } else {
+    MP.appState._metroExpectedTime += interval;
+  }
+  var drift = MP.appState._metroExpectedTime - performance.now();
+  MP.appState.metronomeTimer = setTimeout(MP.tickMetronome, Math.max(0, drift));
 };
 
 MP.scheduleMetronomeChunk = function() {
