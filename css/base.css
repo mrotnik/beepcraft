@@ -39,7 +39,7 @@ h1 { color: var(--accent); font-size: 1.4em; margin: 0; white-space: nowrap; }
 
 .top-bar {
   position: sticky; top: 0; z-index: 50;
-  display: flex; align-items: center; gap: 16px;
+  display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap;
   background: var(--top-bar-bg); border-bottom: 1px solid var(--top-bar-border);
   padding: 8px 20px; margin: -60px -20px 16px -20px;
   box-shadow: 0 1px 3px var(--section-shadow);

@@ -53,7 +53,7 @@ MP.generateCode = function() {
   code += '    int dur = noteDurations[currentNote];\n';
   code += '    int duration = dur > 0 ? (wholenote / dur) : (-wholenote * 3 / (dur * 2));\n';
   code += '    if (melody[currentNote] > 0) {\n';
-  code += '      tone(BUZZER_PIN, melody[currentNote], duration * 0.9);\n';
+  code += '      tone(BUZZER_PIN, melody[currentNote], duration * ' + MP.TONE_DUTY + ');\n';
   code += '    } else {\n';
   code += '      noTone(BUZZER_PIN);\n';
   code += '    }\n';

@@ -110,6 +110,15 @@
 }
 .pr-edge-expand::before { border-right: 5px solid currentColor; }
 .pr-edge-expand::after { border-left: 5px solid currentColor; }
+.pr-edge-expand .shift-arrows { display: none; }
+.pr-edge-expand.shift::before, .pr-edge-expand.shift::after { display: none; }
+.pr-edge-expand.shift .shift-arrows { display: contents; }
+.pr-edge-arrow {
+  width: 0; height: 0;
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+}
+.pr-edge-arrow.left { border-right: 5px solid currentColor; }
+.pr-edge-arrow.right { border-left: 5px solid currentColor; }
 .pr-edge-expand:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 .pr-transpose-overlay {

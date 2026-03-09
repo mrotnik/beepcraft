@@ -7,7 +7,7 @@ def read(path):
         return f.read()
 
 css_files = ['css/base.css', 'css/controls.css', 'css/keyboard.css', 'css/piano-roll.css', 'css/chips.css', 'css/dark.css']
-js_files = ['js/state.js', 'js/constants.js', 'js/duration.js', 'js/audio.js', 'js/rtttl.js', 'js/codegen.js', 'js/ui.js', 'js/dancing-cat.js', 'js/playback.js', 'js/keyboard.js', 'js/piano-roll.js', 'js/chips.js', 'js/midi.js', 'js/serial.js', 'js/main.js']
+js_files = ['js/state.js', 'js/constants.js', 'js/duration.js', 'js/audio.js', 'js/audio-import.js', 'js/rtttl.js', 'js/codegen.js', 'js/ui.js', 'js/dancing-cat.js', 'js/playback.js', 'js/keyboard.js', 'js/piano-roll.js', 'js/chips.js', 'js/midi.js', 'js/serial.js', 'js/main.js']
 
 css = '\n'.join(read(f) for f in css_files)
 js = '\n'.join(read(f) for f in js_files)

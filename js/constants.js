@@ -5,7 +5,7 @@ for (let octave = 0; octave <= 9; octave++) {
   for (let i = 0; i < 12; i++) {
     const name = MP.NOTE_NAMES[i] + octave;
     const midi = (octave + 1) * 12 + i;
-    const freq = Math.round(440 * Math.pow(2, (midi - 69) / 12));
+    const freq = Math.round(MP.A4_FREQ * Math.pow(2, (midi - MP.A4_MIDI) / 12));
     const type = MP.NOTE_NAMES[i].includes('#') ? 'black' : 'white';
     MP.NOTES.push({ name, freq, type });
   }
@@ -46,7 +46,7 @@ MP.nameFromMidi = function(midi) {
 };
 
 MP.freqFromMidi = function(midi) {
-  return Math.round(440 * Math.pow(2, (midi - 69) / 12));
+  return Math.round(MP.A4_FREQ * Math.pow(2, (midi - MP.A4_MIDI) / 12));
 };
 
 MP.getBpm = function() {
@@ -80,6 +80,19 @@ MP.updateNoteFromMidi = function(note, midi) {
   note.name = MP.nameFromMidi(midi);
   note.freq = MP.freqFromMidi(midi);
 };
+
+MP.A4_MIDI = 69;
+MP.A4_FREQ = 440;
+MP.MIDI_MIN = 12;
+MP.MIDI_MAX = 108;
+MP.BPM_MIN = 40;
+MP.BPM_MAX = 300;
+MP.TONE_DUTY = 0.9;
+MP.ZOOM_STEP = 0.25;
+MP.ZOOM_WHEEL_STEP = 0.125;
+MP.ZOOM_MIN = 0.25;
+MP.ZOOM_MAX = 5;
+MP.DRAG_THRESHOLD = 4;
 
 MP.COPY_FEEDBACK_MS = 1500;
 MP.TOAST_MS = 3000;

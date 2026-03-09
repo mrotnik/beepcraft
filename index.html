@@ -16,7 +16,7 @@
 <div class="top-bar" id="top-bar">
   <canvas id="dance-cat" width="32" height="32"></canvas>
   <h1>BuzzCraft</h1>
-  <span class="preset-search-wrap">
+  <span class="preset-search-wrap tip-down" data-tip="Search presets">
     <input type="text" class="melody-search" id="melody-search" placeholder="Search presets..." autocomplete="off">
     <div class="preset-dropdown" id="preset-dropdown"></div>
   </span>
@@ -41,6 +41,9 @@
   <button class="btn btn-metronome btn-sm tip-down" id="btn-metronome" data-tip="Metronome — audible beat click (M)">&#9201; Metronome</button>
   <span class="rec-indicator" id="rec-indicator" style="display:none">REC</span>
   <span class="metro-indicator" id="metro-indicator" style="display:none">&#9201;</span>
+  <input type="file" id="audio-file-input" accept=".wav,.mp3,.ogg,.m4a,audio/*" style="display:none">
+  <button class="btn btn-clear btn-sm tip-down" id="btn-import-audio" data-tip="Import audio file (WAV/MP3) — detects monophonic melody pitches">&#128266; Import</button>
+  <button class="btn btn-clear btn-sm tip-down" id="btn-mic-record" data-tip="Record from microphone — detects melody pitches">&#127908; Mic</button>
   <button class="btn btn-clear btn-sm tip-down" id="btn-midi" data-tip="Connect MIDI keyboard">&#127929; MIDI</button>
   <span class="top-bar-group" id="serial-group">
     <span class="top-bar-group-label"><span style="font-size:1.3em">&#12336;</span> Serial</span>
@@ -58,7 +61,7 @@
     <button class="btn btn-clear btn-sm tip-down" id="btn-serial" data-tip="Connect to serial port (Chromium only)">Connect</button>
     <button class="btn btn-clear btn-sm tip-down" id="btn-serial-setup" data-tip="Show Arduino receiver sketch and setup instructions">Setup</button>
   </span>
-  <button class="theme-toggle tip-down" id="theme-toggle" data-tip="Toggle theme">&#9790;</button>
+  <button class="theme-toggle tip-down" id="theme-toggle" data-tip="Toggle theme"><span class="moon-icon"></span></button>
   <button class="btn-help tip-down tip-right" id="btn-help" data-tip="Keyboard shortcuts (?)">?</button>
 </div>
 
@@ -218,6 +221,12 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="import-modal" style="display:none">
+  <div class="modal-content" style="max-width:350px;text-align:center;padding:30px">
+    <div id="import-status" style="font-size:1.1em">Analyzing audio...</div>
+  </div>
+</div>
+
 <footer class="app-footer">
   <span id="app-version">BuzzCraft</span>
   <span>by Mike Rotnik</span>
@@ -230,6 +239,7 @@
 <script src="js/constants.js"></script>
 <script src="js/duration.js"></script>
 <script src="js/audio.js"></script>
+<script src="js/audio-import.js"></script>
 <script src="js/rtttl.js"></script>
 <script src="js/codegen.js"></script>
 <script src="js/ui.js"></script>

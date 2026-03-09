@@ -50,7 +50,7 @@ MP.renderSequence = function() {
   var nameEl = document.getElementById('melody-name');
   if (nameEl) nameEl.textContent = MP.appState.melodyName || 'Melody';
   var searchEl = document.getElementById('melody-search');
-  if (searchEl && MP.appState.melodyName) searchEl.placeholder = 'Preset: ' + MP.appState.melodyName;
+  if (searchEl && MP.appState.melodyName) { searchEl.placeholder = MP.appState.melodyName; searchEl.parentElement.dataset.tip = MP.appState.melodyName; }
 };
 
 MP.autoSave = function() {
@@ -191,6 +191,31 @@ MP.ensureNextNoteStart = function() {
 };
 
 MP.updateSequence = function() { MP.renderSequence(); MP.generateCode(); };
+
+MP.loadRTTTL = function(rtttlString, opts) {
+  var result = MP.parseRTTTL(rtttlString);
+  if (!result) return null;
+  MP.pushUndo();
+  MP.appState.seq = MP.oldSeqToTimeline(result.notes);
+  MP.resetNextNoteStart();
+  MP.appState.melodyName = result.name;
+  MP.setBpm(result.bpm);
+  var wasPlaying = !!MP.appState.playState;
+  MP.stopPlayback();
+  MP.updateSequence();
+  if (wasPlaying) MP.playSequence();
+  return result;
+};
+
+MP.sanitizeFilename = function(name) {
+  return (name || 'Melody').replace(/[^a-zA-Z0-9_\-]/g, '_');
+};
+
+MP.clearSelection = function() {
+  MP.appState.selectedNoteIdxs.clear();
+  MP.appState.selectedNoteIdx = null;
+  document.querySelectorAll('.pr-note.selected').forEach(function(b) { b.classList.remove('selected'); });
+};
 
 MP.setBpm = function(val) {
   var v = Math.max(10, Math.min(900, parseInt(val) || 120));

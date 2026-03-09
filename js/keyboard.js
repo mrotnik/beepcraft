@@ -89,7 +89,7 @@ MP.transposeSemitones = function(shift) {
   const midiNotes = MP.appState.seq.map(n => MP.midiFromName(n.name)).filter(m => m >= 0);
   if (midiNotes.length === 0) return;
   const minM = Math.min(...midiNotes), maxM = Math.max(...midiNotes);
-  if (minM + shift < 12 || maxM + shift > 108) return;
+  if (minM + shift < MP.MIDI_MIN || maxM + shift > MP.MIDI_MAX) return;
   MP.pushUndo();
   MP.appState.seq.forEach(n => {
     const midi = MP.midiFromName(n.name);
@@ -187,8 +187,7 @@ function setupComputerKeyboard() {
       MP.appState.clipboard = selected.map(n => ({ name: n.name, freq: n.freq, dur: n.dur, startOffset: n.start - minStart }));
       MP.pushUndo();
       [...MP.appState.selectedNoteIdxs].sort((a, b) => b - a).forEach(idx => MP.appState.seq.splice(idx, 1));
-      MP.appState.selectedNoteIdxs.clear();
-      MP.appState.selectedNoteIdx = null;
+      MP.clearSelection();
       MP.resetNextNoteStart();
       MP.updateSequence();
       MP.showToast('Cut ' + selected.length + ' note' + (selected.length !== 1 ? 's' : ''));
@@ -224,9 +223,7 @@ function setupComputerKeyboard() {
       const m = document.getElementById('hotkey-modal');
       if (m.style.display !== 'none') { m.style.display = 'none'; return; }
       if (MP.appState.selectedNoteIdxs.size > 0) {
-        MP.appState.selectedNoteIdxs.clear();
-        MP.appState.selectedNoteIdx = null;
-        document.querySelectorAll('.pr-note.selected').forEach(function(b) { b.classList.remove('selected'); });
+        MP.clearSelection();
       }
       return;
     }
@@ -237,8 +234,8 @@ function setupComputerKeyboard() {
       m.style.display = m.style.display === 'none' ? '' : 'none';
       return;
     }
-    if (e.key === '=' || e.key === '+') { e.preventDefault(); MP.updateZoom(0.25); return; }
-    if (e.key === '-' || e.key === '_') { e.preventDefault(); MP.updateZoom(-0.25); return; }
+    if (e.key === '=' || e.key === '+') { e.preventDefault(); MP.updateZoom(MP.ZOOM_STEP); return; }
+    if (e.key === '-' || e.key === '_') { e.preventDefault(); MP.updateZoom(-MP.ZOOM_STEP); return; }
     if (e.key === 'ArrowUp') { e.preventDefault(); MP.transposeSemitones(1); return; }
     if (e.key === 'ArrowDown') { e.preventDefault(); MP.transposeSemitones(-1); return; }
     if (e.key === 'Backspace') {
@@ -259,8 +256,7 @@ function setupComputerKeyboard() {
       e.preventDefault();
       MP.pushUndo();
       idxs.forEach(idx => MP.appState.seq.splice(idx, 1));
-      MP.appState.selectedNoteIdx = null;
-      MP.appState.selectedNoteIdxs.clear();
+      MP.clearSelection();
       MP.resetNextNoteStart();
       MP.updateSequence();
       return;

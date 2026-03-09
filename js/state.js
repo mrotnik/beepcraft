@@ -1,5 +1,5 @@
 window.MP = window.MP || {};
-MP.VERSION = 'v0.0.4';
+MP.VERSION = 'v0.0.5';
 
 MP.appState = {
   seq: [],
@@ -38,6 +38,9 @@ MP.appState = {
   selectedNoteIdxs: new Set(),
   clipboard: [],
   lastNoteDur: null,
+  micStream: null,
+  micChunks: [],
+  micRecording: false,
   chipHighlightRAF: null,
   prZoom: 1.0,
   snapEnabled: true,

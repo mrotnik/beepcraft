@@ -61,7 +61,7 @@ MP.getSerialSketch = function() {
     '      int freq = line.substring(c1 + 1, c2).toInt();\n' +
     '      int dur = line.substring(c2 + 1).toInt();\n' +
     '      if (freq > 0) {\n' +
-    '        tone(BUZZER_PIN, freq, dur * 0.9);\n' +
+    '        tone(BUZZER_PIN, freq, dur * ' + MP.TONE_DUTY + ');\n' +
     '      } else {\n' +
     '        noTone(BUZZER_PIN);\n' +
     '      }\n' +

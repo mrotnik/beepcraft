@@ -84,28 +84,28 @@ function setupPlaybackControls() {
 function setupPianoRollControls() {
   var zoomInput = document.getElementById('pr-zoom-input');
   MP.updateZoom = function(delta) {
-    MP.appState.prZoom = Math.min(5, Math.max(0.25, MP.appState.prZoom + delta));
+    MP.appState.prZoom = Math.min(MP.ZOOM_MAX, Math.max(MP.ZOOM_MIN, MP.appState.prZoom + delta));
     zoomInput.value = Math.round(MP.appState.prZoom * 100) + '%';
     MP.renderPianoRoll();
     if (MP.appState.playState) MP.startPlayhead();
   };
   MP.setZoom = function(val) {
-    MP.appState.prZoom = Math.min(5, Math.max(0.25, val));
+    MP.appState.prZoom = Math.min(MP.ZOOM_MAX, Math.max(MP.ZOOM_MIN, val));
     zoomInput.value = Math.round(MP.appState.prZoom * 100) + '%';
     MP.renderPianoRoll();
     if (MP.appState.playState) MP.startPlayhead();
   };
-  document.getElementById('btn-zoom-in').addEventListener('click', function() { MP.updateZoom(0.25); });
-  document.getElementById('btn-zoom-out').addEventListener('click', function() { MP.updateZoom(-0.25); });
-  document.querySelector('.pr-zoom-controls').addEventListener('wheel', function(e) { e.preventDefault(); MP.updateZoom(e.deltaY < 0 ? 0.125 : -0.125); });
+  document.getElementById('btn-zoom-in').addEventListener('click', function() { MP.updateZoom(MP.ZOOM_STEP); });
+  document.getElementById('btn-zoom-out').addEventListener('click', function() { MP.updateZoom(-MP.ZOOM_STEP); });
+  document.querySelector('.pr-zoom-controls').addEventListener('wheel', function(e) { e.preventDefault(); MP.updateZoom(e.deltaY < 0 ? MP.ZOOM_WHEEL_STEP : -MP.ZOOM_WHEEL_STEP); });
   zoomInput.addEventListener('change', function() {
     var num = parseInt(zoomInput.value);
-    if (!isNaN(num) && num >= 25 && num <= 500) MP.setZoom(num / 100);
+    if (!isNaN(num) && num >= MP.ZOOM_MIN * 100 && num <= MP.ZOOM_MAX * 100) MP.setZoom(num / 100);
     else zoomInput.value = Math.round(MP.appState.prZoom * 100) + '%';
   });
   zoomInput.addEventListener('wheel', function(e) {
     e.preventDefault();
-    MP.updateZoom(e.deltaY < 0 ? 0.125 : -0.125);
+    MP.updateZoom(e.deltaY < 0 ? MP.ZOOM_WHEEL_STEP : -MP.ZOOM_WHEEL_STEP);
   });
 
   MP.togglePrFullscreen = function() {
@@ -150,7 +150,7 @@ function setupBpmControls() {
   bpmInput.addEventListener('input', updateLed);
   function stepBpm(delta) {
     var cur = parseInt(bpmInput.value) || 120;
-    bpmInput.value = Math.min(300, Math.max(40, cur + delta));
+    bpmInput.value = Math.min(MP.BPM_MAX, Math.max(MP.BPM_MIN, cur + delta));
     bpmInput.dispatchEvent(new Event('change'));
   }
   document.getElementById('bpm-up').addEventListener('click', function() { stepBpm(1); });
@@ -189,7 +189,7 @@ function setupBpmControls() {
       for (var i = 1; i < tapTimes.length; i++) intervals.push(tapTimes[i] - tapTimes[i - 1]);
       var avgMs = intervals.reduce(function(a, b) { return a + b; }) / intervals.length;
       var bpm = Math.round(60000 / avgMs);
-      bpmInput.value = Math.min(300, Math.max(40, bpm));
+      bpmInput.value = Math.min(MP.BPM_MAX, Math.max(MP.BPM_MIN, bpm));
       bpmInput.dispatchEvent(new Event('change'));
     }
     tapBtn.classList.add('tap-flash');
@@ -212,7 +212,7 @@ function setupOutputControls() {
   document.getElementById('rtttl-save-btn').addEventListener('click', function() {
     var rtttl = document.getElementById('rtttl-output').value.trim();
     if (!rtttl) { MP.showToast('Nothing to save', true); return; }
-    var name = (MP.appState.melodyName || 'Melody').replace(/[^a-zA-Z0-9_\-]/g, '_');
+    var name = MP.sanitizeFilename(MP.appState.melodyName);
     var blob = new Blob([rtttl], { type: 'text/plain' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -224,7 +224,7 @@ function setupOutputControls() {
   document.getElementById('midi-save-btn').addEventListener('click', function() {
     var data = MP.generateMIDI();
     if (!data) { MP.showToast('Nothing to save', true); return; }
-    var name = (MP.appState.melodyName || 'Melody').replace(/[^a-zA-Z0-9_\-]/g, '_');
+    var name = MP.sanitizeFilename(MP.appState.melodyName);
     var blob = new Blob([data], { type: 'audio/midi' });
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -236,18 +236,9 @@ function setupOutputControls() {
   function parseRtttlInput() {
     var raw = document.getElementById('rtttl-output').value.trim();
     if (!raw) return;
-    var result = MP.parseRTTTL(raw);
+    var result = MP.loadRTTTL(raw);
     if (!result) { MP.showMidiInfo('Invalid RTTTL format. Expected: Name:d=4,o=5,b=120:4c,8d,e,2p', true); return; }
-    MP.pushUndo();
-    MP.appState.seq = MP.oldSeqToTimeline(result.notes);
-    MP.resetNextNoteStart();
-    MP.appState.melodyName = result.name;
-    MP.setBpm(result.bpm);
-    var wasPlaying = !!MP.appState.playState;
-    MP.stopPlayback();
-    MP.renderSequence();
     MP.showMidiInfo('Parsed "' + result.name + '" (' + MP.appState.seq.length + ' notes, ' + result.bpm + ' BPM)');
-    if (wasPlaying) MP.playSequence();
   }
   var rtttlAutoParseTimer = null;
   document.getElementById('rtttl-output').addEventListener('input', function() {
@@ -274,22 +265,16 @@ function setupMelodyPresets() {
   var searchInput = document.getElementById('melody-search');
   var dropdown = document.getElementById('preset-dropdown');
   var activeIdx = -1;
+  var loadedPresetName = null;
 
   function loadPreset(preset) {
-    var result = MP.parseRTTTL(preset.rtttl);
+    var result = MP.loadRTTTL(preset.rtttl);
     if (!result) return;
-    MP.pushUndo();
-    MP.appState.seq = MP.oldSeqToTimeline(result.notes);
-    MP.resetNextNoteStart();
-    MP.appState.melodyName = result.name;
-    MP.setBpm(result.bpm);
-    var wasPlaying = !!MP.appState.playState;
-    MP.stopPlayback();
-    MP.updateSequence();
     MP.showMidiInfo('Loaded "' + result.name + '" (' + MP.appState.seq.length + ' notes, ' + result.bpm + ' BPM)');
-    if (wasPlaying) MP.playSequence();
     searchInput.value = '';
-    searchInput.placeholder = 'Preset: ' + result.name;
+    searchInput.placeholder = result.name;
+    searchInput.parentElement.dataset.tip = result.name;
+    loadedPresetName = result.name;
     dropdown.classList.remove('open');
   }
 
@@ -320,6 +305,7 @@ function setupMelodyPresets() {
     matches.forEach(function(p, i) {
       var item = document.createElement('div');
       item.className = 'preset-item';
+      if (p.name === loadedPresetName) item.classList.add('loaded');
       item.innerHTML = highlightMatch(p.name, q);
       item.addEventListener('mousedown', function(e) {
         e.preventDefault();
@@ -376,7 +362,12 @@ function setupMelodyPresets() {
       melodies.forEach(function(m) {
         allPresets.push({ name: m.split(':')[0].trim(), rtttl: m });
       });
-      searchInput.placeholder = 'Search ' + allPresets.length + ' presets...';
+      if (MP.appState.melodyName) {
+        searchInput.placeholder = MP.appState.melodyName;
+        searchInput.parentElement.dataset.tip = MP.appState.melodyName;
+      } else {
+        searchInput.placeholder = 'Search ' + allPresets.length + ' presets...';
+      }
     });
 
   MP._addCustomPresets = function(rtttlStrings) {
@@ -395,7 +386,7 @@ function setupThemeAndSettings() {
   var themeBtn = document.getElementById('theme-toggle');
   function setTheme(dark) {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    themeBtn.textContent = dark ? '\u2600' : '\u263E';
+    themeBtn.innerHTML = dark ? '\u2600' : '<span class="moon-icon"></span>';
     localStorage.setItem(MP.LS_THEME, dark ? 'dark' : 'light');
   }
   themeBtn.addEventListener('click', function() { setTheme(document.documentElement.getAttribute('data-theme') !== 'dark'); });
@@ -417,6 +408,20 @@ function setupThemeAndSettings() {
     localStorage.setItem(MP.LS_INPUT_COLLAPSED, isOpen ? 'true' : 'false');
   });
 
+  document.getElementById('btn-import-audio').addEventListener('click', function() {
+    document.getElementById('audio-file-input').click();
+  });
+  document.getElementById('audio-file-input').addEventListener('change', function() {
+    if (this.files.length > 0) MP.importAudioFile(this.files[0]);
+    this.value = '';
+  });
+  document.getElementById('btn-mic-record').addEventListener('click', function() {
+    if (MP.appState.micRecording) MP.stopMicRecording();
+    else MP.startMicRecording();
+  });
+  document.getElementById('import-modal').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+  });
   document.getElementById('btn-midi').addEventListener('click', function() { MP.initMIDI(); });
   var savedBaud = localStorage.getItem(MP.LS_SERIAL_BAUD);
   if (savedBaud) document.getElementById('baud-select').value = savedBaud;
@@ -508,21 +513,22 @@ function setupFileHandling() {
   document.body.addEventListener('drop', function(e) {
     e.preventDefault();
     document.body.classList.remove('drag-overlay');
+    var audioExts = ['.wav', '.mp3', '.ogg', '.m4a', '.flac', '.aac'];
+    var droppedAudio = [...e.dataTransfer.files].filter(function(f) {
+      return audioExts.some(function(ext) { return f.name.toLowerCase().endsWith(ext); });
+    });
+    if (droppedAudio.length > 0) {
+      MP.importAudioFile(droppedAudio[0]);
+      return;
+    }
     var files = [...e.dataTransfer.files].filter(function(f) { return f.name.endsWith('.rtttl') || f.name.endsWith('.txt'); });
     if (files.length === 0) return;
     if (files.length === 1) {
       files[0].text().then(function(text) {
         var line = text.split('\n')[0].trim();
         if (!RTTTL_RE.test(line)) { MP.showToast('Invalid RTTTL file', true); return; }
-        var result = MP.parseRTTTL(line);
+        var result = MP.loadRTTTL(line);
         if (!result) { MP.showToast('Failed to parse RTTTL', true); return; }
-        MP.pushUndo();
-        MP.appState.seq = MP.oldSeqToTimeline(result.notes);
-        MP.resetNextNoteStart();
-        MP.appState.melodyName = result.name;
-        MP.setBpm(result.bpm);
-        MP.stopPlayback();
-        MP.updateSequence();
         MP.showToast('Loaded "' + result.name + '" (' + MP.appState.seq.length + ' notes)');
       });
     } else {
@@ -559,7 +565,12 @@ function setupAutoRestore() {
       document.querySelectorAll('.dur-btn').forEach(function(b) { b.classList.remove('active'); });
       durBtn.classList.add('active');
     }
-    if (MP.appState.melodyName) document.getElementById('melody-name').textContent = MP.appState.melodyName;
+    if (MP.appState.melodyName) {
+      document.getElementById('melody-name').textContent = MP.appState.melodyName;
+      var si = document.getElementById('melody-search');
+      si.placeholder = MP.appState.melodyName;
+      si.parentElement.dataset.tip = MP.appState.melodyName;
+    }
     document.getElementById('btn-snap').classList.toggle('active', MP.appState.snapEnabled);
     if (MP.appState.timeSig) {
       document.getElementById('time-sig').value = MP.appState.timeSig.beats + '/' + MP.appState.timeSig.value;

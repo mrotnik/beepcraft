@@ -35,16 +35,14 @@
 .durations { display: flex; gap: 8px; flex-wrap: wrap; }
 .pauses { display: flex; gap: 8px; flex-wrap: wrap; }
 .dur-btn, .pause-btn {
+  padding: 6px 12px; font-size: 0.85em;
   border: 2px solid var(--section-border); background: var(--subtle-bg);
   color: var(--muted); border-radius: 6px; cursor: pointer; font-family: monospace;
-  transition: border-color 0.1s, color 0.1s;
+  transition: border-color 0.1s, color 0.1s, background 0.1s;
 }
-.dur-btn { padding: 7px 13px; font-size: 0.9em; }
-.pause-btn { padding: 6px 12px; font-size: 0.85em; }
 .dur-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
-.dur-btn:hover { border-color: var(--muted); }
+.dur-btn:hover, .pause-btn:hover { border-color: var(--muted); color: var(--text); background: var(--section-border); }
 .dur-btn:disabled { opacity: 0.35; cursor: default; }
-.pause-btn:hover { border-color: var(--muted); color: var(--text); background: var(--section-border); }
 
 .view-tabs { display: flex; gap: 0; margin-bottom: 12px; }
 .view-tab {
@@ -58,8 +56,8 @@
 .view-tab:hover:not(.active) { background: var(--accent-bg); }
 
 .seq-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; position: relative; }
-.seq-header-left { display: flex; align-items: center; gap: 8px; }
-.seq-header-right { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+.seq-header-left { display: flex; align-items: center; gap: 8px; z-index: 1; }
+.seq-header-right { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: wrap; z-index: 1; }
 
 .controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .btn {
@@ -90,7 +88,13 @@
 .metro-indicator { font-size: 1.1em; transition: opacity 0.05s; }
 .metro-indicator.tick { opacity: 1; transform: scale(1.3); }
 .btn-record.recording { background: var(--error); color: #fff; border-color: var(--error); animation: pulse-rec 1s infinite; }
+#btn-mic-record.recording { background: var(--error); color: #fff; border-color: var(--error); animation: pulse-rec 1s infinite; }
 .btn:hover { opacity: 0.85; }
+.btn-clear:hover, .btn-record:not(.recording):hover, .btn-metronome:not(.active):hover, .btn-loop:not(.active):hover {
+  opacity: 1; border-color: var(--muted); color: var(--text); background: var(--section-border);
+}
+.theme-toggle:hover { background: var(--section-border); }
+.btn-help:hover { background: var(--section-border); }
 .btn:active:not(:disabled) { transform: scale(0.95); opacity: 0.7; }
 .btn:disabled { opacity: 0.35; cursor: default; }
 .dur-btn:active { transform: scale(0.95); opacity: 0.7; }
@@ -111,6 +115,13 @@
   display: inline-flex; align-items: center; justify-content: center; padding: 0;
 }
 .theme-toggle:hover { background: var(--section-border); }
+.moon-icon {
+  display: inline-block; width: 16px; height: 16px;
+  background: #7c3aed;
+  -webkit-mask: radial-gradient(circle 6px at 12px 7px, transparent 98%, #000 100%);
+  mask: radial-gradient(circle 6px at 12px 7px, transparent 98%, #000 100%);
+  border-radius: 50%;
+}
 
 .top-bar-group {
   display: inline-flex; align-items: center; gap: 4px;
@@ -130,8 +141,8 @@
 .baud-select, .time-sig-select, .melody-select { cursor: pointer; }
 .baud-select { width: 76px; }
 .time-sig-select { width: 56px; }
-.preset-search-wrap { position: relative; }
-.melody-search { width: 160px; text-overflow: ellipsis; }
+.preset-search-wrap { position: relative; flex: 1 1 120px; min-width: 80px; max-width: 280px; }
+.melody-search { width: 100%; text-overflow: ellipsis; box-sizing: border-box; }
 .melody-search::placeholder { color: var(--text); opacity: 1; }
 .melody-select { min-width: 140px; }
 .preset-dropdown {
@@ -149,6 +160,7 @@
 }
 .preset-item:last-child { border-bottom: none; }
 .preset-item:hover, .preset-item.active { background: var(--dropdown-hover); }
+.preset-item.loaded { color: var(--accent); font-weight: bold; }
 .preset-item .preset-match { color: var(--accent); font-weight: bold; }
 .preset-count {
   padding: 4px 10px; font-size: 0.7em; color: var(--muted);
@@ -160,7 +172,7 @@
   position: absolute; left: 50%; transform: translateX(-50%);
   font-weight: bold; font-size: 1.2em;
   color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: 40%; cursor: pointer;
+  max-width: 40%; cursor: pointer; pointer-events: auto;
 }
 .melody-name:empty { pointer-events: none; }
 .melody-name.editing {
