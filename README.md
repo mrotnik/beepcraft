@@ -2,7 +2,7 @@
 
 A browser-based melody composer for Arduino buzzers. Create melodies with a piano keyboard and piano roll editor, then export as Arduino C++ code or RTTTL notation.
 
-**[Open buzzcraft.html](buzzcraft.html)** — single file, no install, works offline.
+Open **[buzzcraft.html](buzzcraft.html)** — single file, no install, works offline.
 
 ## Features
 
@@ -40,6 +40,8 @@ Connect a passive buzzer between any GPIO pin (default: pin 5) and GND, with VCC
 ![RTTTL output](screenshots/03.png)
 
 ![Keyboard shortcuts](screenshots/04.png)
+
+![Serial Setup](screenshots/05.png)
 
 ## Development
 
