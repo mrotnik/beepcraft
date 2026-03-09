@@ -10,7 +10,7 @@ MP.undo = function() {
   MP.appState.redoStack.push(JSON.stringify({ s: MP.appState.seq, c: MP.appState.nextNoteStart }));
   const state = JSON.parse(MP.appState.undoStack.pop());
   MP.appState.seq = state.s; MP.appState.nextNoteStart = state.c;
-  MP.renderSequence(); MP.generateCode(); MP.updateUndoRedoButtons();
+  MP.updateSequence(); MP.updateUndoRedoButtons();
 };
 
 MP.redo = function() {
@@ -18,7 +18,7 @@ MP.redo = function() {
   MP.appState.undoStack.push(JSON.stringify({ s: MP.appState.seq, c: MP.appState.nextNoteStart }));
   const state = JSON.parse(MP.appState.redoStack.pop());
   MP.appState.seq = state.s; MP.appState.nextNoteStart = state.c;
-  MP.renderSequence(); MP.generateCode(); MP.updateUndoRedoButtons();
+  MP.updateSequence(); MP.updateUndoRedoButtons();
 };
 
 MP.updateUndoRedoButtons = function() {
@@ -147,7 +147,6 @@ MP.scheduleMetronomeChunk = function() {
   if (!MP.appState.metronomeOn || !MP.appState.playState) return;
   var ps = MP.appState.playState;
   var tsBeats = MP.getTimeSigBeats();
-  var totalBeats = ps.totalDur / ps.beatSec;
   var elapsed = ps.ctx.currentTime - ps.startTime;
   var currentBeat = elapsed / ps.beatSec;
   var LOOKAHEAD = 2;
@@ -155,23 +154,15 @@ MP.scheduleMetronomeChunk = function() {
   if (ps.nextMetroBeat === undefined) {
     ps.nextMetroBeat = Math.max(0, Math.ceil(currentBeat));
   }
-  while (ps.nextMetroBeat <= lookaheadBeat && ps.nextMetroBeat < totalBeats) {
+  while (ps.nextMetroBeat <= lookaheadBeat) {
     var beat = ps.nextMetroBeat;
     var absTime = ps.startTime + beat * ps.beatSec;
     if (absTime >= ps.ctx.currentTime - 0.01) {
-      playMetroTick(ps.ctx, absTime, (beat % tsBeats) === 0);
+      playMetroTick(ps.ctx, absTime, (Math.round(beat) % tsBeats) === 0);
     }
     ps.nextMetroBeat++;
   }
-  if (ps.nextMetroBeat < totalBeats) {
-    ps.metroTimer = setTimeout(MP.scheduleMetronomeChunk, 500);
-  } else if (MP.appState.loopEnabled) {
-    ps.metroTimer = setTimeout(function() {
-      if (!MP.appState.playState || !MP.appState.metronomeOn) return;
-      MP.appState.playState.nextMetroBeat = 0;
-      MP.scheduleMetronomeChunk();
-    }, Math.max(0, (totalBeats - currentBeat) * ps.beatSec * 1000));
-  }
+  ps.metroTimer = setTimeout(MP.scheduleMetronomeChunk, MP.SCHEDULE_INTERVAL);
 };
 
 MP.updateMetronomeIndicator = function(currentBeat) {
@@ -185,6 +176,12 @@ MP.updateMetronomeIndicator = function(currentBeat) {
 
 MP.resetNextNoteStart = function() { MP.appState.nextNoteStart = MP.seqEndBeat(); };
 
+MP.ensureNextNoteStart = function() {
+  MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
+};
+
+MP.updateSequence = function() { MP.renderSequence(); MP.generateCode(); };
+
 MP.setBpm = function(val) {
   var v = Math.max(10, Math.min(900, parseInt(val) || 120));
   document.getElementById('bpm').value = v;
@@ -195,11 +192,11 @@ MP.copyToClipboard = function(elementId, btn, originalHtml) {
   var el = document.getElementById(elementId);
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(el.value).then(function() {
-      btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, 1500);
+      btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, MP.COPY_FEEDBACK_MS);
     });
   } else {
     el.select(); document.execCommand('copy');
-    btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, 1500);
+    btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, MP.COPY_FEEDBACK_MS);
   }
 };
 
@@ -222,7 +219,7 @@ MP.showMidiInfo = function(msg, isError) {
   const el = document.getElementById('midi-info');
   el.textContent = msg; el.style.display = '';
   el.style.color = isError ? '#e06c75' : '';
-  setTimeout(() => el.style.display = 'none', 6000);
+  setTimeout(() => el.style.display = 'none', MP.MIDI_INFO_MS);
 };
 
 MP.showTransposeOverlay = function(direction, isOctave) {
@@ -259,18 +256,17 @@ MP.addNoteFromInput = function(note, pressStart) {
     if (gapBeats > MP.SNAP_BEATS * 0.5) {
       MP.appState.nextNoteStart = MP.seqEndBeat() + Math.max(MP.SNAP_BEATS, MP.snapBeats(gapBeats));
     } else {
-      MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
+      MP.ensureNextNoteStart();
     }
   } else {
-    MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
+    MP.ensureNextNoteStart();
   }
   MP.appState.seq.push({ name: note.name, freq: note.freq, start: MP.appState.nextNoteStart, dur: durBeats });
   MP.appState.nextNoteStart += durBeats;
   if (MP.appState.isRecording) MP.appState.lastNoteEndTime = performance.now();
   MP.appState.pressedNote = null;
   MP.appState.pressedEl = null;
-  MP.renderSequence();
-  MP.generateCode();
+  MP.updateSequence();
   MP.scrollPrToNote(note);
 };
 
@@ -310,5 +306,5 @@ MP.showToast = function(msg, isError) {
   el.textContent = msg;
   el.classList.toggle('error', !!isError);
   el.classList.add('visible');
-  MP._toastTimer = setTimeout(() => el.classList.remove('visible'), 3000);
+  MP._toastTimer = setTimeout(() => el.classList.remove('visible'), MP.TOAST_MS);
 };

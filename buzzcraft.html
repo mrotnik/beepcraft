@@ -101,10 +101,11 @@ textarea {
 .toast.error { border-color: var(--error); color: var(--error); }
 
 .app-footer {
-  display: flex; justify-content: center; gap: 16px; padding: 8px 0 4px;
+  display: flex; justify-content: center; align-items: center; gap: 16px; padding: 8px 0 4px;
   font-size: 0.75em; color: var(--muted); font-family: monospace;
 }
 .app-footer span { white-space: nowrap; }
+.app-footer a { display: inline-flex; align-items: center; gap: 4px; }
 
 body.drag-overlay::after {
   content: 'Drop .rtttl file(s) here';
@@ -890,10 +891,10 @@ kbd {
 </div>
 
 <footer class="app-footer">
-  <span>BuzzCraft v0.0.2</span>
+  <span>BuzzCraft v0.0.3</span>
   <span>by Mike Rotnik</span>
   <span>GPLv3 License</span>
-  <a href="https://github.com/mrotnik/buzzcraft" target="_blank" rel="noopener">GitHub</a>
+  <a href="https://github.com/mrotnik/buzzcraft" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> GitHub</a>
 </footer>
 
 <div class="toast" id="toast"></div>
@@ -939,6 +940,7 @@ MP.appState = {
   selectedNoteIdx: null,
   selectedNoteIdxs: new Set(),
   clipboard: [],
+  lastNoteDur: null,
   chipHighlightRAF: null,
   prZoom: 1.0,
   snapEnabled: true,
@@ -1030,6 +1032,13 @@ MP.updateNoteFromMidi = function(note, midi) {
   note.freq = MP.freqFromMidi(midi);
 };
 
+MP.COPY_FEEDBACK_MS = 1500;
+MP.TOAST_MS = 3000;
+MP.MIDI_INFO_MS = 6000;
+MP.SCHEDULE_INTERVAL = 500;
+MP.PLAYBACK_BUFFER_MS = 200;
+MP.REST_GAP_THRESHOLD = 0.03;
+
 MP.IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 MP.MOD_KEY = MP.IS_MAC ? 'Cmd' : 'Ctrl';
 MP.modKey = function(e) { return MP.IS_MAC ? e.metaKey : e.ctrlKey; };
@@ -1070,7 +1079,7 @@ MP.seqToFlat = function() {
   let cursor = 0;
   sorted.forEach(n => {
     const gap = n.start - cursor;
-    if (gap > 0.03) {
+    if (gap > MP.REST_GAP_THRESHOLD) {
       const gd = MP.durFromBeats(gap);
       flat.push({ name: 'REST', freq: 0, dur: gd.dur, dotted: gd.dotted, _beats: gap });
     }
@@ -1079,7 +1088,7 @@ MP.seqToFlat = function() {
     cursor = n.start + n.dur;
   });
   const trailing = MP.appState.nextNoteStart - cursor;
-  if (trailing > 0.03) {
+  if (trailing > MP.REST_GAP_THRESHOLD) {
     const td = MP.durFromBeats(trailing);
     flat.push({ name: 'REST', freq: 0, dur: td.dur, dotted: td.dotted, _beats: trailing });
   }
@@ -1453,7 +1462,7 @@ MP.undo = function() {
   MP.appState.redoStack.push(JSON.stringify({ s: MP.appState.seq, c: MP.appState.nextNoteStart }));
   const state = JSON.parse(MP.appState.undoStack.pop());
   MP.appState.seq = state.s; MP.appState.nextNoteStart = state.c;
-  MP.renderSequence(); MP.generateCode(); MP.updateUndoRedoButtons();
+  MP.updateSequence(); MP.updateUndoRedoButtons();
 };
 
 MP.redo = function() {
@@ -1461,7 +1470,7 @@ MP.redo = function() {
   MP.appState.undoStack.push(JSON.stringify({ s: MP.appState.seq, c: MP.appState.nextNoteStart }));
   const state = JSON.parse(MP.appState.redoStack.pop());
   MP.appState.seq = state.s; MP.appState.nextNoteStart = state.c;
-  MP.renderSequence(); MP.generateCode(); MP.updateUndoRedoButtons();
+  MP.updateSequence(); MP.updateUndoRedoButtons();
 };
 
 MP.updateUndoRedoButtons = function() {
@@ -1590,7 +1599,6 @@ MP.scheduleMetronomeChunk = function() {
   if (!MP.appState.metronomeOn || !MP.appState.playState) return;
   var ps = MP.appState.playState;
   var tsBeats = MP.getTimeSigBeats();
-  var totalBeats = ps.totalDur / ps.beatSec;
   var elapsed = ps.ctx.currentTime - ps.startTime;
   var currentBeat = elapsed / ps.beatSec;
   var LOOKAHEAD = 2;
@@ -1598,23 +1606,15 @@ MP.scheduleMetronomeChunk = function() {
   if (ps.nextMetroBeat === undefined) {
     ps.nextMetroBeat = Math.max(0, Math.ceil(currentBeat));
   }
-  while (ps.nextMetroBeat <= lookaheadBeat && ps.nextMetroBeat < totalBeats) {
+  while (ps.nextMetroBeat <= lookaheadBeat) {
     var beat = ps.nextMetroBeat;
     var absTime = ps.startTime + beat * ps.beatSec;
     if (absTime >= ps.ctx.currentTime - 0.01) {
-      playMetroTick(ps.ctx, absTime, (beat % tsBeats) === 0);
+      playMetroTick(ps.ctx, absTime, (Math.round(beat) % tsBeats) === 0);
     }
     ps.nextMetroBeat++;
   }
-  if (ps.nextMetroBeat < totalBeats) {
-    ps.metroTimer = setTimeout(MP.scheduleMetronomeChunk, 500);
-  } else if (MP.appState.loopEnabled) {
-    ps.metroTimer = setTimeout(function() {
-      if (!MP.appState.playState || !MP.appState.metronomeOn) return;
-      MP.appState.playState.nextMetroBeat = 0;
-      MP.scheduleMetronomeChunk();
-    }, Math.max(0, (totalBeats - currentBeat) * ps.beatSec * 1000));
-  }
+  ps.metroTimer = setTimeout(MP.scheduleMetronomeChunk, MP.SCHEDULE_INTERVAL);
 };
 
 MP.updateMetronomeIndicator = function(currentBeat) {
@@ -1628,6 +1628,12 @@ MP.updateMetronomeIndicator = function(currentBeat) {
 
 MP.resetNextNoteStart = function() { MP.appState.nextNoteStart = MP.seqEndBeat(); };
 
+MP.ensureNextNoteStart = function() {
+  MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
+};
+
+MP.updateSequence = function() { MP.renderSequence(); MP.generateCode(); };
+
 MP.setBpm = function(val) {
   var v = Math.max(10, Math.min(900, parseInt(val) || 120));
   document.getElementById('bpm').value = v;
@@ -1638,11 +1644,11 @@ MP.copyToClipboard = function(elementId, btn, originalHtml) {
   var el = document.getElementById(elementId);
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(el.value).then(function() {
-      btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, 1500);
+      btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, MP.COPY_FEEDBACK_MS);
     });
   } else {
     el.select(); document.execCommand('copy');
-    btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, 1500);
+    btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, MP.COPY_FEEDBACK_MS);
   }
 };
 
@@ -1665,7 +1671,7 @@ MP.showMidiInfo = function(msg, isError) {
   const el = document.getElementById('midi-info');
   el.textContent = msg; el.style.display = '';
   el.style.color = isError ? '#e06c75' : '';
-  setTimeout(() => el.style.display = 'none', 6000);
+  setTimeout(() => el.style.display = 'none', MP.MIDI_INFO_MS);
 };
 
 MP.showTransposeOverlay = function(direction, isOctave) {
@@ -1702,18 +1708,17 @@ MP.addNoteFromInput = function(note, pressStart) {
     if (gapBeats > MP.SNAP_BEATS * 0.5) {
       MP.appState.nextNoteStart = MP.seqEndBeat() + Math.max(MP.SNAP_BEATS, MP.snapBeats(gapBeats));
     } else {
-      MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
+      MP.ensureNextNoteStart();
     }
   } else {
-    MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
+    MP.ensureNextNoteStart();
   }
   MP.appState.seq.push({ name: note.name, freq: note.freq, start: MP.appState.nextNoteStart, dur: durBeats });
   MP.appState.nextNoteStart += durBeats;
   if (MP.appState.isRecording) MP.appState.lastNoteEndTime = performance.now();
   MP.appState.pressedNote = null;
   MP.appState.pressedEl = null;
-  MP.renderSequence();
-  MP.generateCode();
+  MP.updateSequence();
   MP.scrollPrToNote(note);
 };
 
@@ -1753,7 +1758,7 @@ MP.showToast = function(msg, isError) {
   el.textContent = msg;
   el.classList.toggle('error', !!isError);
   el.classList.add('visible');
-  MP._toastTimer = setTimeout(() => el.classList.remove('visible'), 3000);
+  MP._toastTimer = setTimeout(() => el.classList.remove('visible'), MP.TOAST_MS);
 };
 
 MP.dancingCat = (function() {
@@ -2146,7 +2151,7 @@ MP.playSequence = function(fromBeat) {
   }
 
   const offsetSec = startBeat * beatSec;
-  MP.appState.playState = { ctx, scheduleTimer: null, idx: startIdx, startTime: ctx.currentTime - offsetSec, beatSec, totalDur, sorted };
+  MP.appState.playState = { ctx, scheduleTimer: null, idx: startIdx, startTime: ctx.currentTime - offsetSec, beatSec, totalDur, sorted, loopOffset: 0 };
   scheduleChunk();
 
   if (MP.appState.metronomeOn) {
@@ -2157,7 +2162,7 @@ MP.playSequence = function(fromBeat) {
   }
 
   if (!MP.appState.loopEnabled) {
-    MP.appState.playTimeout = setTimeout(MP.stopPlayback, (totalDur - offsetSec) * 1000 + 200);
+    MP.appState.playTimeout = setTimeout(MP.stopPlayback, (totalDur - offsetSec) * 1000 + MP.PLAYBACK_BUFFER_MS);
   }
 
   if (MP.appState.currentView === 'roll') MP.startPlayhead();
@@ -2166,15 +2171,16 @@ MP.playSequence = function(fromBeat) {
 
 function scheduleChunk() {
   if (!MP.appState.playState) return;
-  const { ctx, startTime, beatSec, sorted } = MP.appState.playState;
+  var ps = MP.appState.playState;
+  const { ctx, startTime, beatSec, sorted } = ps;
   const LOOKAHEAD = 2;
   const now = ctx.currentTime - startTime;
 
-  while (MP.appState.playState.idx < sorted.length) {
-    const n = sorted[MP.appState.playState.idx];
-    const noteStart = n.start * beatSec;
+  while (ps.idx < sorted.length) {
+    const n = sorted[ps.idx];
+    const noteStart = ps.loopOffset + n.start * beatSec;
     if (noteStart > now + LOOKAHEAD) break;
-    MP.appState.playState.idx++;
+    ps.idx++;
     const noteDur = n.dur * beatSec;
     const absStart = Math.max(ctx.currentTime, startTime + noteStart);
     const absEnd = startTime + noteStart + noteDur;
@@ -2194,21 +2200,12 @@ function scheduleChunk() {
     }
   }
 
-  if (MP.appState.playState.idx < sorted.length) {
-    MP.appState.playState.scheduleTimer = setTimeout(scheduleChunk, 500);
+  if (ps.idx < sorted.length) {
+    ps.scheduleTimer = setTimeout(scheduleChunk, MP.SCHEDULE_INTERVAL);
   } else if (MP.appState.loopEnabled) {
-    const loopDelay = MP.appState.playState.totalDur * 1000 - (ctx.currentTime - startTime) * 1000 + 100;
-    MP.appState.playState.scheduleTimer = setTimeout(() => {
-      if (!MP.appState.playState) return;
-      MP.appState.playState.idx = 0;
-      MP.appState.playState.startTime = MP.appState.playState.ctx.currentTime;
-      if (MP.appState.currentView === 'roll') MP.startPlayhead();
-      if (MP.appState.metronomeOn) {
-        MP.appState.playState.nextMetroBeat = 0;
-        MP.scheduleMetronomeChunk();
-      }
-      scheduleChunk();
-    }, Math.max(0, loopDelay));
+    ps.loopOffset += ps.totalDur;
+    ps.idx = 0;
+    ps.scheduleTimer = setTimeout(scheduleChunk, MP.PLAYBACK_BUFFER_MS);
   }
 }
 
@@ -2280,7 +2277,7 @@ MP.startPlayhead = function() {
     if (MP.appState.playState.totalDur <= 0) { MP.stopPlayhead(); return; }
     var currentBeat = elapsed / MP.appState.playState.beatSec;
     var totalBeats = MP.appState.playState.totalDur / MP.appState.playState.beatSec;
-    if (MP.appState.loopEnabled && totalBeats > 0) currentBeat = currentBeat % totalBeats;
+    if (MP.appState.loopEnabled && totalBeats > 0) currentBeat = ((currentBeat % totalBeats) + totalBeats) % totalBeats;
     const px = currentBeat * beatW;
     line.style.left = (MP.PR_LABEL_W + px) + 'px';
     MP.updateMetronomeIndicator(currentBeat);
@@ -2321,7 +2318,7 @@ MP.startChipHighlight = function() {
     if (!MP.appState.playState) { MP.stopChipHighlight(); return; }
     const elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
     let beat = elapsed / MP.appState.playState.beatSec;
-    if (MP.appState.loopEnabled && totalBeats > 0) beat = beat % totalBeats;
+    if (MP.appState.loopEnabled && totalBeats > 0) beat = ((beat % totalBeats) + totalBeats) % totalBeats;
     let idx = 0;
     for (let i = cumBeats.length - 1; i >= 0; i--) {
       if (beat >= cumBeats[i]) { idx = i; break; }
@@ -2465,8 +2462,7 @@ MP.transposeSemitones = function(shift) {
     MP.updateKeyBindingLabels();
     MP.scrollKbToOctave();
   }
-  MP.renderSequence();
-  MP.generateCode();
+  MP.updateSequence();
   MP.showTransposeOverlay(shift > 0 ? 'up' : 'down');
 };
 
@@ -2484,8 +2480,7 @@ MP.transposeSequence = function(octaveShift) {
     n.name = match[1] + newOct;
     n.freq = MP.freqFromMidi(MP.midiFromName(n.name));
   });
-  MP.renderSequence();
-  MP.generateCode();
+  MP.updateSequence();
   MP.showTransposeOverlay(octaveShift > 0 ? 'up' : 'down', true);
 };
 
@@ -2553,7 +2548,7 @@ function setupComputerKeyboard() {
       MP.appState.selectedNoteIdxs.clear();
       MP.appState.selectedNoteIdx = null;
       MP.resetNextNoteStart();
-      MP.renderSequence(); MP.generateCode();
+      MP.updateSequence();
       MP.showToast('Cut ' + selected.length + ' note' + (selected.length !== 1 ? 's' : ''));
       return;
     }
@@ -2569,8 +2564,8 @@ function setupComputerKeyboard() {
         newIdxs.add(idx);
       });
       MP.appState.selectedNoteIdxs = newIdxs;
-      MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
-      MP.renderSequence(); MP.generateCode();
+      MP.ensureNextNoteStart();
+      MP.updateSequence();
       MP.showToast('Pasted ' + MP.appState.clipboard.length + ' note' + (MP.appState.clipboard.length !== 1 ? 's' : ''));
       return;
     }
@@ -2606,7 +2601,7 @@ function setupComputerKeyboard() {
       MP.appState.seq.pop();
       MP.resetNextNoteStart();
       MP.appState.selectedNoteIdx = null;
-      MP.renderSequence(); MP.generateCode();
+      MP.updateSequence();
       return;
     }
     if (e.key === 'Delete') {
@@ -2620,14 +2615,14 @@ function setupComputerKeyboard() {
       MP.appState.selectedNoteIdx = null;
       MP.appState.selectedNoteIdxs.clear();
       MP.resetNextNoteStart();
-      MP.renderSequence(); MP.generateCode();
+      MP.updateSequence();
       return;
     }
 
     const key = e.key.toLowerCase() === "'" ? "'" : e.key.toLowerCase();
     if (key === 'z' && !MP.modKey(e)) { MP.transposeSequence(-1); if (MP.appState.kbOctave > 0) { MP.appState.kbOctave--; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); } return; }
     if (key === 'x' && !MP.modKey(e)) { MP.transposeSequence(1); if (MP.appState.kbOctave < 8) { MP.appState.kbOctave++; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); } return; }
-    if (key === 'c' && !MP.modKey(e)) { MP.pushUndo(); MP.appState.seq = []; MP.appState.nextNoteStart = 0; MP.stopPlayback(); MP.renderSequence(); MP.generateCode(); return; }
+    if (key === 'c' && !MP.modKey(e)) { MP.pushUndo(); MP.appState.seq = []; MP.appState.nextNoteStart = 0; MP.stopPlayback(); MP.updateSequence(); return; }
 
     const mapping = MP.KEY_MAP[key];
     if (!mapping) return;
@@ -2654,6 +2649,15 @@ function setupComputerKeyboard() {
     MP.appState.kbPressedKey = null;
     MP.appState.kbPressedNote = null;
     MP.appState.kbPressedEl = null;
+  });
+}
+
+function startDrag(onMove, onUp) {
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', function handler(e) {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', handler);
+    onUp(e);
   });
 }
 
@@ -2821,9 +2825,10 @@ function setupPrResize(resizeHandle, n, i, beatW, noteBlocks) {
   resizeHandle.addEventListener('mousedown', function(e) {
     e.stopPropagation(); e.preventDefault();
     var startX = e.clientX;
-    var minDur = MP.FINE_SNAP_BEATS;
-    var step = MP.SNAP_BEATS;
-    var snap = function(b) { return Math.max(minDur, Math.round(b / step) * step || minDur); };
+    var snap = function(b) {
+      var step = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
+      return Math.max(step, Math.round(b / step) * step);
+    };
     var batchIdxs = MP.appState.selectedNoteIdxs.has(i) && MP.appState.selectedNoteIdxs.size > 1
       ? [...MP.appState.selectedNoteIdxs] : [i];
     var origDurs = {};
@@ -2837,7 +2842,6 @@ function setupPrResize(resizeHandle, n, i, beatW, noteBlocks) {
       });
     };
     var onUp = function(e3) {
-      document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
       var delta = (e3.clientX - startX) / beatW;
       var changed = false;
       batchIdxs.forEach(function(idx) {
@@ -2845,13 +2849,16 @@ function setupPrResize(resizeHandle, n, i, beatW, noteBlocks) {
       });
       if (!changed) return;
       MP.pushUndo();
+      var newDur;
       batchIdxs.forEach(function(idx) {
-        MP.appState.seq[idx].dur = snap(origDurs[idx] + delta);
+        newDur = snap(origDurs[idx] + delta);
+        MP.appState.seq[idx].dur = newDur;
       });
-      MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
-      MP.renderSequence(); MP.generateCode();
+      MP.appState.lastNoteDur = newDur;
+      MP.ensureNextNoteStart();
+      MP.updateSequence();
     };
-    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+    startDrag(onMove, onUp);
   });
 }
 
@@ -2868,6 +2875,7 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
     MP.appState.selectedNoteIdxs.add(i);
     block.classList.add('selected');
     MP.appState.selectedNoteIdx = i;
+    MP.appState.lastNoteDur = n.dur;
 
     var isClone = e.shiftKey;
     var dragMode = null, startX, startY;
@@ -2918,7 +2926,6 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
         });
       };
       var onUp = function() {
-        document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
         ghostBlocks.forEach(function(g) { g.ghost.remove(); });
         if (dragMode === 'free') {
           var diffs = [];
@@ -2952,12 +2959,12 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
                 if (d.newStart !== undefined) MP.appState.seq[d.idx].start = d.newStart;
               });
             }
-            MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
-            MP.renderSequence(); MP.generateCode();
+            MP.ensureNextNoteStart();
+            MP.updateSequence();
           }
         }
       };
-      document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+      startDrag(onMove, onUp);
       return;
     }
 
@@ -2993,7 +3000,6 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
       target._newStart = newStart;
     };
     var onUp = function() {
-      document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
       MP.stopNotePreview(notePreview);
       var clonedMidi = ghostBlock ? ghostBlock._previewMidi : undefined;
       var clonedStart = ghostBlock ? ghostBlock._newStart : undefined;
@@ -3017,13 +3023,13 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
               MP.appState.seq[i].start = finalStart;
             }
           }
-          MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
-          MP.renderSequence(); MP.generateCode();
+          MP.ensureNextNoteStart();
+          MP.updateSequence();
         }
         delete block._previewMidi; delete block._newStart;
       }
     };
-    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+    startDrag(onMove, onUp);
   });
 }
 
@@ -3056,7 +3062,7 @@ function buildPrNoteBlocks(inner, minMidi, maxMidi, beatW, noteBlocks) {
     setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, noteBlocks);
 
     block.addEventListener('contextmenu', function(e) {
-      e.preventDefault(); MP.pushUndo(); MP.appState.seq.splice(i, 1); MP.resetNextNoteStart(); MP.renderSequence(); MP.generateCode();
+      e.preventDefault(); MP.pushUndo(); MP.appState.seq.splice(i, 1); MP.resetNextNoteStart(); MP.updateSequence();
     });
     inner.appendChild(block);
   });
@@ -3074,27 +3080,35 @@ function buildPrEdgeHandle(inner, gridH, totalW, beatW) {
     e.preventDefault(); e.stopPropagation();
     var startX = e.clientX;
     var origEnd = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
-    var minEnd = Math.max(MP.SNAP_BEATS, MP.seqEndBeat());
+    var minEnd = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
+    var lastEnd = origEnd;
     var onMove = function(e2) {
       var dx = e2.clientX - startX;
-      var newEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
-      var newW = newEnd * beatW;
+      lastEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
+      var newW = lastEnd * beatW;
       inner.style.width = (MP.PR_LABEL_W + newW) + 'px';
       edgeHandle.style.left = (MP.PR_LABEL_W + newW - 3) + 'px';
     };
-    var onUp = function(e3) {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      var dx = e3.clientX - startX;
-      var newEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
-      if (newEnd !== origEnd) {
+    var onUp = function() {
+      if (Math.abs(lastEnd - origEnd) > 0.001) {
         MP.pushUndo();
+        var newEnd = lastEnd;
+        for (var j = MP.appState.seq.length - 1; j >= 0; j--) {
+          var s = MP.appState.seq[j];
+          if (s.start >= newEnd) {
+            MP.appState.seq.splice(j, 1);
+          } else if (s.start + s.dur > newEnd) {
+            s.dur = newEnd - s.start;
+          }
+        }
         MP.appState.nextNoteStart = newEnd;
-        MP.renderSequence(); MP.generateCode();
+        MP.updateSequence();
+      } else {
+        inner.style.width = (MP.PR_LABEL_W + origEnd * beatW) + 'px';
+        edgeHandle.style.left = (MP.PR_LABEL_W + origEnd * beatW - 3) + 'px';
       }
     };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    startDrag(onMove, onUp);
   });
 }
 
@@ -3152,21 +3166,20 @@ function buildPrEmptySpace(inner, minMidi, maxMidi, totalW, beatW, noteBlocks) {
       });
     };
     var onUp = function() {
-      document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
       if (selRect) { selRect.remove(); selRect = null; }
       if (!emptySpaceDragged) {
         MP.stopNotePreview(emptySpacePreview); emptySpacePreview = null;
         if (emptySpaceMidi !== null) {
-          var lastDur = MP.appState.seq.length > 0 ? MP.appState.seq[MP.appState.seq.length - 1].dur : 1;
+          var placeDur = MP.appState.lastNoteDur || (MP.appState.seq.length > 0 ? MP.appState.seq[MP.appState.seq.length - 1].dur : 1);
           MP.pushUndo();
-          MP.appState.seq.push({ name: MP.nameFromMidi(emptySpaceMidi), freq: MP.freqFromMidi(emptySpaceMidi), start: clickBeat, dur: lastDur });
-          MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
-          MP.renderSequence(); MP.generateCode();
+          MP.appState.seq.push({ name: MP.nameFromMidi(emptySpaceMidi), freq: MP.freqFromMidi(emptySpaceMidi), start: clickBeat, dur: placeDur });
+          MP.ensureNextNoteStart();
+          MP.updateSequence();
         }
       }
       emptySpaceMidi = null;
     };
-    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+    startDrag(onMove, onUp);
   });
 }
 
@@ -3182,7 +3195,9 @@ MP.renderPianoRoll = function() {
   var beatW = MP.PR_BEAT_W * MP.appState.prZoom;
   var pitchCount = maxMidi - minMidi + 1;
   var gridH = pitchCount * MP.PR_ROW_H;
-  var totalBeats = Math.max(1, Math.ceil(Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart)));
+  var snapStep = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
+  var rawBeats = Math.max(snapStep, Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart));
+  var totalBeats = Math.ceil(rawBeats / snapStep) * snapStep;
   var totalW = totalBeats * beatW;
   var tsBeats = MP.getTimeSigBeats();
 
@@ -3244,7 +3259,7 @@ MP.renderChips = function() {
       chip.querySelector('.remove').addEventListener('click', () => {
         MP.pushUndo(); MP.appState.seq.splice(origIdx, 1);
         MP.resetNextNoteStart();
-        MP.renderSequence(); MP.generateCode();
+        MP.updateSequence();
       });
     } else {
       buildChipContent(chip, n.name, durLabel);
@@ -3255,7 +3270,7 @@ MP.renderChips = function() {
         currentFlat.splice(restFlatIdx, 1);
         MP.appState.seq = MP.rebuildSeqFromFlat(currentFlat);
         MP.resetNextNoteStart();
-        MP.renderSequence(); MP.generateCode();
+        MP.updateSequence();
       });
     }
 
@@ -3287,7 +3302,7 @@ MP.renderChips = function() {
       flat.splice(toIdx, 0, item);
       MP.appState.seq = MP.rebuildSeqFromFlat(flat);
       MP.resetNextNoteStart();
-      MP.renderSequence(); MP.generateCode();
+      MP.updateSequence();
     });
     el.appendChild(chip);
   });
@@ -3479,8 +3494,9 @@ function setupDurationControls() {
   document.querySelectorAll('.pause-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
       MP.pushUndo();
-      MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat()) + MP.beatsFromDur(parseInt(btn.dataset.dur));
-      MP.renderSequence(); MP.generateCode();
+      MP.ensureNextNoteStart();
+      MP.appState.nextNoteStart += MP.beatsFromDur(parseInt(btn.dataset.dur));
+      MP.updateSequence();
     });
   });
 }
@@ -3492,7 +3508,7 @@ function setupPlaybackControls() {
   document.getElementById('btn-clear').addEventListener('click', function() {
     MP.pushUndo(); MP.appState.seq = []; MP.appState.nextNoteStart = 0;
     MP.appState.melodyName = null;
-    MP.stopPlayback(); MP.renderSequence(); MP.generateCode();
+    MP.stopPlayback(); MP.updateSequence();
   });
   document.getElementById('btn-loop').addEventListener('click', function() {
     MP.appState.loopEnabled = !MP.appState.loopEnabled;
@@ -3748,7 +3764,7 @@ function setupMelodyPresets() {
     MP.setBpm(result.bpm);
     var wasPlaying = !!MP.appState.playState;
     MP.stopPlayback();
-    MP.renderSequence(); MP.generateCode();
+    MP.updateSequence();
     MP.showMidiInfo('Loaded "' + result.name + '" (' + MP.appState.seq.length + ' notes, ' + result.bpm + ' BPM)');
     if (wasPlaying) MP.playSequence();
     searchInput.value = '';
@@ -3984,7 +4000,7 @@ function setupFileHandling() {
         MP.appState.melodyName = result.name;
         MP.setBpm(result.bpm);
         MP.stopPlayback();
-        MP.renderSequence(); MP.generateCode();
+        MP.updateSequence();
         MP.showToast('Loaded "' + result.name + '" (' + MP.appState.seq.length + ' notes)');
       });
     } else {
@@ -4026,8 +4042,7 @@ function setupAutoRestore() {
     if (MP.appState.timeSig) {
       document.getElementById('time-sig').value = MP.appState.timeSig.beats + '/' + MP.appState.timeSig.value;
     }
-    MP.renderSequence();
-    MP.generateCode();
+    MP.updateSequence();
   }
 
   if (MP.appState.currentView === 'roll') {

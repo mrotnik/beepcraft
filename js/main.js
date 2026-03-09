@@ -15,8 +15,9 @@ function setupDurationControls() {
   document.querySelectorAll('.pause-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
       MP.pushUndo();
-      MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat()) + MP.beatsFromDur(parseInt(btn.dataset.dur));
-      MP.renderSequence(); MP.generateCode();
+      MP.ensureNextNoteStart();
+      MP.appState.nextNoteStart += MP.beatsFromDur(parseInt(btn.dataset.dur));
+      MP.updateSequence();
     });
   });
 }
@@ -28,7 +29,7 @@ function setupPlaybackControls() {
   document.getElementById('btn-clear').addEventListener('click', function() {
     MP.pushUndo(); MP.appState.seq = []; MP.appState.nextNoteStart = 0;
     MP.appState.melodyName = null;
-    MP.stopPlayback(); MP.renderSequence(); MP.generateCode();
+    MP.stopPlayback(); MP.updateSequence();
   });
   document.getElementById('btn-loop').addEventListener('click', function() {
     MP.appState.loopEnabled = !MP.appState.loopEnabled;
@@ -284,7 +285,7 @@ function setupMelodyPresets() {
     MP.setBpm(result.bpm);
     var wasPlaying = !!MP.appState.playState;
     MP.stopPlayback();
-    MP.renderSequence(); MP.generateCode();
+    MP.updateSequence();
     MP.showMidiInfo('Loaded "' + result.name + '" (' + MP.appState.seq.length + ' notes, ' + result.bpm + ' BPM)');
     if (wasPlaying) MP.playSequence();
     searchInput.value = '';
@@ -521,7 +522,7 @@ function setupFileHandling() {
         MP.appState.melodyName = result.name;
         MP.setBpm(result.bpm);
         MP.stopPlayback();
-        MP.renderSequence(); MP.generateCode();
+        MP.updateSequence();
         MP.showToast('Loaded "' + result.name + '" (' + MP.appState.seq.length + ' notes)');
       });
     } else {
@@ -563,8 +564,7 @@ function setupAutoRestore() {
     if (MP.appState.timeSig) {
       document.getElementById('time-sig').value = MP.appState.timeSig.beats + '/' + MP.appState.timeSig.value;
     }
-    MP.renderSequence();
-    MP.generateCode();
+    MP.updateSequence();
   }
 
   if (MP.appState.currentView === 'roll') {

@@ -36,6 +36,7 @@ MP.appState = {
   selectedNoteIdx: null,
   selectedNoteIdxs: new Set(),
   clipboard: [],
+  lastNoteDur: null,
   chipHighlightRAF: null,
   prZoom: 1.0,
   snapEnabled: true,

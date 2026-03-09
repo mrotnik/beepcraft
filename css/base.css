@@ -94,10 +94,11 @@ textarea {
 .toast.error { border-color: var(--error); color: var(--error); }
 
 .app-footer {
-  display: flex; justify-content: center; gap: 16px; padding: 8px 0 4px;
+  display: flex; justify-content: center; align-items: center; gap: 16px; padding: 8px 0 4px;
   font-size: 0.75em; color: var(--muted); font-family: monospace;
 }
 .app-footer span { white-space: nowrap; }
+.app-footer a { display: inline-flex; align-items: center; gap: 4px; }
 
 body.drag-overlay::after {
   content: 'Drop .rtttl file(s) here';

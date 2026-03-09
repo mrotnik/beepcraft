@@ -20,7 +20,7 @@ MP.playSequence = function(fromBeat) {
   }
 
   const offsetSec = startBeat * beatSec;
-  MP.appState.playState = { ctx, scheduleTimer: null, idx: startIdx, startTime: ctx.currentTime - offsetSec, beatSec, totalDur, sorted };
+  MP.appState.playState = { ctx, scheduleTimer: null, idx: startIdx, startTime: ctx.currentTime - offsetSec, beatSec, totalDur, sorted, loopOffset: 0 };
   scheduleChunk();
 
   if (MP.appState.metronomeOn) {
@@ -31,7 +31,7 @@ MP.playSequence = function(fromBeat) {
   }
 
   if (!MP.appState.loopEnabled) {
-    MP.appState.playTimeout = setTimeout(MP.stopPlayback, (totalDur - offsetSec) * 1000 + 200);
+    MP.appState.playTimeout = setTimeout(MP.stopPlayback, (totalDur - offsetSec) * 1000 + MP.PLAYBACK_BUFFER_MS);
   }
 
   if (MP.appState.currentView === 'roll') MP.startPlayhead();
@@ -40,15 +40,16 @@ MP.playSequence = function(fromBeat) {
 
 function scheduleChunk() {
   if (!MP.appState.playState) return;
-  const { ctx, startTime, beatSec, sorted } = MP.appState.playState;
+  var ps = MP.appState.playState;
+  const { ctx, startTime, beatSec, sorted } = ps;
   const LOOKAHEAD = 2;
   const now = ctx.currentTime - startTime;
 
-  while (MP.appState.playState.idx < sorted.length) {
-    const n = sorted[MP.appState.playState.idx];
-    const noteStart = n.start * beatSec;
+  while (ps.idx < sorted.length) {
+    const n = sorted[ps.idx];
+    const noteStart = ps.loopOffset + n.start * beatSec;
     if (noteStart > now + LOOKAHEAD) break;
-    MP.appState.playState.idx++;
+    ps.idx++;
     const noteDur = n.dur * beatSec;
     const absStart = Math.max(ctx.currentTime, startTime + noteStart);
     const absEnd = startTime + noteStart + noteDur;
@@ -68,21 +69,12 @@ function scheduleChunk() {
     }
   }
 
-  if (MP.appState.playState.idx < sorted.length) {
-    MP.appState.playState.scheduleTimer = setTimeout(scheduleChunk, 500);
+  if (ps.idx < sorted.length) {
+    ps.scheduleTimer = setTimeout(scheduleChunk, MP.SCHEDULE_INTERVAL);
   } else if (MP.appState.loopEnabled) {
-    const loopDelay = MP.appState.playState.totalDur * 1000 - (ctx.currentTime - startTime) * 1000 + 100;
-    MP.appState.playState.scheduleTimer = setTimeout(() => {
-      if (!MP.appState.playState) return;
-      MP.appState.playState.idx = 0;
-      MP.appState.playState.startTime = MP.appState.playState.ctx.currentTime;
-      if (MP.appState.currentView === 'roll') MP.startPlayhead();
-      if (MP.appState.metronomeOn) {
-        MP.appState.playState.nextMetroBeat = 0;
-        MP.scheduleMetronomeChunk();
-      }
-      scheduleChunk();
-    }, Math.max(0, loopDelay));
+    ps.loopOffset += ps.totalDur;
+    ps.idx = 0;
+    ps.scheduleTimer = setTimeout(scheduleChunk, MP.PLAYBACK_BUFFER_MS);
   }
 }
 
@@ -154,7 +146,7 @@ MP.startPlayhead = function() {
     if (MP.appState.playState.totalDur <= 0) { MP.stopPlayhead(); return; }
     var currentBeat = elapsed / MP.appState.playState.beatSec;
     var totalBeats = MP.appState.playState.totalDur / MP.appState.playState.beatSec;
-    if (MP.appState.loopEnabled && totalBeats > 0) currentBeat = currentBeat % totalBeats;
+    if (MP.appState.loopEnabled && totalBeats > 0) currentBeat = ((currentBeat % totalBeats) + totalBeats) % totalBeats;
     const px = currentBeat * beatW;
     line.style.left = (MP.PR_LABEL_W + px) + 'px';
     MP.updateMetronomeIndicator(currentBeat);
@@ -195,7 +187,7 @@ MP.startChipHighlight = function() {
     if (!MP.appState.playState) { MP.stopChipHighlight(); return; }
     const elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
     let beat = elapsed / MP.appState.playState.beatSec;
-    if (MP.appState.loopEnabled && totalBeats > 0) beat = beat % totalBeats;
+    if (MP.appState.loopEnabled && totalBeats > 0) beat = ((beat % totalBeats) + totalBeats) % totalBeats;
     let idx = 0;
     for (let i = cumBeats.length - 1; i >= 0; i--) {
       if (beat >= cumBeats[i]) { idx = i; break; }

@@ -81,6 +81,13 @@ MP.updateNoteFromMidi = function(note, midi) {
   note.freq = MP.freqFromMidi(midi);
 };
 
+MP.COPY_FEEDBACK_MS = 1500;
+MP.TOAST_MS = 3000;
+MP.MIDI_INFO_MS = 6000;
+MP.SCHEDULE_INTERVAL = 500;
+MP.PLAYBACK_BUFFER_MS = 200;
+MP.REST_GAP_THRESHOLD = 0.03;
+
 MP.IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 MP.MOD_KEY = MP.IS_MAC ? 'Cmd' : 'Ctrl';
 MP.modKey = function(e) { return MP.IS_MAC ? e.metaKey : e.ctrlKey; };

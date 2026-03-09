@@ -1,3 +1,12 @@
+function startDrag(onMove, onUp) {
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', function handler(e) {
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', handler);
+    onUp(e);
+  });
+}
+
 function calcPrRange(seq, containerH) {
   var minMidi, maxMidi;
   if (seq.length === 0) {
@@ -162,9 +171,10 @@ function setupPrResize(resizeHandle, n, i, beatW, noteBlocks) {
   resizeHandle.addEventListener('mousedown', function(e) {
     e.stopPropagation(); e.preventDefault();
     var startX = e.clientX;
-    var minDur = MP.FINE_SNAP_BEATS;
-    var step = MP.SNAP_BEATS;
-    var snap = function(b) { return Math.max(minDur, Math.round(b / step) * step || minDur); };
+    var snap = function(b) {
+      var step = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
+      return Math.max(step, Math.round(b / step) * step);
+    };
     var batchIdxs = MP.appState.selectedNoteIdxs.has(i) && MP.appState.selectedNoteIdxs.size > 1
       ? [...MP.appState.selectedNoteIdxs] : [i];
     var origDurs = {};
@@ -178,7 +188,6 @@ function setupPrResize(resizeHandle, n, i, beatW, noteBlocks) {
       });
     };
     var onUp = function(e3) {
-      document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
       var delta = (e3.clientX - startX) / beatW;
       var changed = false;
       batchIdxs.forEach(function(idx) {
@@ -186,13 +195,16 @@ function setupPrResize(resizeHandle, n, i, beatW, noteBlocks) {
       });
       if (!changed) return;
       MP.pushUndo();
+      var newDur;
       batchIdxs.forEach(function(idx) {
-        MP.appState.seq[idx].dur = snap(origDurs[idx] + delta);
+        newDur = snap(origDurs[idx] + delta);
+        MP.appState.seq[idx].dur = newDur;
       });
-      MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
-      MP.renderSequence(); MP.generateCode();
+      MP.appState.lastNoteDur = newDur;
+      MP.ensureNextNoteStart();
+      MP.updateSequence();
     };
-    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+    startDrag(onMove, onUp);
   });
 }
 
@@ -209,6 +221,7 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
     MP.appState.selectedNoteIdxs.add(i);
     block.classList.add('selected');
     MP.appState.selectedNoteIdx = i;
+    MP.appState.lastNoteDur = n.dur;
 
     var isClone = e.shiftKey;
     var dragMode = null, startX, startY;
@@ -259,7 +272,6 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
         });
       };
       var onUp = function() {
-        document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
         ghostBlocks.forEach(function(g) { g.ghost.remove(); });
         if (dragMode === 'free') {
           var diffs = [];
@@ -293,12 +305,12 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
                 if (d.newStart !== undefined) MP.appState.seq[d.idx].start = d.newStart;
               });
             }
-            MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
-            MP.renderSequence(); MP.generateCode();
+            MP.ensureNextNoteStart();
+            MP.updateSequence();
           }
         }
       };
-      document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+      startDrag(onMove, onUp);
       return;
     }
 
@@ -334,7 +346,6 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
       target._newStart = newStart;
     };
     var onUp = function() {
-      document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
       MP.stopNotePreview(notePreview);
       var clonedMidi = ghostBlock ? ghostBlock._previewMidi : undefined;
       var clonedStart = ghostBlock ? ghostBlock._newStart : undefined;
@@ -358,13 +369,13 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
               MP.appState.seq[i].start = finalStart;
             }
           }
-          MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
-          MP.renderSequence(); MP.generateCode();
+          MP.ensureNextNoteStart();
+          MP.updateSequence();
         }
         delete block._previewMidi; delete block._newStart;
       }
     };
-    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+    startDrag(onMove, onUp);
   });
 }
 
@@ -397,7 +408,7 @@ function buildPrNoteBlocks(inner, minMidi, maxMidi, beatW, noteBlocks) {
     setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, noteBlocks);
 
     block.addEventListener('contextmenu', function(e) {
-      e.preventDefault(); MP.pushUndo(); MP.appState.seq.splice(i, 1); MP.resetNextNoteStart(); MP.renderSequence(); MP.generateCode();
+      e.preventDefault(); MP.pushUndo(); MP.appState.seq.splice(i, 1); MP.resetNextNoteStart(); MP.updateSequence();
     });
     inner.appendChild(block);
   });
@@ -415,27 +426,35 @@ function buildPrEdgeHandle(inner, gridH, totalW, beatW) {
     e.preventDefault(); e.stopPropagation();
     var startX = e.clientX;
     var origEnd = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
-    var minEnd = Math.max(MP.SNAP_BEATS, MP.seqEndBeat());
+    var minEnd = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
+    var lastEnd = origEnd;
     var onMove = function(e2) {
       var dx = e2.clientX - startX;
-      var newEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
-      var newW = newEnd * beatW;
+      lastEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
+      var newW = lastEnd * beatW;
       inner.style.width = (MP.PR_LABEL_W + newW) + 'px';
       edgeHandle.style.left = (MP.PR_LABEL_W + newW - 3) + 'px';
     };
-    var onUp = function(e3) {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      var dx = e3.clientX - startX;
-      var newEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
-      if (newEnd !== origEnd) {
+    var onUp = function() {
+      if (Math.abs(lastEnd - origEnd) > 0.001) {
         MP.pushUndo();
+        var newEnd = lastEnd;
+        for (var j = MP.appState.seq.length - 1; j >= 0; j--) {
+          var s = MP.appState.seq[j];
+          if (s.start >= newEnd) {
+            MP.appState.seq.splice(j, 1);
+          } else if (s.start + s.dur > newEnd) {
+            s.dur = newEnd - s.start;
+          }
+        }
         MP.appState.nextNoteStart = newEnd;
-        MP.renderSequence(); MP.generateCode();
+        MP.updateSequence();
+      } else {
+        inner.style.width = (MP.PR_LABEL_W + origEnd * beatW) + 'px';
+        edgeHandle.style.left = (MP.PR_LABEL_W + origEnd * beatW - 3) + 'px';
       }
     };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
+    startDrag(onMove, onUp);
   });
 }
 
@@ -493,21 +512,20 @@ function buildPrEmptySpace(inner, minMidi, maxMidi, totalW, beatW, noteBlocks) {
       });
     };
     var onUp = function() {
-      document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp);
       if (selRect) { selRect.remove(); selRect = null; }
       if (!emptySpaceDragged) {
         MP.stopNotePreview(emptySpacePreview); emptySpacePreview = null;
         if (emptySpaceMidi !== null) {
-          var lastDur = MP.appState.seq.length > 0 ? MP.appState.seq[MP.appState.seq.length - 1].dur : 1;
+          var placeDur = MP.appState.lastNoteDur || (MP.appState.seq.length > 0 ? MP.appState.seq[MP.appState.seq.length - 1].dur : 1);
           MP.pushUndo();
-          MP.appState.seq.push({ name: MP.nameFromMidi(emptySpaceMidi), freq: MP.freqFromMidi(emptySpaceMidi), start: clickBeat, dur: lastDur });
-          MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
-          MP.renderSequence(); MP.generateCode();
+          MP.appState.seq.push({ name: MP.nameFromMidi(emptySpaceMidi), freq: MP.freqFromMidi(emptySpaceMidi), start: clickBeat, dur: placeDur });
+          MP.ensureNextNoteStart();
+          MP.updateSequence();
         }
       }
       emptySpaceMidi = null;
     };
-    document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp);
+    startDrag(onMove, onUp);
   });
 }
 
@@ -523,7 +541,9 @@ MP.renderPianoRoll = function() {
   var beatW = MP.PR_BEAT_W * MP.appState.prZoom;
   var pitchCount = maxMidi - minMidi + 1;
   var gridH = pitchCount * MP.PR_ROW_H;
-  var totalBeats = Math.max(1, Math.ceil(Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart)));
+  var snapStep = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
+  var rawBeats = Math.max(snapStep, Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart));
+  var totalBeats = Math.ceil(rawBeats / snapStep) * snapStep;
   var totalW = totalBeats * beatW;
   var tsBeats = MP.getTimeSigBeats();
 

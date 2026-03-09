@@ -34,7 +34,7 @@ MP.seqToFlat = function() {
   let cursor = 0;
   sorted.forEach(n => {
     const gap = n.start - cursor;
-    if (gap > 0.03) {
+    if (gap > MP.REST_GAP_THRESHOLD) {
       const gd = MP.durFromBeats(gap);
       flat.push({ name: 'REST', freq: 0, dur: gd.dur, dotted: gd.dotted, _beats: gap });
     }
@@ -43,7 +43,7 @@ MP.seqToFlat = function() {
     cursor = n.start + n.dur;
   });
   const trailing = MP.appState.nextNoteStart - cursor;
-  if (trailing > 0.03) {
+  if (trailing > MP.REST_GAP_THRESHOLD) {
     const td = MP.durFromBeats(trailing);
     flat.push({ name: 'REST', freq: 0, dur: td.dur, dotted: td.dotted, _beats: trailing });
   }

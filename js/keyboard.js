@@ -104,8 +104,7 @@ MP.transposeSemitones = function(shift) {
     MP.updateKeyBindingLabels();
     MP.scrollKbToOctave();
   }
-  MP.renderSequence();
-  MP.generateCode();
+  MP.updateSequence();
   MP.showTransposeOverlay(shift > 0 ? 'up' : 'down');
 };
 
@@ -123,8 +122,7 @@ MP.transposeSequence = function(octaveShift) {
     n.name = match[1] + newOct;
     n.freq = MP.freqFromMidi(MP.midiFromName(n.name));
   });
-  MP.renderSequence();
-  MP.generateCode();
+  MP.updateSequence();
   MP.showTransposeOverlay(octaveShift > 0 ? 'up' : 'down', true);
 };
 
@@ -192,7 +190,7 @@ function setupComputerKeyboard() {
       MP.appState.selectedNoteIdxs.clear();
       MP.appState.selectedNoteIdx = null;
       MP.resetNextNoteStart();
-      MP.renderSequence(); MP.generateCode();
+      MP.updateSequence();
       MP.showToast('Cut ' + selected.length + ' note' + (selected.length !== 1 ? 's' : ''));
       return;
     }
@@ -208,8 +206,8 @@ function setupComputerKeyboard() {
         newIdxs.add(idx);
       });
       MP.appState.selectedNoteIdxs = newIdxs;
-      MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
-      MP.renderSequence(); MP.generateCode();
+      MP.ensureNextNoteStart();
+      MP.updateSequence();
       MP.showToast('Pasted ' + MP.appState.clipboard.length + ' note' + (MP.appState.clipboard.length !== 1 ? 's' : ''));
       return;
     }
@@ -245,7 +243,7 @@ function setupComputerKeyboard() {
       MP.appState.seq.pop();
       MP.resetNextNoteStart();
       MP.appState.selectedNoteIdx = null;
-      MP.renderSequence(); MP.generateCode();
+      MP.updateSequence();
       return;
     }
     if (e.key === 'Delete') {
@@ -259,14 +257,14 @@ function setupComputerKeyboard() {
       MP.appState.selectedNoteIdx = null;
       MP.appState.selectedNoteIdxs.clear();
       MP.resetNextNoteStart();
-      MP.renderSequence(); MP.generateCode();
+      MP.updateSequence();
       return;
     }
 
     const key = e.key.toLowerCase() === "'" ? "'" : e.key.toLowerCase();
     if (key === 'z' && !MP.modKey(e)) { MP.transposeSequence(-1); if (MP.appState.kbOctave > 0) { MP.appState.kbOctave--; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); } return; }
     if (key === 'x' && !MP.modKey(e)) { MP.transposeSequence(1); if (MP.appState.kbOctave < 8) { MP.appState.kbOctave++; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); } return; }
-    if (key === 'c' && !MP.modKey(e)) { MP.pushUndo(); MP.appState.seq = []; MP.appState.nextNoteStart = 0; MP.stopPlayback(); MP.renderSequence(); MP.generateCode(); return; }
+    if (key === 'c' && !MP.modKey(e)) { MP.pushUndo(); MP.appState.seq = []; MP.appState.nextNoteStart = 0; MP.stopPlayback(); MP.updateSequence(); return; }
 
     const mapping = MP.KEY_MAP[key];
     if (!mapping) return;
