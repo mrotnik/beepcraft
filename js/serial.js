@@ -19,7 +19,7 @@ MP.initSerial = async function() {
     MP._serialWriter = port.writable.getWriter();
     var btn = document.getElementById('btn-serial');
     btn.classList.add('active');
-    btn.textContent = 'Disconnect';
+    btn.innerHTML = '&#9889;<span class="btn-text">Disconnect</span>';
     localStorage.setItem(MP.LS_SERIAL_BAUD, baud);
     MP.showToast('Serial connected at ' + baud + ' baud');
   } catch (err) {
@@ -40,7 +40,7 @@ MP.disconnectSerial = async function() {
   MP._serialPort = null;
   var btn = document.getElementById('btn-serial');
   btn.classList.remove('active');
-  btn.textContent = 'Connect';
+  btn.innerHTML = '&#9889;<span class="btn-text">Connect</span>';
   MP.showToast('Serial disconnected');
 };
 

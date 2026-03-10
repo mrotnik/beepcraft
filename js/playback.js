@@ -2,7 +2,7 @@ MP.playSequence = function(fromBeat) {
   if (MP.appState.seq.length === 0) return;
   MP._internalStop();
   var playBtn = document.getElementById('btn-play');
-  playBtn.innerHTML = '&#9632; Stop';
+  playBtn.innerHTML = '&#9632;<span class="btn-text">Stop</span>';
   playBtn.classList.remove('btn-play');
   playBtn.classList.add('btn-stop');
   MP.dancingCat.start();
@@ -88,7 +88,7 @@ MP._internalStop = function() {
     MP.appState.playState = null;
   }
   var playBtn = document.getElementById('btn-play');
-  playBtn.innerHTML = '&#9654; Play';
+  playBtn.innerHTML = '&#9654;<span class="btn-text">Play</span>';
   playBtn.classList.remove('btn-stop');
   playBtn.classList.add('btn-play');
   MP.dancingCat.stop();

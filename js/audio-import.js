@@ -363,7 +363,7 @@ MP.startMicRecording = function() {
 
     var btn = document.getElementById('btn-mic-record');
     btn.classList.add('recording');
-    btn.innerHTML = '&#9632; Stop Mic';
+    btn.innerHTML = '&#9632;<span class="btn-text">Stop Mic</span>';
     document.getElementById('btn-play').disabled = true;
     document.getElementById('btn-metronome').disabled = true;
     document.getElementById('btn-record').disabled = true;
@@ -390,7 +390,7 @@ MP.stopMicRecording = function() {
 
   var btn = document.getElementById('btn-mic-record');
   btn.classList.remove('recording');
-  btn.innerHTML = '&#127908; Mic';
+  btn.innerHTML = '&#127908;<span class="btn-text">Mic</span>';
   btn.blur();
   document.getElementById('btn-play').disabled = false;
   document.getElementById('btn-metronome').disabled = false;

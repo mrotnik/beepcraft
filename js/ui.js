@@ -96,10 +96,8 @@ MP.startMetronome = function() {
   MP.appState.metronomeOn = true;
   MP.appState.metronomeBeat = 0;
   var btn = document.getElementById('btn-metronome');
-  var indicator = document.getElementById('metro-indicator');
   btn.classList.add('active');
-  btn.innerHTML = '&#9201; Stop Met.';
-  indicator.style.display = '';
+  btn.innerHTML = '<span class="metro-indicator" id="metro-indicator"></span><span class="btn-text">Stop Met.</span>';
   if (MP.appState.playState) {
     MP.scheduleMetronomeChunk();
   } else {
@@ -112,10 +110,8 @@ MP.stopMetronome = function() {
   clearTimeout(MP.appState.metronomeTimer);
   MP.appState.metronomeTimer = null;
   var btn = document.getElementById('btn-metronome');
-  var indicator = document.getElementById('metro-indicator');
   btn.classList.remove('active');
-  btn.innerHTML = '&#9201; Metronome';
-  indicator.style.display = 'none';
+  btn.innerHTML = '&#9201;<span class="btn-text">Metronome</span>';
 };
 
 function playMetroTick(ctx, absTime, isDownbeat) {
@@ -193,6 +189,19 @@ MP.ensureNextNoteStart = function() {
 
 MP.updateSequence = function() { MP.renderSequence(); MP.generateCode(); };
 
+MP.clearAll = function() {
+  MP.pushUndo(); MP.appState.seq = [];
+  var tsBeats = MP.getTimeSigBeats();
+  MP.appState.nextNoteStart = tsBeats * 4;
+  MP.appState.melodyName = null;
+  MP.appState.prZoom = 1.0;
+  document.getElementById('pr-zoom-input').value = '100%';
+  MP.appState.kbOctave = 4;
+  MP.updateKeyBindingLabels();
+  MP.scrollKbToOctave();
+  MP.stopPlayback(); MP.updateSequence();
+};
+
 MP.refreshPianoRoll = function() {
   MP.renderPianoRoll();
   if (MP.appState.playState) MP.startPlayhead();
@@ -252,15 +261,13 @@ MP.copyToClipboard = function(elementId, btn, originalHtml) {
 MP.toggleRecording = function() {
   MP.appState.isRecording = !MP.appState.isRecording;
   const btn = document.getElementById('btn-record');
-  const indicator = document.getElementById('rec-indicator');
   if (MP.appState.isRecording) {
-    btn.classList.add('recording'); btn.innerHTML = '&#9679; Stop Rec';
-    indicator.style.display = ''; MP.appState.lastNoteEndTime = 0;
+    btn.classList.add('recording'); btn.innerHTML = '&#9679;<span class="btn-text">Stop Rec</span>';
+    MP.appState.lastNoteEndTime = 0;
     document.getElementById('btn-mic-record').disabled = true;
     if (!MP.appState.metronomeOn) MP.startMetronome();
   } else {
-    btn.classList.remove('recording'); btn.innerHTML = '&#9679; Record';
-    indicator.style.display = 'none';
+    btn.classList.remove('recording'); btn.innerHTML = '&#9679;<span class="btn-text">Record</span>';
     document.getElementById('btn-mic-record').disabled = false;
     if (MP.appState.metronomeOn) MP.stopMetronome();
   }

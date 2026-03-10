@@ -1,11 +1,76 @@
+function setupCompaction(el, maxLevel, skipEls) {
+  var currentLevel = 0;
+  var adjusting = false;
+  var rafId = 0;
+
+  function isWrapping() {
+    var minTop = Infinity, maxBottom = 0, tallest = 0;
+    for (var i = 0; i < el.children.length; i++) {
+      var child = el.children[i];
+      if (skipEls && skipEls.indexOf(child) >= 0) continue;
+      var r = child.getBoundingClientRect();
+      if (r.height === 0) continue;
+      if (r.top < minTop) minTop = r.top;
+      if (r.bottom > maxBottom) maxBottom = r.bottom;
+      if (r.height > tallest) tallest = r.height;
+    }
+    return (maxBottom - minTop) > tallest + 4;
+  }
+
+  function setLevel(level) {
+    for (var i = 1; i <= maxLevel; i++) {
+      el.classList.toggle('compact-' + i, level >= i);
+    }
+    currentLevel = level;
+  }
+
+  function adjust() {
+    if (adjusting) return;
+    adjusting = true;
+    while (currentLevel > 0) {
+      setLevel(currentLevel - 1);
+      if (isWrapping()) { setLevel(currentLevel + 1); break; }
+    }
+    while (isWrapping() && currentLevel < maxLevel) {
+      setLevel(currentLevel + 1);
+    }
+    adjusting = false;
+  }
+
+  new ResizeObserver(function() {
+    if (rafId) return;
+    rafId = requestAnimationFrame(function() { rafId = 0; adjust(); });
+  }).observe(el);
+
+  adjust();
+}
+
+function setupToolbarCompaction() {
+  var topBar = document.getElementById('top-bar');
+  var pinned = topBar.querySelector('.top-bar-pinned');
+  setupCompaction(topBar, 3, [pinned]);
+
+  var settingsBar = document.querySelector('.input-settings-bar');
+  setupCompaction(settingsBar, 4);
+
+  var seqHeader = document.querySelector('.seq-header');
+  setupCompaction(seqHeader, 3);
+}
+
+function setupModalDismiss(modalId, closeId) {
+  var m = document.getElementById(modalId);
+  if (closeId) document.getElementById(closeId).addEventListener('click', function() { m.style.display = 'none'; });
+  m.addEventListener('click', function(e) { if (e.target === m) m.style.display = 'none'; });
+}
+
 function setupDurationControls() {
   document.getElementById('auto-mode').addEventListener('change', function(e) {
     var manual = !e.target.checked;
     document.querySelectorAll('.dur-btn').forEach(function(b) { b.disabled = !manual; });
-    document.getElementById('hold-hint').style.display = manual ? 'none' : '';
+    document.getElementById('hold-hint').textContent = manual ? 'Hold piano keys to set duration' : 'Hold key longer = longer note';
   });
-  document.querySelectorAll('.dur-btn').forEach(function(b) { b.disabled = true; });
   document.querySelectorAll('.dur-btn').forEach(function(btn) {
+    btn.disabled = true;
     btn.addEventListener('click', function() {
       document.querySelectorAll('.dur-btn').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
@@ -14,10 +79,17 @@ function setupDurationControls() {
   });
   document.querySelectorAll('.pause-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
+      var flat = MP.seqToFlat();
+      var hadTrailingRest = flat.length > 0 && flat[flat.length - 1].freq === 0;
       MP.pushUndo();
       MP.ensureNextNoteStart();
       MP.appState.nextNoteStart += MP.beatsFromDur(parseInt(btn.dataset.dur));
       MP.updateSequence();
+      if (hadTrailingRest) {
+        var chips = document.querySelectorAll('#sequence .note-chip.rest');
+        var last = chips[chips.length - 1];
+        if (last) { last.classList.add('flash'); setTimeout(function() { last.classList.remove('flash'); }, 400); }
+      }
     });
   });
 }
@@ -26,11 +98,7 @@ function setupPlaybackControls() {
   document.getElementById('btn-play').addEventListener('click', function() {
     if (MP.appState.playState) MP.stopPlayback(); else MP.playSequence();
   });
-  document.getElementById('btn-clear').addEventListener('click', function() {
-    MP.pushUndo(); MP.appState.seq = []; MP.appState.nextNoteStart = 0;
-    MP.appState.melodyName = null;
-    MP.stopPlayback(); MP.updateSequence();
-  });
+  document.getElementById('btn-clear').addEventListener('click', MP.clearAll);
   document.getElementById('btn-loop').addEventListener('click', function() {
     MP.appState.loopEnabled = !MP.appState.loopEnabled;
     document.getElementById('btn-loop').classList.toggle('active', MP.appState.loopEnabled);
@@ -134,6 +202,7 @@ function setupPianoRollControls() {
   document.getElementById('btn-snap').addEventListener('click', function() {
     MP.appState.snapEnabled = !MP.appState.snapEnabled;
     document.getElementById('btn-snap').classList.toggle('active', MP.appState.snapEnabled);
+    if (MP.appState.currentView === 'roll') MP.refreshPianoRoll();
   });
   document.getElementById('btn-pr-fullscreen').addEventListener('click', MP.togglePrFullscreen);
 }
@@ -165,14 +234,12 @@ function setupBpmControls() {
   bpmInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') bpmInput.blur();
   });
-  ledDisplay.addEventListener('wheel', function(e) {
+  function onBpmWheel(e) {
     e.preventDefault();
     stepBpm((e.shiftKey ? 10 : 1) * (e.deltaY < 0 ? 1 : -1));
-  });
-  bpmInput.addEventListener('wheel', function(e) {
-    e.preventDefault();
-    stepBpm((e.shiftKey ? 10 : 1) * (e.deltaY < 0 ? 1 : -1));
-  });
+  }
+  ledDisplay.addEventListener('wheel', onBpmWheel);
+  bpmInput.addEventListener('wheel', onBpmWheel);
 
   var tapBtn = document.getElementById('btn-tap-tempo');
   var tapTimes = [];
@@ -196,8 +263,7 @@ function setupBpmControls() {
 function setupOutputControls() {
   var hotkeyModal = document.getElementById('hotkey-modal');
   document.getElementById('btn-help').addEventListener('click', function() { hotkeyModal.style.display = hotkeyModal.style.display === 'none' ? '' : 'none'; });
-  document.getElementById('hotkey-modal-close').addEventListener('click', function() { hotkeyModal.style.display = 'none'; });
-  hotkeyModal.addEventListener('click', function(e) { if (e.target === hotkeyModal) hotkeyModal.style.display = 'none'; });
+  setupModalDismiss('hotkey-modal', 'hotkey-modal-close');
 
   document.getElementById('copy-btn').addEventListener('click', function() {
     MP.copyToClipboard('output', this, '&#128203; Copy to clipboard');
@@ -272,6 +338,7 @@ function setupMelodyPresets() {
     searchInput.parentElement.dataset.tip = result.name;
     loadedPresetName = result.name;
     dropdown.classList.remove('open');
+    searchInput.blur();
   }
 
   function highlightMatch(text, query) {
@@ -293,10 +360,9 @@ function setupMelodyPresets() {
       dropdown.classList.add('open');
       return;
     }
-    var total = allPresets.filter(function(p) { return !q || p.name.toLowerCase().includes(q); }).length;
     var countEl = document.createElement('div');
     countEl.className = 'preset-count';
-    countEl.textContent = q ? (total + ' match' + (total !== 1 ? 'es' : '')) : (total + ' presets — type to filter');
+    countEl.textContent = q ? (matches.length + ' match' + (matches.length !== 1 ? 'es' : '')) : (matches.length + ' presets — type to filter');
     dropdown.appendChild(countEl);
     matches.forEach(function(p, i) {
       var item = document.createElement('div');
@@ -390,22 +456,6 @@ function setupTheme() {
   else if (window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme(true);
 }
 
-function setupCollapsibleSettings() {
-  var toggleBtn = document.getElementById('input-settings-toggle');
-  var toggleContent = document.getElementById('input-settings-content');
-  var savedCollapsed = localStorage.getItem(MP.LS_INPUT_COLLAPSED);
-  if (savedCollapsed === 'true') {
-    toggleContent.style.display = 'none';
-    toggleBtn.classList.remove('open');
-  }
-  toggleBtn.addEventListener('click', function() {
-    var isOpen = toggleContent.style.display !== 'none';
-    toggleContent.style.display = isOpen ? 'none' : '';
-    toggleBtn.classList.toggle('open', !isOpen);
-    localStorage.setItem(MP.LS_INPUT_COLLAPSED, isOpen ? 'true' : 'false');
-  });
-}
-
 function setupAudioImport() {
   document.getElementById('btn-import-audio').addEventListener('click', function() {
     document.getElementById('audio-file-input').click();
@@ -418,9 +468,7 @@ function setupAudioImport() {
     if (MP.appState.micRecording) MP.stopMicRecording();
     else MP.startMicRecording();
   });
-  document.getElementById('import-modal').addEventListener('click', function(e) {
-    if (e.target === this) this.style.display = 'none';
-  });
+  setupModalDismiss('import-modal');
 }
 
 function setupSerialAndMidi() {
@@ -440,12 +488,7 @@ function setupSerialAndMidi() {
     document.getElementById('serial-sketch').value = MP.getSerialSketch();
     serialSetupModal.style.display = '';
   });
-  document.getElementById('serial-setup-close').addEventListener('click', function() {
-    serialSetupModal.style.display = 'none';
-  });
-  serialSetupModal.addEventListener('click', function(e) {
-    if (e.target === serialSetupModal) serialSetupModal.style.display = 'none';
-  });
+  setupModalDismiss('serial-setup-modal', 'serial-setup-close');
   document.getElementById('serial-sketch-copy').addEventListener('click', function() {
     MP.copyToClipboard('serial-sketch', this, '&#128203; Copy sketch');
   });
@@ -503,7 +546,7 @@ function setupFileHandling() {
 
   document.body.addEventListener('dragover', function(e) {
     e.preventDefault();
-    document.body.classList.add('drag-overlay');
+    if (e.dataTransfer.types.indexOf('Files') !== -1) document.body.classList.add('drag-overlay');
   });
   document.body.addEventListener('dragleave', function(e) {
     if (e.relatedTarget === null || !document.body.contains(e.relatedTarget)) {
@@ -513,6 +556,14 @@ function setupFileHandling() {
   document.body.addEventListener('drop', function(e) {
     e.preventDefault();
     document.body.classList.remove('drag-overlay');
+    var droppedMidi = [...e.dataTransfer.files].filter(function(f) {
+      var n = f.name.toLowerCase();
+      return n.endsWith('.mid') || n.endsWith('.midi');
+    });
+    if (droppedMidi.length > 0) {
+      MP.importMidiFile(droppedMidi[0]);
+      return;
+    }
     var audioExts = ['.wav', '.mp3', '.ogg', '.m4a', '.flac', '.aac'];
     var droppedAudio = [...e.dataTransfer.files].filter(function(f) {
       return audioExts.some(function(ext) { return f.name.toLowerCase().endsWith(ext); });
@@ -569,6 +620,9 @@ function setupAutoRestore() {
       document.getElementById('time-sig').value = MP.appState.timeSig.beats + '/' + MP.appState.timeSig.value;
     }
     MP.updateSequence();
+  } else {
+    MP.appState.nextNoteStart = MP.getTimeSigBeats() * 4;
+    MP.updateSequence();
   }
 
   if (MP.appState.currentView === 'roll') {
@@ -600,6 +654,22 @@ document.addEventListener('DOMContentLoaded', function() {
     el.textContent = el.textContent.replace(/Mod\+/g, MP.MOD_KEY + '+');
   });
   document.getElementById('app-version').textContent = 'BuzzCraft ' + MP.VERSION;
+  ['top-bar', 'input-settings-bar'].forEach(function(cls) {
+    var el = document.querySelector('.' + cls);
+    if (el) el.addEventListener('mousedown', function(e) {
+      if (e.target.tagName === 'INPUT' && e.target.type === 'text') return;
+      if (e.target.tagName === 'INPUT' && e.target.type === 'number') return;
+      if (e.target.tagName === 'SELECT') return;
+      if (e.target.tagName === 'INPUT' && e.target.type === 'checkbox') {
+        setTimeout(function() { e.target.blur(); }, 0);
+        return;
+      }
+      e.preventDefault();
+    });
+  });
+  document.querySelectorAll('input[type="text"], input[type="number"]').forEach(function(inp) {
+    inp.addEventListener('keydown', function(e) { if (e.key === 'Enter') inp.blur(); });
+  });
   MP.initKeyboard();
   MP.dancingCat.init();
   setupDurationControls();
@@ -609,9 +679,9 @@ document.addEventListener('DOMContentLoaded', function() {
   setupOutputControls();
   setupMelodyPresets();
   setupTheme();
-  setupCollapsibleSettings();
   setupAudioImport();
   setupSerialAndMidi();
   setupFileHandling();
   setupAutoRestore();
+  setupToolbarCompaction();
 });

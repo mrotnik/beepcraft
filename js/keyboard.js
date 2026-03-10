@@ -274,7 +274,7 @@ function setupComputerKeyboard() {
     const key = e.key.toLowerCase() === "'" ? "'" : e.key.toLowerCase();
     if (key === 'z' && !MP.modKey(e)) { MP.transposeAndShiftOctave(-1); return; }
     if (key === 'x' && !MP.modKey(e)) { MP.transposeAndShiftOctave(1); return; }
-    if (key === 'c' && !MP.modKey(e)) { MP.pushUndo(); MP.appState.seq = []; MP.appState.nextNoteStart = 0; MP.stopPlayback(); MP.updateSequence(); return; }
+    if (key === 'c' && !MP.modKey(e)) { MP.clearAll(); return; }
 
     const mapping = MP.KEY_MAP[key];
     if (!mapping) return;

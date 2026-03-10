@@ -18,6 +18,10 @@ MP.createOscGain = function(ctx) {
 };
 
 MP.playNotePreview = function(freq) {
+  if (MP._serialWriter) {
+    MP.sendSerialNote(freq, 300);
+    return { serial: true };
+  }
   const ctx = MP.getAudioCtx();
   const og = MP.createOscGain(ctx);
   const osc = og.osc, gain = og.gain;
@@ -30,11 +34,16 @@ MP.playNotePreview = function(freq) {
 
 MP.stopNotePreview = function(preview) {
   if (!preview) return;
+  if (preview.serial) { MP.sendSerialNote(0, 0); return; }
   preview.gain.gain.exponentialRampToValueAtTime(MP.AUDIO_RELEASE_MIN, preview.ctx.currentTime + MP.AUDIO_RELEASE);
   preview.osc.stop(preview.ctx.currentTime + MP.AUDIO_RELEASE);
 };
 
 MP.startNoteInput = function(freq) {
+  if (MP._serialWriter) {
+    MP.sendSerialNote(freq, 300);
+    return;
+  }
   var ctx = MP.getAudioCtx();
   var og = MP.createOscGain(ctx);
   MP.appState.currentOsc = og.osc;
@@ -46,6 +55,7 @@ MP.startNoteInput = function(freq) {
 };
 
 MP.stopNoteInput = function() {
+  if (MP._serialWriter) { MP.sendSerialNote(0, 0); return; }
   if (!MP.appState.currentGain || !MP.appState.currentOsc) return;
   var ctx = MP.getAudioCtx();
   MP.appState.currentGain.gain.exponentialRampToValueAtTime(MP.AUDIO_RELEASE_MIN, ctx.currentTime + MP.AUDIO_RELEASE);

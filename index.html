@@ -25,7 +25,7 @@
   </select>
   <input type="file" id="rtttl-dir-input" webkitdirectory multiple style="display:none">
   <input type="file" id="rtttl-file-input" multiple accept=".rtttl,.txt" style="display:none">
-  <button class="btn btn-clear btn-sm tip-down" id="btn-load-rtttls" data-tip="Load .rtttl or .txt files (click for files, Shift+click for folder)">Load RTTLs</button>
+  <button class="btn btn-clear btn-sm tip-down" id="btn-load-rtttls" data-tip="Load .rtttl or .txt files (click for files, Shift+click for folder)"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h3.879a1.5 1.5 0 0 1 1.06.44l1.122 1.12A1.5 1.5 0 0 0 9.62 4H13.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z"/></svg><span class="btn-text">Load</span></button>
   <span class="tip-down" data-tip="Time signature (beats per measure) — affects grid lines and metronome accent"><select class="time-sig-select" id="time-sig">
     <option value="4/4" selected>4/4</option>
     <option value="3/4">3/4</option>
@@ -34,17 +34,15 @@
     <option value="5/4">5/4</option>
     <option value="7/8">7/8</option>
   </select></span>
-  <span class="top-bar-bpm tip-down" data-tip="Beats per minute — click to edit, scroll to adjust"><span class="bpm-label">BPM</span><span class="bpm-wrap"><span class="led-display" id="led-display">100</span><input type="number" class="bpm-input" id="bpm" value="100" min="40" max="300"><span class="bpm-arrows"><button class="bpm-arrow" id="bpm-up">&#9650;</button><button class="bpm-arrow" id="bpm-down">&#9660;</button></span></span> <button class="btn btn-clear btn-sm tip-down" id="btn-tap-tempo" data-tip="Tap repeatedly to set BPM">Tap</button></span>
-  <button class="btn btn-play btn-sm tip-down" id="btn-play" data-tip="Play / Stop (Space)">&#9654; Play</button>
-  <button class="btn btn-loop btn-sm tip-down active" id="btn-loop" data-tip="Loop playback">&#8635; Loop</button>
-  <button class="btn btn-record btn-sm tip-down" id="btn-record" data-tip="Record mode — auto-detect gaps between notes">&#9679; Record</button>
-  <button class="btn btn-metronome btn-sm tip-down" id="btn-metronome" data-tip="Metronome — audible beat click (M)">&#9201; Metronome</button>
-  <span class="rec-indicator" id="rec-indicator" style="display:none">REC</span>
-  <span class="metro-indicator" id="metro-indicator" style="display:none">&#9201;</span>
+  <span class="top-bar-bpm tip-down" data-tip="Beats per minute — click to edit, scroll to adjust"><span class="bpm-wrap"><span class="led-display" id="led-display">100</span><input type="number" class="bpm-input" id="bpm" value="100" min="40" max="300"><span class="bpm-arrows"><button class="bpm-arrow" id="bpm-up">&#9650;</button><button class="bpm-arrow" id="bpm-down">&#9660;</button></span></span> <button class="btn btn-clear btn-sm tip-down" id="btn-tap-tempo" data-tip="Tap repeatedly to set BPM">Tap</button></span>
+  <button class="btn btn-play btn-sm tip-down" id="btn-play" data-tip="Play / Stop (Space)">&#9654;<span class="btn-text">Play</span></button>
+  <button class="btn btn-loop btn-sm tip-down active" id="btn-loop" data-tip="Loop playback">&#8635;<span class="btn-text">Loop</span></button>
+  <button class="btn btn-record btn-sm tip-down" id="btn-record" data-tip="Record mode — auto-detect gaps between notes">&#9679;<span class="btn-text">Record</span></button>
+  <button class="btn btn-metronome btn-sm tip-down" id="btn-metronome" data-tip="Metronome — audible beat click (M)">&#9201;<span class="btn-text">Metronome</span></button>
   <input type="file" id="audio-file-input" accept=".wav,.mp3,.ogg,.m4a,audio/*" style="display:none">
-  <button class="btn btn-clear btn-sm tip-down" id="btn-import-audio" data-tip="Import audio file (WAV/MP3) — detects monophonic melody pitches">&#128266; Import</button>
-  <button class="btn btn-clear btn-sm tip-down" id="btn-mic-record" data-tip="Record from microphone — detects melody pitches">&#127908; Mic</button>
-  <button class="btn btn-clear btn-sm tip-down" id="btn-midi" data-tip="Connect MIDI keyboard">&#127929; MIDI</button>
+  <button class="btn btn-clear btn-sm tip-down" id="btn-import-audio" data-tip="Import audio file (WAV/MP3) — detects monophonic melody pitches">&#128266;<span class="btn-text">Import</span></button>
+  <button class="btn btn-clear btn-sm tip-down" id="btn-mic-record" data-tip="Record from microphone — detects melody pitches">&#127908;<span class="btn-text">Mic</span></button>
+  <button class="btn btn-clear btn-sm tip-down" id="btn-midi" data-tip="Connect MIDI keyboard">&#127929;<span class="btn-text">MIDI</span></button>
   <span class="top-bar-group" id="serial-group">
     <span class="top-bar-group-label"><span style="font-size:1.3em">&#12336;</span> Serial</span>
     <span class="tip-down" data-tip="Buzzer GPIO pin number on your board"><input type="text" class="pin-input" id="buzzer-pin" value="5" maxlength="3"></span>
@@ -58,49 +56,40 @@
       <option value="460800">460800</option>
       <option value="921600">921600</option>
     </select></span>
-    <button class="btn btn-clear btn-sm tip-down" id="btn-serial" data-tip="Connect to serial port (Chromium only)">Connect</button>
-    <button class="btn btn-clear btn-sm tip-down" id="btn-serial-setup" data-tip="Show Arduino receiver sketch and setup instructions">Setup</button>
+    <button class="btn btn-clear btn-sm tip-down" id="btn-serial" data-tip="Connect to serial port (Chromium only)">&#9889;<span class="btn-text">Connect</span></button>
+    <button class="btn btn-clear btn-sm tip-down" id="btn-serial-setup" data-tip="Show Arduino receiver sketch and setup instructions">&#9881;<span class="btn-text">Setup</span></button>
   </span>
-  <button class="theme-toggle tip-down" id="theme-toggle" data-tip="Toggle theme"><span class="moon-icon"></span></button>
-  <button class="btn-help tip-down tip-right" id="btn-help" data-tip="Keyboard shortcuts (?)">?</button>
+  <span class="top-bar-pinned">
+    <button class="theme-toggle tip-down" id="theme-toggle" data-tip="Toggle theme"><span class="moon-icon"></span></button>
+    <button class="btn-help tip-down tip-right" id="btn-help" data-tip="Keyboard shortcuts (?)">?</button>
+  </span>
 </div>
 
-<div class="section collapsible-section">
-  <button class="collapsible-toggle open" id="input-settings-toggle">Input Settings <span class="arrow">&#9654;</span></button>
-  <div class="collapsible-content" id="input-settings-content">
-    <div class="mode-row">
-      <label><input type="checkbox" id="auto-mode" checked> Auto-detect duration (hold key longer = longer note)</label>
-      <span class="hold-hint" id="hold-hint">Hold piano keys to set duration</span>
-    </div>
-    <div class="row" style="margin-top:12px">
-      <div>
-        <h3 class="subsection-label">Manual Note Duration</h3>
-        <div class="durations" id="dur-btns">
-          <button class="dur-btn" data-dur="1">&#9711; Whole</button>
-          <button class="dur-btn" data-dur="2">&#9700; Half</button>
-          <button class="dur-btn active" data-dur="4">&#9833; Quarter</button>
-          <button class="dur-btn" data-dur="8">&#9834; Eighth</button>
-          <button class="dur-btn" data-dur="16">&#9835; 16th</button>
-          <button class="dur-btn" data-dur="32">&#9836; 32nd</button>
-          <button class="dur-btn" data-dur="64">&#9836; 64th</button>
-          <button class="dur-btn" data-dur="128">&#9836; 128th</button>
-        </div>
-      </div>
-      <div>
-        <h3 class="subsection-label">Add Pause (Gap)</h3>
-        <div class="pauses">
-          <button class="pause-btn" data-dur="1">&#9711; Whole</button>
-          <button class="pause-btn" data-dur="2">&#9700; Half</button>
-          <button class="pause-btn" data-dur="4">&#9833; Quarter</button>
-          <button class="pause-btn" data-dur="8">&#9834; Eighth</button>
-          <button class="pause-btn" data-dur="16">&#9835; 16th</button>
-          <button class="pause-btn" data-dur="32">&#9836; 32nd</button>
-          <button class="pause-btn" data-dur="64">&#9836; 64th</button>
-          <button class="pause-btn" data-dur="128">&#9836; 128th</button>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="section input-settings-bar">
+  <label class="auto-label"><input type="checkbox" id="auto-mode" checked> Auto-duration</label>
+  <span class="hold-hint" id="hold-hint">Hold key longer = longer note</span>
+  <span class="top-bar-group">
+    <span class="top-bar-group-label">Note</span>
+    <button class="dur-btn" data-dur="1" data-tip="&#9711; Whole">1</button>
+    <button class="dur-btn" data-dur="2" data-tip="&#9700; Half">1/2</button>
+    <button class="dur-btn active" data-dur="4" data-tip="&#9833; Quarter">1/4</button>
+    <button class="dur-btn" data-dur="8" data-tip="&#9834; Eighth">1/8</button>
+    <button class="dur-btn" data-dur="16" data-tip="&#9835; 16th">1/16</button>
+    <button class="dur-btn" data-dur="32" data-tip="&#9836; 32nd">1/32</button>
+    <button class="dur-btn" data-dur="64" data-tip="&#9836; 64th">1/64</button>
+    <button class="dur-btn" data-dur="128" data-tip="&#9836; 128th">1/128</button>
+  </span>
+  <span class="top-bar-group">
+    <span class="top-bar-group-label">Pause</span>
+    <button class="pause-btn" data-dur="1" data-tip="&#119102; Whole rest">1</button>
+    <button class="pause-btn" data-dur="2" data-tip="&#119103; Half rest">1/2</button>
+    <button class="pause-btn" data-dur="4" data-tip="&#119104; Quarter rest">1/4</button>
+    <button class="pause-btn" data-dur="8" data-tip="&#119105; Eighth rest">1/8</button>
+    <button class="pause-btn" data-dur="16" data-tip="&#119106; 16th rest">1/16</button>
+    <button class="pause-btn" data-dur="32" data-tip="&#119106; 32nd rest">1/32</button>
+    <button class="pause-btn" data-dur="64" data-tip="&#119106; 64th rest">1/64</button>
+    <button class="pause-btn" data-dur="128" data-tip="&#119106; 128th rest">1/128</button>
+  </span>
 </div>
 
 <div class="section">
@@ -123,12 +112,12 @@
       <span class="octave-badge" id="octave-badge" data-tip="Current keyboard octave">C4</span>
       <button class="btn btn-clear btn-sm" id="btn-pitch-up" data-tip="Pitch up (Arrow Up)">&#9650;</button>
       <button class="btn btn-clear btn-sm" id="btn-octave-up" data-tip="Octave up (X)">&#9650;&#9650;</button>
-      <span class="info" id="note-count" style="margin:0">0 notes</span>
-      <span class="info" id="melody-stats" style="margin:0"></span>
+      <span class="info" id="note-count">0 notes</span>
+      <span class="info" id="melody-stats"></span>
     </div>
     <span class="melody-name" id="melody-name" data-tip="Click to rename"></span>
     <div class="seq-header-right">
-      <button class="btn btn-danger btn-sm" id="btn-clear" data-tip="Clear all notes (C)">&#10005; Clear</button>
+      <button class="btn btn-danger btn-sm" id="btn-clear" data-tip="Clear all notes (C)">&#10005;<span class="btn-text">Clear</span></button>
     </div>
   </div>
   <div id="chips-view" style="display:none">

@@ -19,4 +19,9 @@
 .note-chip.playing { background: #e0c860; border-color: #c4a830; color: #3a3520; }
 .note-chip.playing .dur-label { color: #6a6040; }
 .note-chip.rest.playing { background: #f0e8c8; border-color: #c4a830; color: #6a6040; }
+.note-chip.rest.flash { animation: chip-flash 0.4s ease-out; }
+@keyframes chip-flash {
+  0% { background: var(--accent); color: #fff; border-color: var(--accent); }
+  100% { background: var(--bg); color: var(--muted); border-color: var(--section-border); }
+}
 .empty-msg { color: var(--muted); font-size: 0.85em; align-self: center; padding: 4px; }

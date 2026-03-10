@@ -7,8 +7,8 @@
 .piano-roll-wrapper.fullscreen .piano-roll {
   height: 100% !important; max-height: none; border-radius: 0; resize: none;
 }
-.piano-roll { overflow: auto; border: 1px solid var(--section-border); border-radius: 6px; background: var(--subtle-bg); height: 400px; resize: vertical; min-height: 150px; max-height: 90vh; }
-.piano-roll-inner { position: relative; min-width: 100%; }
+.piano-roll { position: relative; overflow: auto; border: 1px solid var(--section-border); border-radius: 6px; background: var(--subtle-bg); height: 400px; resize: vertical; min-height: 150px; max-height: 90vh; }
+.piano-roll-inner { position: relative; overflow: clip; }
 .pr-label {
   width: 50px; height: 20px; display: flex; align-items: center; justify-content: flex-end;
   padding-right: 6px; font-size: 0.65em; color: #555; background: #dddfe3;
@@ -34,6 +34,8 @@
   position: absolute; top: 0; width: 1px; background: var(--section-border); pointer-events: none;
 }
 .pr-gridline-v.measure { background: var(--input-border); width: 2px; }
+.pr-gridline-v.sub-half { background: var(--section-border); opacity: 0.6; }
+.pr-gridline-v.sub-quarter { background: var(--section-border); opacity: 0.3; }
 .pr-note {
   position: absolute; height: 18px; border-radius: 3px; cursor: grab;
   background: var(--accent); color: #fff; font-size: 0.6em; line-height: 18px;
@@ -41,7 +43,7 @@
   box-shadow: 0 1px 2px rgba(0,0,0,0.15); min-width: 8px; z-index: 2;
 }
 .pr-note:hover { filter: brightness(1.15); }
-.pr-note.selected { outline: 2px solid #c06000; outline-offset: -1px; box-shadow: 0 0 0 1px #c06000, 0 1px 6px rgba(192,96,0,0.5); z-index: 3; }
+.pr-note.selected { outline: 2px solid #d03830; outline-offset: -1px; box-shadow: 0 0 0 1px #d03830, 0 1px 6px rgba(208,56,48,0.45); z-index: 3; }
 .pr-note-label { pointer-events: none; }
 .pr-note .pr-resize {
   position: absolute; right: 0; top: 0; width: 6px; height: 100%;
@@ -51,7 +53,7 @@
 .pr-note .pr-resize:hover { background: rgba(255,255,255,0.7); }
 .piano-roll .pr-empty { padding: 20px; text-align: center; color: var(--muted); font-size: 0.85em; }
 .pr-timeline {
-  position: sticky; top: 0; z-index: 11; height: 20px; background: var(--bg);
+  position: sticky; top: 0; z-index: 11; height: 20px; min-width: 100%; background: var(--bg);
   border-bottom: 1px solid var(--input-border); cursor: pointer; user-select: none; display: flex;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
@@ -96,7 +98,8 @@
 }
 .pr-edge-handle:hover { border-right-color: var(--accent); background: rgba(112,93,207,0.08); }
 .pr-edge-expand {
-  position: absolute; width: 22px; height: 22px; border-radius: 50%;
+  position: absolute;
+  width: 22px; height: 22px; border-radius: 50%;
   background: var(--section-border); border: 1px solid var(--input-border);
   cursor: ew-resize; z-index: 9; user-select: none;
   display: flex; align-items: center; justify-content: center; gap: 2px;
@@ -117,7 +120,7 @@
 }
 .pr-edge-arrow.left { border-right: 5px solid currentColor; }
 .pr-edge-arrow.right { border-left: 5px solid currentColor; }
-.pr-edge-expand:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+.pr-edge-expand:hover, .pr-edge-expand.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 .pr-transpose-overlay {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);

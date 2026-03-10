@@ -41,7 +41,9 @@ MP.renderChips = function() {
         const currentFlat = MP.seqToFlat();
         currentFlat.splice(restFlatIdx, 1);
         MP.appState.seq = MP.rebuildSeqFromFlat(currentFlat);
-        MP.ensureNextNoteStart();
+        var cursor = 0;
+        currentFlat.forEach(function(f) { cursor += f._beats; });
+        MP.appState.nextNoteStart = cursor;
         MP.updateSequence();
       });
     }
