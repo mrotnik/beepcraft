@@ -94,7 +94,6 @@ MP._internalStop = function() {
   MP.dancingCat.stop();
   clearTimeout(MP.appState.metronomeTimer);
   MP.appState.metronomeTimer = null;
-  MP.closeAudioCtx();
   if (MP.appState.metronomeOn) {
     MP.appState.metronomeBeat = 0;
     MP.tickMetronome();
@@ -111,6 +110,7 @@ MP.refreshPlayback = function() {
 MP.stopPlayback = function() {
   var wasRecording = MP.appState.isRecording;
   MP._internalStop();
+  MP.closeAudioCtx();
   if (wasRecording) MP.toggleRecording();
 };
 

@@ -1,5 +1,5 @@
 window.MP = window.MP || {};
-MP.VERSION = 'v0.0.5';
+MP.VERSION = 'v0.0.6';
 
 MP.appState = {
   seq: [],
@@ -34,7 +34,6 @@ MP.appState = {
 
   undoStack: [],
   redoStack: [],
-  selectedNoteIdx: null,
   selectedNoteIdxs: new Set(),
   clipboard: [],
   lastNoteDur: null,

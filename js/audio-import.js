@@ -291,6 +291,10 @@ MP._analyzeAudioBuffer = function(audioBuffer, bpm) {
 
 MP.importAudioFile = function(file) {
   if (!file) return;
+  if (file.size > MP.IMPORT_MAX_FILE_SIZE) {
+    MP.showToast('File too large (max ' + Math.round(MP.IMPORT_MAX_FILE_SIZE / 1024 / 1024) + 'MB)', true);
+    return;
+  }
   var modal = document.getElementById('import-modal');
   var status = document.getElementById('import-status');
   modal.style.display = '';
@@ -350,11 +354,19 @@ MP.startMicRecording = function() {
     MP.appState._micSource = source;
     MP.appState._micProcessor = processor;
 
+    MP.appState._micTimeout = setTimeout(function() {
+      if (MP.appState.micRecording) {
+        MP.stopMicRecording();
+        MP.showToast('Mic recording stopped (max ' + Math.round(MP.MIC_MAX_DURATION_SEC / 60) + ' min)');
+      }
+    }, MP.MIC_MAX_DURATION_SEC * 1000);
+
     var btn = document.getElementById('btn-mic-record');
     btn.classList.add('recording');
     btn.innerHTML = '&#9632; Stop Mic';
     document.getElementById('btn-play').disabled = true;
     document.getElementById('btn-metronome').disabled = true;
+    document.getElementById('btn-record').disabled = true;
   }).catch(function() {
     MP.showToast('Microphone access denied', true);
   });
@@ -362,6 +374,7 @@ MP.startMicRecording = function() {
 
 MP.stopMicRecording = function() {
   MP.appState.micRecording = false;
+  clearTimeout(MP.appState._micTimeout);
   if (MP.appState._micProcessor) {
     MP.appState._micProcessor.disconnect();
     MP.appState._micProcessor = null;
@@ -381,6 +394,7 @@ MP.stopMicRecording = function() {
   btn.blur();
   document.getElementById('btn-play').disabled = false;
   document.getElementById('btn-metronome').disabled = false;
+  document.getElementById('btn-record').disabled = false;
 
   var chunks = MP.appState.micChunks;
   if (!chunks || chunks.length === 0) {

@@ -2,6 +2,7 @@ MP._audioCtx = null;
 
 MP.getAudioCtx = function() {
   if (!MP._audioCtx) MP._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (MP._audioCtx.state === 'suspended') MP._audioCtx.resume();
   return MP._audioCtx;
 };
 

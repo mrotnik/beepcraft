@@ -1,4 +1,4 @@
-[data-theme="dark"] { color-scheme: dark; }
+[data-theme="dark"] { color-scheme: dark; --led-color: #ff3333; }
 [data-theme="dark"] body {
   background: #282c34; color: #abb2bf;
   background-image:
@@ -20,12 +20,12 @@
 
 [data-theme="dark"] .top-bar { background: #21252b; border-bottom-color: #181a1f; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
 [data-theme="dark"] .top-bar-bpm { color: #abb2bf; }
-[data-theme="dark"] .led-display { background: #111; color: #ff3333; border-color: #222; text-shadow: 0 0 6px rgba(255,51,51,0.5); }
+[data-theme="dark"] .led-display { background: #111; color: var(--led-color); border-color: #222; text-shadow: 0 0 6px rgba(255,51,51,0.5); }
 [data-theme="dark"] .led-display:hover { text-shadow: 0 0 10px rgba(255,51,51,0.7); }
 [data-theme="dark"] .bpm-arrows { border-color: #222; }
-[data-theme="dark"] .bpm-arrow { background: #1a1a1a; color: #ff3333; }
+[data-theme="dark"] .bpm-arrow { background: #1a1a1a; color: var(--led-color); }
 [data-theme="dark"] .bpm-arrow:hover { background: #2a2a2a; }
-[data-theme="dark"] .bpm-arrow:active { background: #ff3333; color: #111; }
+[data-theme="dark"] .bpm-arrow:active { background: var(--led-color); color: #111; }
 
 [data-theme="dark"] .collapsible-toggle { color: #636d83; }
 [data-theme="dark"] .collapsible-toggle:hover { color: #61afef; }
@@ -109,7 +109,7 @@
 [data-theme="dark"] .preset-dropdown { background: #2c313a; border-color: #3e4451; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
 [data-theme="dark"] .preset-item { color: #abb2bf; border-bottom-color: #3e4451; }
 [data-theme="dark"] .preset-item:hover, [data-theme="dark"] .preset-item.active { background: #3e4451; }
-[data-theme="dark"] .preset-item.loaded { color: #61afef; }
+[data-theme="dark"] .preset-item.loaded { color: #61afef; background: rgba(97,175,239,0.15); }
 [data-theme="dark"] .preset-count { color: #636d83; border-bottom-color: #3e4451; }
 [data-theme="dark"] .top-bar-group { background: #2c313a; border-color: #3e4451; }
 [data-theme="dark"] .top-bar-group-label { color: #636d83; }
@@ -128,8 +128,8 @@
 [data-theme="dark"] .copy-btn:hover { background: #4b5263; }
 [data-theme="dark"] .info { color: #4b5263; }
 
-[data-theme="dark"] .theme-toggle { background: #fff8e1; color: #f59e0b; border-color: #d0a020; }
-[data-theme="dark"] .theme-toggle:hover { background: #ffecb3; }
+[data-theme="dark"] .theme-toggle { background: #61afef; color: #fbbf24; border-color: #4a9ae0; }
+[data-theme="dark"] .theme-toggle:hover { background: #4a9ae0; }
 
 [data-theme="dark"] .btn-help { background: #3e4451; color: #abb2bf; border-color: #4b5263; }
 [data-theme="dark"] .btn-help:hover { background: #4b5263; color: #e5c07b; border-color: #636d83; }

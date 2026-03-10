@@ -86,14 +86,12 @@ function setupPianoRollControls() {
   MP.updateZoom = function(delta) {
     MP.appState.prZoom = Math.min(MP.ZOOM_MAX, Math.max(MP.ZOOM_MIN, MP.appState.prZoom + delta));
     zoomInput.value = Math.round(MP.appState.prZoom * 100) + '%';
-    MP.renderPianoRoll();
-    if (MP.appState.playState) MP.startPlayhead();
+    MP.refreshPianoRoll();
   };
   MP.setZoom = function(val) {
     MP.appState.prZoom = Math.min(MP.ZOOM_MAX, Math.max(MP.ZOOM_MIN, val));
     zoomInput.value = Math.round(MP.appState.prZoom * 100) + '%';
-    MP.renderPianoRoll();
-    if (MP.appState.playState) MP.startPlayhead();
+    MP.refreshPianoRoll();
   };
   document.getElementById('btn-zoom-in').addEventListener('click', function() { MP.updateZoom(MP.ZOOM_STEP); });
   document.getElementById('btn-zoom-out').addEventListener('click', function() { MP.updateZoom(-MP.ZOOM_STEP); });
@@ -123,16 +121,14 @@ function setupPianoRollControls() {
     btn.classList.toggle('btn-clear', !isFs);
     btn.classList.toggle('btn-danger', isFs);
     if (MP.appState.currentView === 'roll') {
-      MP.renderPianoRoll();
-      if (MP.appState.playState) MP.startPlayhead();
+      MP.refreshPianoRoll();
     }
   };
   document.getElementById('time-sig').addEventListener('change', function(e) {
     var parts = e.target.value.split('/');
     MP.appState.timeSig = { beats: parseInt(parts[0]), value: parseInt(parts[1]) };
     if (MP.appState.currentView === 'roll') {
-      MP.renderPianoRoll();
-      if (MP.appState.playState) MP.startPlayhead();
+      MP.refreshPianoRoll();
     }
   });
   document.getElementById('btn-snap').addEventListener('click', function() {
@@ -213,25 +209,25 @@ function setupOutputControls() {
     var rtttl = document.getElementById('rtttl-output').value.trim();
     if (!rtttl) { MP.showToast('Nothing to save', true); return; }
     var name = MP.sanitizeFilename(MP.appState.melodyName);
-    var blob = new Blob([rtttl], { type: 'text/plain' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name + '.rtttl';
-    a.click();
-    URL.revokeObjectURL(a.href);
+    MP.downloadBlob(new Blob([rtttl], { type: 'text/plain' }), name + '.rtttl');
     MP.showToast('Saved ' + name + '.rtttl');
   });
   document.getElementById('midi-save-btn').addEventListener('click', function() {
     var data = MP.generateMIDI();
     if (!data) { MP.showToast('Nothing to save', true); return; }
     var name = MP.sanitizeFilename(MP.appState.melodyName);
-    var blob = new Blob([data], { type: 'audio/midi' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name + '.mid';
-    a.click();
-    URL.revokeObjectURL(a.href);
+    MP.downloadBlob(new Blob([data], { type: 'audio/midi' }), name + '.mid');
     MP.showToast('Saved ' + name + '.mid');
+  });
+  document.getElementById('btn-share').addEventListener('click', function() {
+    var rtttl = document.getElementById('rtttl-output').value.trim();
+    if (!rtttl) { MP.showToast('Nothing to share', true); return; }
+    var url = location.href.split('#')[0] + '#r=' + btoa(unescape(encodeURIComponent(rtttl)));
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function() { MP.showToast('Share link copied'); });
+    } else {
+      MP.showToast('Could not copy link', true);
+    }
   });
   function parseRtttlInput() {
     var raw = document.getElementById('rtttl-output').value.trim();
@@ -358,7 +354,6 @@ function setupMelodyPresets() {
   fetch('melodies/melodies.json')
     .then(function(r) { return r.json(); })
     .then(function(melodies) {
-      MP._builtinMelodies = melodies;
       melodies.forEach(function(m) {
         allPresets.push({ name: m.split(':')[0].trim(), rtttl: m });
       });
@@ -382,7 +377,7 @@ function setupMelodyPresets() {
   };
 }
 
-function setupThemeAndSettings() {
+function setupTheme() {
   var themeBtn = document.getElementById('theme-toggle');
   function setTheme(dark) {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
@@ -393,7 +388,9 @@ function setupThemeAndSettings() {
   var saved = localStorage.getItem(MP.LS_THEME);
   if (saved) setTheme(saved === 'dark');
   else if (window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme(true);
+}
 
+function setupCollapsibleSettings() {
   var toggleBtn = document.getElementById('input-settings-toggle');
   var toggleContent = document.getElementById('input-settings-content');
   var savedCollapsed = localStorage.getItem(MP.LS_INPUT_COLLAPSED);
@@ -407,7 +404,9 @@ function setupThemeAndSettings() {
     toggleBtn.classList.toggle('open', !isOpen);
     localStorage.setItem(MP.LS_INPUT_COLLAPSED, isOpen ? 'true' : 'false');
   });
+}
 
+function setupAudioImport() {
   document.getElementById('btn-import-audio').addEventListener('click', function() {
     document.getElementById('audio-file-input').click();
   });
@@ -422,6 +421,9 @@ function setupThemeAndSettings() {
   document.getElementById('import-modal').addEventListener('click', function(e) {
     if (e.target === this) this.style.display = 'none';
   });
+}
+
+function setupSerialAndMidi() {
   document.getElementById('btn-midi').addEventListener('click', function() { MP.initMIDI(); });
   var savedBaud = localStorage.getItem(MP.LS_SERIAL_BAUD);
   if (savedBaud) document.getElementById('baud-select').value = savedBaud;
@@ -451,20 +453,13 @@ function setupThemeAndSettings() {
     if (MP._serialPort) MP.disconnectSerial();
     else MP.initSerial();
   });
-  document.getElementById('btn-octave-down').addEventListener('click', function() {
-    MP.transposeSequence(-1);
-    if (MP.appState.kbOctave > 0) { MP.appState.kbOctave--; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); }
-  });
-  document.getElementById('btn-octave-up').addEventListener('click', function() {
-    MP.transposeSequence(1);
-    if (MP.appState.kbOctave < 8) { MP.appState.kbOctave++; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); }
-  });
+  document.getElementById('btn-octave-down').addEventListener('click', function() { MP.transposeAndShiftOctave(-1); });
+  document.getElementById('btn-octave-up').addEventListener('click', function() { MP.transposeAndShiftOctave(1); });
 }
 
 function setupFileHandling() {
   var RTTTL_RE = /^[^:]+:\s*[dob]=\d+.*:.+$/;
-  function loadRtttlFiles(input) {
-    var files = [...input.files].filter(function(f) { return f.name.endsWith('.rtttl') || f.name.endsWith('.txt'); });
+  function loadRtttlFilesFromList(files, verb) {
     if (files.length === 0) { MP.showToast('No .rtttl or .txt files found', true); return; }
     var loaded = 0, skipped = 0, dupes = 0;
     var seen = new Set();
@@ -480,7 +475,7 @@ function setupFileHandling() {
       });
       if (loaded > 0) {
         MP._addCustomPresets(customs);
-        var msg = 'Loaded ' + loaded + ' melody' + (loaded !== 1 ? 's' : '');
+        var msg = (verb || 'Loaded') + ' ' + loaded + ' melody' + (loaded !== 1 ? 's' : '');
         if (dupes > 0) msg += ', ' + dupes + ' duplicate' + (dupes !== 1 ? 's' : '');
         if (skipped > 0) msg += ', ' + skipped + ' invalid';
         MP.showToast(msg);
@@ -488,7 +483,9 @@ function setupFileHandling() {
         MP.showToast('No valid RTTTL files found', true);
       }
     });
-    input.value = '';
+  }
+  function filterRtttlFiles(fileList) {
+    return [...fileList].filter(function(f) { return f.name.endsWith('.rtttl') || f.name.endsWith('.txt'); });
   }
   var rtttlDirInput = document.getElementById('rtttl-dir-input');
   var rtttlFileInput = document.getElementById('rtttl-file-input');
@@ -496,10 +493,13 @@ function setupFileHandling() {
     if (e.shiftKey) rtttlDirInput.click();
     else rtttlFileInput.click();
   });
-  rtttlDirInput.addEventListener('change', function() { loadRtttlFiles(rtttlDirInput); });
-  rtttlFileInput.addEventListener('change', function() { loadRtttlFiles(rtttlFileInput); });
+  rtttlDirInput.addEventListener('change', function() { loadRtttlFilesFromList(filterRtttlFiles(rtttlDirInput.files)); rtttlDirInput.value = ''; });
+  rtttlFileInput.addEventListener('change', function() { loadRtttlFilesFromList(filterRtttlFiles(rtttlFileInput.files)); rtttlFileInput.value = ''; });
 
   document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  document.addEventListener('dragstart', function(e) {
+    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.isContentEditable) e.preventDefault();
+  });
 
   document.body.addEventListener('dragover', function(e) {
     e.preventDefault();
@@ -521,7 +521,7 @@ function setupFileHandling() {
       MP.importAudioFile(droppedAudio[0]);
       return;
     }
-    var files = [...e.dataTransfer.files].filter(function(f) { return f.name.endsWith('.rtttl') || f.name.endsWith('.txt'); });
+    var files = filterRtttlFiles(e.dataTransfer.files);
     if (files.length === 0) return;
     if (files.length === 1) {
       files[0].text().then(function(text) {
@@ -532,31 +532,24 @@ function setupFileHandling() {
         MP.showToast('Loaded "' + result.name + '" (' + MP.appState.seq.length + ' notes)');
       });
     } else {
-      var loaded = 0, skipped = 0;
-      var seen = new Set();
-      var customs = [];
-      Promise.all(files.map(function(f) { return f.text(); })).then(function(contents) {
-        contents.forEach(function(text) {
-          var line = text.split('\n')[0].trim();
-          if (!RTTTL_RE.test(line)) { skipped++; return; }
-          if (seen.has(line)) return;
-          seen.add(line);
-          customs.push(line);
-          loaded++;
-        });
-        if (loaded > 0) {
-          MP._addCustomPresets(customs);
-          MP.showToast('Dropped ' + loaded + ' melody' + (loaded !== 1 ? 's' : ''));
-        } else {
-          MP.showToast('No valid RTTTL files found', true);
-        }
-      });
+      loadRtttlFilesFromList(files, 'Dropped');
     }
   });
 }
 
 function setupAutoRestore() {
-  if (MP.autoLoad()) {
+  var hash = location.hash;
+  if (hash.startsWith('#r=')) {
+    try {
+      var rtttl = decodeURIComponent(escape(atob(hash.slice(3))));
+      var result = MP.loadRTTTL(rtttl);
+      if (result) {
+        history.replaceState(null, '', location.pathname + location.search);
+        MP.showToast('Loaded "' + result.name + '" from shared link');
+        MP.updateSequence();
+      }
+    } catch (e) {}
+  } else if (MP.autoLoad()) {
     MP.setBpm(document.getElementById('bpm').value);
     document.getElementById('pr-zoom-input').value = Math.round(MP.appState.prZoom * 100) + '%';
     MP.updateKeyBindingLabels(true);
@@ -579,8 +572,7 @@ function setupAutoRestore() {
   }
 
   if (MP.appState.currentView === 'roll') {
-    MP.renderPianoRoll();
-    if (MP.appState.playState) MP.startPlayhead();
+    MP.refreshPianoRoll();
   }
 
   var prLastH = 0, prResizePending = false;
@@ -595,8 +587,7 @@ function setupAutoRestore() {
     prResizePending = false;
     prLastH = prContainer.clientHeight;
     if (MP.appState.currentView === 'roll') {
-      MP.renderPianoRoll();
-      if (MP.appState.playState) MP.startPlayhead();
+      MP.refreshPianoRoll();
     }
   });
 }
@@ -617,7 +608,10 @@ document.addEventListener('DOMContentLoaded', function() {
   setupBpmControls();
   setupOutputControls();
   setupMelodyPresets();
-  setupThemeAndSettings();
+  setupTheme();
+  setupCollapsibleSettings();
+  setupAudioImport();
+  setupSerialAndMidi();
   setupFileHandling();
   setupAutoRestore();
 });

@@ -57,7 +57,6 @@ MP.parseRTTTL = function(rtttl) {
   bpm = Math.max(10, Math.min(900, bpm || 120));
 
   const noteNames = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
-  const fullNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   const notes = [];
 
   noteStr.split(',').forEach(token => {
@@ -89,7 +88,7 @@ MP.parseRTTTL = function(rtttl) {
     if (pos < token.length && token[pos] >= '0' && token[pos] <= '9') { oct = parseInt(token[pos]); pos++; }
     if (pos < token.length && token[pos] === '.') { dotted = true; pos++; }
 
-    const noteName = fullNames[semitone] + oct;
+    const noteName = MP.NOTE_NAMES[semitone] + oct;
     const midi = (oct + 1) * 12 + semitone;
     const freq = MP.freqFromMidi(midi);
     notes.push({ name: noteName, freq, dur, dotted });

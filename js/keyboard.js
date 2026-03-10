@@ -108,6 +108,16 @@ MP.transposeSemitones = function(shift) {
   MP.showTransposeOverlay(shift > 0 ? 'up' : 'down');
 };
 
+MP.transposeAndShiftOctave = function(direction) {
+  MP.transposeSequence(direction);
+  var newOct = MP.appState.kbOctave + direction;
+  if (newOct >= 0 && newOct <= 8) {
+    MP.appState.kbOctave = newOct;
+    MP.updateKeyBindingLabels();
+    MP.scrollKbToOctave();
+  }
+};
+
 MP.transposeSequence = function(octaveShift) {
   if (MP.appState.seq.length === 0) {
     MP.showTransposeOverlay(octaveShift > 0 ? 'up' : 'down', true);
@@ -244,14 +254,13 @@ function setupComputerKeyboard() {
       MP.pushUndo();
       MP.appState.seq.pop();
       MP.resetNextNoteStart();
-      MP.appState.selectedNoteIdx = null;
       MP.updateSequence();
       return;
     }
     if (e.key === 'Delete') {
       const idxs = MP.appState.selectedNoteIdxs.size > 0
         ? [...MP.appState.selectedNoteIdxs].sort((a, b) => b - a)
-        : (MP.appState.selectedNoteIdx !== null && MP.appState.selectedNoteIdx < MP.appState.seq.length ? [MP.appState.selectedNoteIdx] : []);
+        : [];
       if (idxs.length === 0) return;
       e.preventDefault();
       MP.pushUndo();
@@ -263,8 +272,8 @@ function setupComputerKeyboard() {
     }
 
     const key = e.key.toLowerCase() === "'" ? "'" : e.key.toLowerCase();
-    if (key === 'z' && !MP.modKey(e)) { MP.transposeSequence(-1); if (MP.appState.kbOctave > 0) { MP.appState.kbOctave--; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); } return; }
-    if (key === 'x' && !MP.modKey(e)) { MP.transposeSequence(1); if (MP.appState.kbOctave < 8) { MP.appState.kbOctave++; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); } return; }
+    if (key === 'z' && !MP.modKey(e)) { MP.transposeAndShiftOctave(-1); return; }
+    if (key === 'x' && !MP.modKey(e)) { MP.transposeAndShiftOctave(1); return; }
     if (key === 'c' && !MP.modKey(e)) { MP.pushUndo(); MP.appState.seq = []; MP.appState.nextNoteStart = 0; MP.stopPlayback(); MP.updateSequence(); return; }
 
     const mapping = MP.KEY_MAP[key];

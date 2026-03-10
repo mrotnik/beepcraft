@@ -1,3 +1,16 @@
+MP.A4_MIDI = 69;
+MP.A4_FREQ = 440;
+MP.MIDI_MIN = 12;
+MP.MIDI_MAX = 108;
+MP.BPM_MIN = 40;
+MP.BPM_MAX = 300;
+MP.TONE_DUTY = 0.9;
+MP.ZOOM_STEP = 0.25;
+MP.ZOOM_WHEEL_STEP = 0.125;
+MP.ZOOM_MIN = 0.25;
+MP.ZOOM_MAX = 5;
+MP.DRAG_THRESHOLD = 4;
+
 MP.NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
 MP.NOTES = [];
@@ -81,25 +94,14 @@ MP.updateNoteFromMidi = function(note, midi) {
   note.freq = MP.freqFromMidi(midi);
 };
 
-MP.A4_MIDI = 69;
-MP.A4_FREQ = 440;
-MP.MIDI_MIN = 12;
-MP.MIDI_MAX = 108;
-MP.BPM_MIN = 40;
-MP.BPM_MAX = 300;
-MP.TONE_DUTY = 0.9;
-MP.ZOOM_STEP = 0.25;
-MP.ZOOM_WHEEL_STEP = 0.125;
-MP.ZOOM_MIN = 0.25;
-MP.ZOOM_MAX = 5;
-MP.DRAG_THRESHOLD = 4;
-
 MP.COPY_FEEDBACK_MS = 1500;
 MP.TOAST_MS = 3000;
 MP.MIDI_INFO_MS = 6000;
 MP.SCHEDULE_INTERVAL = 500;
 MP.PLAYBACK_BUFFER_MS = 200;
 MP.REST_GAP_THRESHOLD = 0.03;
+MP.IMPORT_MAX_FILE_SIZE = 50 * 1024 * 1024;
+MP.MIC_MAX_DURATION_SEC = 300;
 
 MP.IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 MP.MOD_KEY = MP.IS_MAC ? 'Cmd' : 'Ctrl';

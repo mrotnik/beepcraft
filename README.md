@@ -15,9 +15,13 @@ Open **[buzzcraft.html](buzzcraft.html)** — single file, no install, works off
 - **MIDI input** — connect a MIDI keyboard
 - **Serial upload** — send notes directly to Arduino over serial (Chromium-based browsers)
 - **Playback** with loop, metronome, tap tempo, time signatures (4/4, 3/4, 6/8, etc.)
+- **Audio import** — load WAV/MP3/OGG files and extract melody via pitch detection
+- **Mic recording** — record from microphone and detect pitches in real time
+- **Share links** — copy a shareable URL that encodes the melody
 - **57 preset melodies** — search and load classic tunes
 - **Recording mode** — auto-detect note duration from key hold time
 - **Undo/redo**, copy/paste, octave transpose
+- **Dark/light theme**
 - **Works from `file://`** — no server needed
 
 ## Quick Start
@@ -48,7 +52,7 @@ Connect a passive buzzer between any GPIO pin (default: pin 5) and GND, with VCC
 The project is plain HTML/JS/CSS with no dependencies. Source files are modular:
 
 ```
-js/          15 modules (state, constants, audio, rtttl, codegen, ui, ...)
+js/          16 modules (state, constants, audio, audio-import, rtttl, codegen, ui, ...)
 css/         6 stylesheets (base, controls, keyboard, piano-roll, chips, dark)
 melodies/    58 RTTTL preset files
 index.html   main HTML

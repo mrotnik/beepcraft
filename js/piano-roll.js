@@ -170,6 +170,7 @@ function buildPrGrid(inner, minMidi, maxMidi, gridH, totalBeats, beatW, tsBeats)
 
 function setupPrResize(resizeHandle, n, i, beatW, noteBlocks) {
   resizeHandle.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
     e.stopPropagation(); e.preventDefault();
     var startX = e.clientX;
     var snap = function(b) {
@@ -274,7 +275,6 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
     }
     MP.appState.selectedNoteIdxs.add(i);
     block.classList.add('selected');
-    MP.appState.selectedNoteIdx = i;
     MP.appState.lastNoteDur = n.dur;
 
     var isClone = e.shiftKey;
@@ -335,7 +335,6 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
           MP.clearSelection();
           MP.appState.selectedNoteIdxs.add(i);
           block.classList.add('selected');
-          MP.appState.selectedNoteIdx = i;
           return;
         }
         if (dragMode === 'free') {

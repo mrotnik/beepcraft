@@ -42,6 +42,7 @@ body {
   background-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px;
   background-attachment: fixed;
 }
+::selection { background: var(--accent); color: #fff; }
 h1 { color: var(--accent); font-size: 1.4em; margin: 0; white-space: nowrap; }
 
 .top-bar {
@@ -148,7 +149,7 @@ body.drag-overlay::after {
 }
 .led-display:hover { text-shadow: 0 0 10px rgba(112,93,207,0.6); }
 .bpm-input {
-  width: 52px; padding: 4px 4px; border: 1px solid var(--input-border); border-radius: 0;
+  width: 52px; padding: 6px 4px; border: 1px solid var(--input-border); border-radius: 0;
   font-family: monospace; font-size: 1em; text-align: center;
   -moz-appearance: textfield; display: none;
 }
@@ -203,7 +204,7 @@ body.drag-overlay::after {
 }
 .btn-sm { padding: 5px 10px; font-size: 0.8em; }
 .btn-play  { background: var(--success); color: #fff; border-color: var(--success); min-width: 72px; text-align: center; }
-#dance-cat { vertical-align: middle; margin-left: 2px; image-rendering: pixelated; }
+#dance-cat { vertical-align: middle; margin-left: 2px; margin-right: -4px; image-rendering: pixelated; }
 .btn-stop  { background: var(--error); color: #fff; border-color: var(--error); min-width: 72px; text-align: center; }
 .btn-clear { background: var(--subtle-bg); color: var(--muted); border-color: var(--section-border); }
 .btn-danger { background: var(--subtle-bg); color: var(--error); border-color: var(--error); }
@@ -216,7 +217,7 @@ body.drag-overlay::after {
 #btn-serial { min-width: 85px; text-align: center; }
 .octave-badge {
   font-size: 0.75em; font-weight: bold; color: var(--accent); font-family: monospace;
-  padding: 5px 6px; border-radius: 4px; background: var(--accent-bg);
+  padding: 7px 6px; border-radius: 4px; background: var(--accent-bg);
   min-width: 24px; text-align: center; transition: transform 0.15s;
   line-height: 1;
 }
@@ -247,14 +248,14 @@ body.drag-overlay::after {
 }
 
 .theme-toggle {
-  width: 34px; height: 28px; border: 1px solid var(--section-border); border-radius: 6px;
-  background: var(--subtle-bg); color: var(--muted); cursor: pointer; font-size: 1.2em; line-height: 1;
-  display: inline-flex; align-items: center; justify-content: center; padding: 0;
+  width: 36px; height: 30px; border: 2px solid var(--accent); border-radius: 6px;
+  background: var(--accent); color: #fff; cursor: pointer; font-size: 1.2em; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center; padding: 2px;
 }
-.theme-toggle:hover { background: var(--section-border); }
+.theme-toggle:hover { background: var(--accent); opacity: 0.85; }
 .moon-icon {
   display: inline-block; width: 16px; height: 16px;
-  background: #7c3aed;
+  background: #fbbf24;
   -webkit-mask: radial-gradient(circle 6px at 12px 7px, transparent 98%, #000 100%);
   mask: radial-gradient(circle 6px at 12px 7px, transparent 98%, #000 100%);
   border-radius: 50%;
@@ -297,7 +298,7 @@ body.drag-overlay::after {
 }
 .preset-item:last-child { border-bottom: none; }
 .preset-item:hover, .preset-item.active { background: var(--dropdown-hover); }
-.preset-item.loaded { color: var(--accent); font-weight: bold; }
+.preset-item.loaded { color: var(--accent); font-weight: bold; background: var(--accent-bg); }
 .preset-item .preset-match { color: var(--accent); font-weight: bold; }
 .preset-count {
   padding: 4px 10px; font-size: 0.7em; color: var(--muted);
@@ -418,7 +419,6 @@ kbd {
 }
 .piano-roll { overflow: auto; border: 1px solid var(--section-border); border-radius: 6px; background: var(--subtle-bg); height: 400px; resize: vertical; min-height: 150px; max-height: 90vh; }
 .piano-roll-inner { position: relative; min-width: 100%; }
-.pr-labels { position: sticky; left: 0; z-index: 3; display: flex; flex-direction: column; position: absolute; top: 0; left: 0; }
 .pr-label {
   width: 50px; height: 20px; display: flex; align-items: center; justify-content: flex-end;
   padding-right: 6px; font-size: 0.65em; color: #555; background: #dddfe3;
@@ -436,7 +436,6 @@ kbd {
 .pr-label.black-key-row { background: #b0b4bc; color: #666; }
 .pr-row-bg { position: absolute; left: 50px; height: 20px; pointer-events: none; }
 .pr-row-bg.black-key-row { background: rgba(0,0,0,0.04); }
-.pr-grid { position: absolute; top: 0; left: 50px; }
 .pr-gridline-h {
   position: absolute; left: 0; height: 1px; background: var(--section-border); pointer-events: none;
 }
@@ -579,7 +578,7 @@ kbd {
 .note-chip.rest.playing { background: #f0e8c8; border-color: #c4a830; color: #6a6040; }
 .empty-msg { color: var(--muted); font-size: 0.85em; align-self: center; padding: 4px; }
 
-[data-theme="dark"] { color-scheme: dark; }
+[data-theme="dark"] { color-scheme: dark; --led-color: #ff3333; }
 [data-theme="dark"] body {
   background: #282c34; color: #abb2bf;
   background-image:
@@ -601,12 +600,12 @@ kbd {
 
 [data-theme="dark"] .top-bar { background: #21252b; border-bottom-color: #181a1f; box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
 [data-theme="dark"] .top-bar-bpm { color: #abb2bf; }
-[data-theme="dark"] .led-display { background: #111; color: #ff3333; border-color: #222; text-shadow: 0 0 6px rgba(255,51,51,0.5); }
+[data-theme="dark"] .led-display { background: #111; color: var(--led-color); border-color: #222; text-shadow: 0 0 6px rgba(255,51,51,0.5); }
 [data-theme="dark"] .led-display:hover { text-shadow: 0 0 10px rgba(255,51,51,0.7); }
 [data-theme="dark"] .bpm-arrows { border-color: #222; }
-[data-theme="dark"] .bpm-arrow { background: #1a1a1a; color: #ff3333; }
+[data-theme="dark"] .bpm-arrow { background: #1a1a1a; color: var(--led-color); }
 [data-theme="dark"] .bpm-arrow:hover { background: #2a2a2a; }
-[data-theme="dark"] .bpm-arrow:active { background: #ff3333; color: #111; }
+[data-theme="dark"] .bpm-arrow:active { background: var(--led-color); color: #111; }
 
 [data-theme="dark"] .collapsible-toggle { color: #636d83; }
 [data-theme="dark"] .collapsible-toggle:hover { color: #61afef; }
@@ -690,7 +689,7 @@ kbd {
 [data-theme="dark"] .preset-dropdown { background: #2c313a; border-color: #3e4451; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
 [data-theme="dark"] .preset-item { color: #abb2bf; border-bottom-color: #3e4451; }
 [data-theme="dark"] .preset-item:hover, [data-theme="dark"] .preset-item.active { background: #3e4451; }
-[data-theme="dark"] .preset-item.loaded { color: #61afef; }
+[data-theme="dark"] .preset-item.loaded { color: #61afef; background: rgba(97,175,239,0.15); }
 [data-theme="dark"] .preset-count { color: #636d83; border-bottom-color: #3e4451; }
 [data-theme="dark"] .top-bar-group { background: #2c313a; border-color: #3e4451; }
 [data-theme="dark"] .top-bar-group-label { color: #636d83; }
@@ -709,8 +708,8 @@ kbd {
 [data-theme="dark"] .copy-btn:hover { background: #4b5263; }
 [data-theme="dark"] .info { color: #4b5263; }
 
-[data-theme="dark"] .theme-toggle { background: #fff8e1; color: #f59e0b; border-color: #d0a020; }
-[data-theme="dark"] .theme-toggle:hover { background: #ffecb3; }
+[data-theme="dark"] .theme-toggle { background: #61afef; color: #fbbf24; border-color: #4a9ae0; }
+[data-theme="dark"] .theme-toggle:hover { background: #4a9ae0; }
 
 [data-theme="dark"] .btn-help { background: #3e4451; color: #abb2bf; border-color: #4b5263; }
 [data-theme="dark"] .btn-help:hover { background: #4b5263; color: #e5c07b; border-color: #636d83; }
@@ -876,6 +875,7 @@ kbd {
       <button class="copy-btn" id="rtttl-copy-btn">&#128203; Copy</button>
       <button class="copy-btn" id="rtttl-save-btn" data-tip="Download as .rtttl file">&#128190; Save .rtttl</button>
       <button class="copy-btn" id="midi-save-btn" data-tip="Download as Standard MIDI file">&#128190; Save .midi</button>
+      <button class="copy-btn" id="btn-share" data-tip="Copy shareable link to clipboard">&#128279; Share</button>
     </div>
   </div>
   <div id="output-arduino" style="display:none; margin-top:8px">
@@ -954,7 +954,7 @@ window.__BUNDLED_MELODIES__ = ["007:d=4,o=5,b=320:c,8d,8d,d,2d,c,c,c,c,8d#,8d#,d
 </script>
 <script>
 window.MP = window.MP || {};
-MP.VERSION = 'v0.0.5';
+MP.VERSION = 'v0.0.6';
 
 MP.appState = {
   seq: [],
@@ -989,7 +989,6 @@ MP.appState = {
 
   undoStack: [],
   redoStack: [],
-  selectedNoteIdx: null,
   selectedNoteIdxs: new Set(),
   clipboard: [],
   lastNoteDur: null,
@@ -1003,6 +1002,19 @@ MP.appState = {
 };
 
 MP.MAX_UNDO = 50;
+
+MP.A4_MIDI = 69;
+MP.A4_FREQ = 440;
+MP.MIDI_MIN = 12;
+MP.MIDI_MAX = 108;
+MP.BPM_MIN = 40;
+MP.BPM_MAX = 300;
+MP.TONE_DUTY = 0.9;
+MP.ZOOM_STEP = 0.25;
+MP.ZOOM_WHEEL_STEP = 0.125;
+MP.ZOOM_MIN = 0.25;
+MP.ZOOM_MAX = 5;
+MP.DRAG_THRESHOLD = 4;
 
 MP.NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
@@ -1087,25 +1099,14 @@ MP.updateNoteFromMidi = function(note, midi) {
   note.freq = MP.freqFromMidi(midi);
 };
 
-MP.A4_MIDI = 69;
-MP.A4_FREQ = 440;
-MP.MIDI_MIN = 12;
-MP.MIDI_MAX = 108;
-MP.BPM_MIN = 40;
-MP.BPM_MAX = 300;
-MP.TONE_DUTY = 0.9;
-MP.ZOOM_STEP = 0.25;
-MP.ZOOM_WHEEL_STEP = 0.125;
-MP.ZOOM_MIN = 0.25;
-MP.ZOOM_MAX = 5;
-MP.DRAG_THRESHOLD = 4;
-
 MP.COPY_FEEDBACK_MS = 1500;
 MP.TOAST_MS = 3000;
 MP.MIDI_INFO_MS = 6000;
 MP.SCHEDULE_INTERVAL = 500;
 MP.PLAYBACK_BUFFER_MS = 200;
 MP.REST_GAP_THRESHOLD = 0.03;
+MP.IMPORT_MAX_FILE_SIZE = 50 * 1024 * 1024;
+MP.MIC_MAX_DURATION_SEC = 300;
 
 MP.IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 MP.MOD_KEY = MP.IS_MAC ? 'Cmd' : 'Ctrl';
@@ -1223,6 +1224,7 @@ MP._audioCtx = null;
 
 MP.getAudioCtx = function() {
   if (!MP._audioCtx) MP._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (MP._audioCtx.state === 'suspended') MP._audioCtx.resume();
   return MP._audioCtx;
 };
 
@@ -1567,6 +1569,10 @@ MP._analyzeAudioBuffer = function(audioBuffer, bpm) {
 
 MP.importAudioFile = function(file) {
   if (!file) return;
+  if (file.size > MP.IMPORT_MAX_FILE_SIZE) {
+    MP.showToast('File too large (max ' + Math.round(MP.IMPORT_MAX_FILE_SIZE / 1024 / 1024) + 'MB)', true);
+    return;
+  }
   var modal = document.getElementById('import-modal');
   var status = document.getElementById('import-status');
   modal.style.display = '';
@@ -1626,11 +1632,19 @@ MP.startMicRecording = function() {
     MP.appState._micSource = source;
     MP.appState._micProcessor = processor;
 
+    MP.appState._micTimeout = setTimeout(function() {
+      if (MP.appState.micRecording) {
+        MP.stopMicRecording();
+        MP.showToast('Mic recording stopped (max ' + Math.round(MP.MIC_MAX_DURATION_SEC / 60) + ' min)');
+      }
+    }, MP.MIC_MAX_DURATION_SEC * 1000);
+
     var btn = document.getElementById('btn-mic-record');
     btn.classList.add('recording');
     btn.innerHTML = '&#9632; Stop Mic';
     document.getElementById('btn-play').disabled = true;
     document.getElementById('btn-metronome').disabled = true;
+    document.getElementById('btn-record').disabled = true;
   }).catch(function() {
     MP.showToast('Microphone access denied', true);
   });
@@ -1638,6 +1652,7 @@ MP.startMicRecording = function() {
 
 MP.stopMicRecording = function() {
   MP.appState.micRecording = false;
+  clearTimeout(MP.appState._micTimeout);
   if (MP.appState._micProcessor) {
     MP.appState._micProcessor.disconnect();
     MP.appState._micProcessor = null;
@@ -1657,6 +1672,7 @@ MP.stopMicRecording = function() {
   btn.blur();
   document.getElementById('btn-play').disabled = false;
   document.getElementById('btn-metronome').disabled = false;
+  document.getElementById('btn-record').disabled = false;
 
   var chunks = MP.appState.micChunks;
   if (!chunks || chunks.length === 0) {
@@ -1755,7 +1771,6 @@ MP.parseRTTTL = function(rtttl) {
   bpm = Math.max(10, Math.min(900, bpm || 120));
 
   const noteNames = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
-  const fullNames = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
   const notes = [];
 
   noteStr.split(',').forEach(token => {
@@ -1787,7 +1802,7 @@ MP.parseRTTTL = function(rtttl) {
     if (pos < token.length && token[pos] >= '0' && token[pos] <= '9') { oct = parseInt(token[pos]); pos++; }
     if (pos < token.length && token[pos] === '.') { dotted = true; pos++; }
 
-    const noteName = fullNames[semitone] + oct;
+    const noteName = MP.NOTE_NAMES[semitone] + oct;
     const midi = (oct + 1) * 12 + semitone;
     const freq = MP.freqFromMidi(midi);
     notes.push({ name: noteName, freq, dur, dotted });
@@ -1974,9 +1989,8 @@ MP.switchView = function(view) {
   document.getElementById('chips-view').style.display = view === 'chips' ? '' : 'none';
   document.getElementById('roll-view').style.display = view === 'roll' ? '' : 'none';
   if (view === 'roll') {
-    MP.renderPianoRoll();
+    MP.refreshPianoRoll();
     MP.stopChipHighlight();
-    if (MP.appState.playState) MP.startPlayhead();
   } else {
     MP.stopPlayhead();
     if (MP.appState.playState) MP.startChipHighlight();
@@ -2018,13 +2032,14 @@ MP.autoLoad = function() {
     const data = JSON.parse(raw);
     if (!Array.isArray(data.seq) || data.seq.length === 0) return false;
     if (!data.seq.every(function(n) { return typeof n.name === 'string' && typeof n.freq === 'number' && typeof n.start === 'number' && typeof n.dur === 'number'; })) return false;
-    MP.appState.seq = data.seq;
-    MP.appState.nextNoteStart = typeof data.nextNoteStart === 'number' ? data.nextNoteStart : MP.seqEndBeat();
+    MP.appState.seq = data.seq.filter(function(n) { return n.freq > 0 && n.start >= 0 && n.dur > 0; });
+    if (MP.appState.seq.length === 0) return false;
+    MP.appState.nextNoteStart = typeof data.nextNoteStart === 'number' && data.nextNoteStart >= 0 ? data.nextNoteStart : MP.seqEndBeat();
     MP.appState.melodyName = typeof data.melodyName === 'string' ? data.melodyName : null;
-    if (typeof data.bpm === 'number') document.getElementById('bpm').value = data.bpm;
-    if (typeof data.kbOctave === 'number') MP.appState.kbOctave = data.kbOctave;
-    if (typeof data.prZoom === 'number') MP.appState.prZoom = data.prZoom;
-    if (typeof data.selectedDur === 'number') MP.appState.selectedDur = data.selectedDur;
+    if (typeof data.bpm === 'number') document.getElementById('bpm').value = Math.max(MP.BPM_MIN, Math.min(MP.BPM_MAX, Math.round(data.bpm)));
+    if (typeof data.kbOctave === 'number') MP.appState.kbOctave = Math.max(0, Math.min(8, Math.floor(data.kbOctave)));
+    if (typeof data.prZoom === 'number') MP.appState.prZoom = Math.max(MP.ZOOM_MIN, Math.min(MP.ZOOM_MAX, data.prZoom));
+    if (typeof data.selectedDur === 'number') MP.appState.selectedDur = MP.DUR_NAMES[data.selectedDur] ? data.selectedDur : 4;
     if (Array.isArray(data.timeSig) && data.timeSig.length === 2) MP.appState.timeSig = data.timeSig;
     if (typeof data.snapEnabled === 'boolean') MP.appState.snapEnabled = data.snapEnabled;
     return true;
@@ -2135,6 +2150,19 @@ MP.ensureNextNoteStart = function() {
 
 MP.updateSequence = function() { MP.renderSequence(); MP.generateCode(); };
 
+MP.refreshPianoRoll = function() {
+  MP.renderPianoRoll();
+  if (MP.appState.playState) MP.startPlayhead();
+};
+
+MP.downloadBlob = function(blob, filename) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
 MP.loadRTTTL = function(rtttlString, opts) {
   var result = MP.parseRTTTL(rtttlString);
   if (!result) return null;
@@ -2157,7 +2185,6 @@ MP.sanitizeFilename = function(name) {
 
 MP.clearSelection = function() {
   MP.appState.selectedNoteIdxs.clear();
-  MP.appState.selectedNoteIdx = null;
   document.querySelectorAll('.pr-note.selected').forEach(function(b) { b.classList.remove('selected'); });
 };
 
@@ -2186,10 +2213,12 @@ MP.toggleRecording = function() {
   if (MP.appState.isRecording) {
     btn.classList.add('recording'); btn.innerHTML = '&#9679; Stop Rec';
     indicator.style.display = ''; MP.appState.lastNoteEndTime = 0;
+    document.getElementById('btn-mic-record').disabled = true;
     if (!MP.appState.metronomeOn) MP.startMetronome();
   } else {
     btn.classList.remove('recording'); btn.innerHTML = '&#9679; Record';
     indicator.style.display = 'none';
+    document.getElementById('btn-mic-record').disabled = false;
     if (MP.appState.metronomeOn) MP.stopMetronome();
   }
 };
@@ -2752,7 +2781,6 @@ MP._internalStop = function() {
   MP.dancingCat.stop();
   clearTimeout(MP.appState.metronomeTimer);
   MP.appState.metronomeTimer = null;
-  MP.closeAudioCtx();
   if (MP.appState.metronomeOn) {
     MP.appState.metronomeBeat = 0;
     MP.tickMetronome();
@@ -2769,6 +2797,7 @@ MP.refreshPlayback = function() {
 MP.stopPlayback = function() {
   var wasRecording = MP.appState.isRecording;
   MP._internalStop();
+  MP.closeAudioCtx();
   if (wasRecording) MP.toggleRecording();
 };
 
@@ -2993,6 +3022,16 @@ MP.transposeSemitones = function(shift) {
   MP.showTransposeOverlay(shift > 0 ? 'up' : 'down');
 };
 
+MP.transposeAndShiftOctave = function(direction) {
+  MP.transposeSequence(direction);
+  var newOct = MP.appState.kbOctave + direction;
+  if (newOct >= 0 && newOct <= 8) {
+    MP.appState.kbOctave = newOct;
+    MP.updateKeyBindingLabels();
+    MP.scrollKbToOctave();
+  }
+};
+
 MP.transposeSequence = function(octaveShift) {
   if (MP.appState.seq.length === 0) {
     MP.showTransposeOverlay(octaveShift > 0 ? 'up' : 'down', true);
@@ -3129,14 +3168,13 @@ function setupComputerKeyboard() {
       MP.pushUndo();
       MP.appState.seq.pop();
       MP.resetNextNoteStart();
-      MP.appState.selectedNoteIdx = null;
       MP.updateSequence();
       return;
     }
     if (e.key === 'Delete') {
       const idxs = MP.appState.selectedNoteIdxs.size > 0
         ? [...MP.appState.selectedNoteIdxs].sort((a, b) => b - a)
-        : (MP.appState.selectedNoteIdx !== null && MP.appState.selectedNoteIdx < MP.appState.seq.length ? [MP.appState.selectedNoteIdx] : []);
+        : [];
       if (idxs.length === 0) return;
       e.preventDefault();
       MP.pushUndo();
@@ -3148,8 +3186,8 @@ function setupComputerKeyboard() {
     }
 
     const key = e.key.toLowerCase() === "'" ? "'" : e.key.toLowerCase();
-    if (key === 'z' && !MP.modKey(e)) { MP.transposeSequence(-1); if (MP.appState.kbOctave > 0) { MP.appState.kbOctave--; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); } return; }
-    if (key === 'x' && !MP.modKey(e)) { MP.transposeSequence(1); if (MP.appState.kbOctave < 8) { MP.appState.kbOctave++; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); } return; }
+    if (key === 'z' && !MP.modKey(e)) { MP.transposeAndShiftOctave(-1); return; }
+    if (key === 'x' && !MP.modKey(e)) { MP.transposeAndShiftOctave(1); return; }
     if (key === 'c' && !MP.modKey(e)) { MP.pushUndo(); MP.appState.seq = []; MP.appState.nextNoteStart = 0; MP.stopPlayback(); MP.updateSequence(); return; }
 
     const mapping = MP.KEY_MAP[key];
@@ -3352,6 +3390,7 @@ function buildPrGrid(inner, minMidi, maxMidi, gridH, totalBeats, beatW, tsBeats)
 
 function setupPrResize(resizeHandle, n, i, beatW, noteBlocks) {
   resizeHandle.addEventListener('mousedown', function(e) {
+    if (e.button !== 0) return;
     e.stopPropagation(); e.preventDefault();
     var startX = e.clientX;
     var snap = function(b) {
@@ -3456,7 +3495,6 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
     }
     MP.appState.selectedNoteIdxs.add(i);
     block.classList.add('selected');
-    MP.appState.selectedNoteIdx = i;
     MP.appState.lastNoteDur = n.dur;
 
     var isClone = e.shiftKey;
@@ -3517,7 +3555,6 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
           MP.clearSelection();
           MP.appState.selectedNoteIdxs.add(i);
           block.classList.add('selected');
-          MP.appState.selectedNoteIdx = i;
           return;
         }
         if (dragMode === 'free') {
@@ -4285,14 +4322,12 @@ function setupPianoRollControls() {
   MP.updateZoom = function(delta) {
     MP.appState.prZoom = Math.min(MP.ZOOM_MAX, Math.max(MP.ZOOM_MIN, MP.appState.prZoom + delta));
     zoomInput.value = Math.round(MP.appState.prZoom * 100) + '%';
-    MP.renderPianoRoll();
-    if (MP.appState.playState) MP.startPlayhead();
+    MP.refreshPianoRoll();
   };
   MP.setZoom = function(val) {
     MP.appState.prZoom = Math.min(MP.ZOOM_MAX, Math.max(MP.ZOOM_MIN, val));
     zoomInput.value = Math.round(MP.appState.prZoom * 100) + '%';
-    MP.renderPianoRoll();
-    if (MP.appState.playState) MP.startPlayhead();
+    MP.refreshPianoRoll();
   };
   document.getElementById('btn-zoom-in').addEventListener('click', function() { MP.updateZoom(MP.ZOOM_STEP); });
   document.getElementById('btn-zoom-out').addEventListener('click', function() { MP.updateZoom(-MP.ZOOM_STEP); });
@@ -4322,16 +4357,14 @@ function setupPianoRollControls() {
     btn.classList.toggle('btn-clear', !isFs);
     btn.classList.toggle('btn-danger', isFs);
     if (MP.appState.currentView === 'roll') {
-      MP.renderPianoRoll();
-      if (MP.appState.playState) MP.startPlayhead();
+      MP.refreshPianoRoll();
     }
   };
   document.getElementById('time-sig').addEventListener('change', function(e) {
     var parts = e.target.value.split('/');
     MP.appState.timeSig = { beats: parseInt(parts[0]), value: parseInt(parts[1]) };
     if (MP.appState.currentView === 'roll') {
-      MP.renderPianoRoll();
-      if (MP.appState.playState) MP.startPlayhead();
+      MP.refreshPianoRoll();
     }
   });
   document.getElementById('btn-snap').addEventListener('click', function() {
@@ -4412,25 +4445,25 @@ function setupOutputControls() {
     var rtttl = document.getElementById('rtttl-output').value.trim();
     if (!rtttl) { MP.showToast('Nothing to save', true); return; }
     var name = MP.sanitizeFilename(MP.appState.melodyName);
-    var blob = new Blob([rtttl], { type: 'text/plain' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name + '.rtttl';
-    a.click();
-    URL.revokeObjectURL(a.href);
+    MP.downloadBlob(new Blob([rtttl], { type: 'text/plain' }), name + '.rtttl');
     MP.showToast('Saved ' + name + '.rtttl');
   });
   document.getElementById('midi-save-btn').addEventListener('click', function() {
     var data = MP.generateMIDI();
     if (!data) { MP.showToast('Nothing to save', true); return; }
     var name = MP.sanitizeFilename(MP.appState.melodyName);
-    var blob = new Blob([data], { type: 'audio/midi' });
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = name + '.mid';
-    a.click();
-    URL.revokeObjectURL(a.href);
+    MP.downloadBlob(new Blob([data], { type: 'audio/midi' }), name + '.mid');
     MP.showToast('Saved ' + name + '.mid');
+  });
+  document.getElementById('btn-share').addEventListener('click', function() {
+    var rtttl = document.getElementById('rtttl-output').value.trim();
+    if (!rtttl) { MP.showToast('Nothing to share', true); return; }
+    var url = location.href.split('#')[0] + '#r=' + btoa(unescape(encodeURIComponent(rtttl)));
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function() { MP.showToast('Share link copied'); });
+    } else {
+      MP.showToast('Could not copy link', true);
+    }
   });
   function parseRtttlInput() {
     var raw = document.getElementById('rtttl-output').value.trim();
@@ -4556,7 +4589,6 @@ function setupMelodyPresets() {
 
   Promise.resolve(window.__BUNDLED_MELODIES__)
     .then(function(melodies) {
-      MP._builtinMelodies = melodies;
       melodies.forEach(function(m) {
         allPresets.push({ name: m.split(':')[0].trim(), rtttl: m });
       });
@@ -4580,7 +4612,7 @@ function setupMelodyPresets() {
   };
 }
 
-function setupThemeAndSettings() {
+function setupTheme() {
   var themeBtn = document.getElementById('theme-toggle');
   function setTheme(dark) {
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
@@ -4591,7 +4623,9 @@ function setupThemeAndSettings() {
   var saved = localStorage.getItem(MP.LS_THEME);
   if (saved) setTheme(saved === 'dark');
   else if (window.matchMedia('(prefers-color-scheme: dark)').matches) setTheme(true);
+}
 
+function setupCollapsibleSettings() {
   var toggleBtn = document.getElementById('input-settings-toggle');
   var toggleContent = document.getElementById('input-settings-content');
   var savedCollapsed = localStorage.getItem(MP.LS_INPUT_COLLAPSED);
@@ -4605,7 +4639,9 @@ function setupThemeAndSettings() {
     toggleBtn.classList.toggle('open', !isOpen);
     localStorage.setItem(MP.LS_INPUT_COLLAPSED, isOpen ? 'true' : 'false');
   });
+}
 
+function setupAudioImport() {
   document.getElementById('btn-import-audio').addEventListener('click', function() {
     document.getElementById('audio-file-input').click();
   });
@@ -4620,6 +4656,9 @@ function setupThemeAndSettings() {
   document.getElementById('import-modal').addEventListener('click', function(e) {
     if (e.target === this) this.style.display = 'none';
   });
+}
+
+function setupSerialAndMidi() {
   document.getElementById('btn-midi').addEventListener('click', function() { MP.initMIDI(); });
   var savedBaud = localStorage.getItem(MP.LS_SERIAL_BAUD);
   if (savedBaud) document.getElementById('baud-select').value = savedBaud;
@@ -4649,20 +4688,13 @@ function setupThemeAndSettings() {
     if (MP._serialPort) MP.disconnectSerial();
     else MP.initSerial();
   });
-  document.getElementById('btn-octave-down').addEventListener('click', function() {
-    MP.transposeSequence(-1);
-    if (MP.appState.kbOctave > 0) { MP.appState.kbOctave--; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); }
-  });
-  document.getElementById('btn-octave-up').addEventListener('click', function() {
-    MP.transposeSequence(1);
-    if (MP.appState.kbOctave < 8) { MP.appState.kbOctave++; MP.updateKeyBindingLabels(); MP.scrollKbToOctave(); }
-  });
+  document.getElementById('btn-octave-down').addEventListener('click', function() { MP.transposeAndShiftOctave(-1); });
+  document.getElementById('btn-octave-up').addEventListener('click', function() { MP.transposeAndShiftOctave(1); });
 }
 
 function setupFileHandling() {
   var RTTTL_RE = /^[^:]+:\s*[dob]=\d+.*:.+$/;
-  function loadRtttlFiles(input) {
-    var files = [...input.files].filter(function(f) { return f.name.endsWith('.rtttl') || f.name.endsWith('.txt'); });
+  function loadRtttlFilesFromList(files, verb) {
     if (files.length === 0) { MP.showToast('No .rtttl or .txt files found', true); return; }
     var loaded = 0, skipped = 0, dupes = 0;
     var seen = new Set();
@@ -4678,7 +4710,7 @@ function setupFileHandling() {
       });
       if (loaded > 0) {
         MP._addCustomPresets(customs);
-        var msg = 'Loaded ' + loaded + ' melody' + (loaded !== 1 ? 's' : '');
+        var msg = (verb || 'Loaded') + ' ' + loaded + ' melody' + (loaded !== 1 ? 's' : '');
         if (dupes > 0) msg += ', ' + dupes + ' duplicate' + (dupes !== 1 ? 's' : '');
         if (skipped > 0) msg += ', ' + skipped + ' invalid';
         MP.showToast(msg);
@@ -4686,7 +4718,9 @@ function setupFileHandling() {
         MP.showToast('No valid RTTTL files found', true);
       }
     });
-    input.value = '';
+  }
+  function filterRtttlFiles(fileList) {
+    return [...fileList].filter(function(f) { return f.name.endsWith('.rtttl') || f.name.endsWith('.txt'); });
   }
   var rtttlDirInput = document.getElementById('rtttl-dir-input');
   var rtttlFileInput = document.getElementById('rtttl-file-input');
@@ -4694,10 +4728,13 @@ function setupFileHandling() {
     if (e.shiftKey) rtttlDirInput.click();
     else rtttlFileInput.click();
   });
-  rtttlDirInput.addEventListener('change', function() { loadRtttlFiles(rtttlDirInput); });
-  rtttlFileInput.addEventListener('change', function() { loadRtttlFiles(rtttlFileInput); });
+  rtttlDirInput.addEventListener('change', function() { loadRtttlFilesFromList(filterRtttlFiles(rtttlDirInput.files)); rtttlDirInput.value = ''; });
+  rtttlFileInput.addEventListener('change', function() { loadRtttlFilesFromList(filterRtttlFiles(rtttlFileInput.files)); rtttlFileInput.value = ''; });
 
   document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+  document.addEventListener('dragstart', function(e) {
+    if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.isContentEditable) e.preventDefault();
+  });
 
   document.body.addEventListener('dragover', function(e) {
     e.preventDefault();
@@ -4719,7 +4756,7 @@ function setupFileHandling() {
       MP.importAudioFile(droppedAudio[0]);
       return;
     }
-    var files = [...e.dataTransfer.files].filter(function(f) { return f.name.endsWith('.rtttl') || f.name.endsWith('.txt'); });
+    var files = filterRtttlFiles(e.dataTransfer.files);
     if (files.length === 0) return;
     if (files.length === 1) {
       files[0].text().then(function(text) {
@@ -4730,31 +4767,24 @@ function setupFileHandling() {
         MP.showToast('Loaded "' + result.name + '" (' + MP.appState.seq.length + ' notes)');
       });
     } else {
-      var loaded = 0, skipped = 0;
-      var seen = new Set();
-      var customs = [];
-      Promise.all(files.map(function(f) { return f.text(); })).then(function(contents) {
-        contents.forEach(function(text) {
-          var line = text.split('\n')[0].trim();
-          if (!RTTTL_RE.test(line)) { skipped++; return; }
-          if (seen.has(line)) return;
-          seen.add(line);
-          customs.push(line);
-          loaded++;
-        });
-        if (loaded > 0) {
-          MP._addCustomPresets(customs);
-          MP.showToast('Dropped ' + loaded + ' melody' + (loaded !== 1 ? 's' : ''));
-        } else {
-          MP.showToast('No valid RTTTL files found', true);
-        }
-      });
+      loadRtttlFilesFromList(files, 'Dropped');
     }
   });
 }
 
 function setupAutoRestore() {
-  if (MP.autoLoad()) {
+  var hash = location.hash;
+  if (hash.startsWith('#r=')) {
+    try {
+      var rtttl = decodeURIComponent(escape(atob(hash.slice(3))));
+      var result = MP.loadRTTTL(rtttl);
+      if (result) {
+        history.replaceState(null, '', location.pathname + location.search);
+        MP.showToast('Loaded "' + result.name + '" from shared link');
+        MP.updateSequence();
+      }
+    } catch (e) {}
+  } else if (MP.autoLoad()) {
     MP.setBpm(document.getElementById('bpm').value);
     document.getElementById('pr-zoom-input').value = Math.round(MP.appState.prZoom * 100) + '%';
     MP.updateKeyBindingLabels(true);
@@ -4777,8 +4807,7 @@ function setupAutoRestore() {
   }
 
   if (MP.appState.currentView === 'roll') {
-    MP.renderPianoRoll();
-    if (MP.appState.playState) MP.startPlayhead();
+    MP.refreshPianoRoll();
   }
 
   var prLastH = 0, prResizePending = false;
@@ -4793,8 +4822,7 @@ function setupAutoRestore() {
     prResizePending = false;
     prLastH = prContainer.clientHeight;
     if (MP.appState.currentView === 'roll') {
-      MP.renderPianoRoll();
-      if (MP.appState.playState) MP.startPlayhead();
+      MP.refreshPianoRoll();
     }
   });
 }
@@ -4815,7 +4843,10 @@ document.addEventListener('DOMContentLoaded', function() {
   setupBpmControls();
   setupOutputControls();
   setupMelodyPresets();
-  setupThemeAndSettings();
+  setupTheme();
+  setupCollapsibleSettings();
+  setupAudioImport();
+  setupSerialAndMidi();
   setupFileHandling();
   setupAutoRestore();
 });

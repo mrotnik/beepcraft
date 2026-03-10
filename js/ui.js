@@ -32,9 +32,8 @@ MP.switchView = function(view) {
   document.getElementById('chips-view').style.display = view === 'chips' ? '' : 'none';
   document.getElementById('roll-view').style.display = view === 'roll' ? '' : 'none';
   if (view === 'roll') {
-    MP.renderPianoRoll();
+    MP.refreshPianoRoll();
     MP.stopChipHighlight();
-    if (MP.appState.playState) MP.startPlayhead();
   } else {
     MP.stopPlayhead();
     if (MP.appState.playState) MP.startChipHighlight();
@@ -76,13 +75,14 @@ MP.autoLoad = function() {
     const data = JSON.parse(raw);
     if (!Array.isArray(data.seq) || data.seq.length === 0) return false;
     if (!data.seq.every(function(n) { return typeof n.name === 'string' && typeof n.freq === 'number' && typeof n.start === 'number' && typeof n.dur === 'number'; })) return false;
-    MP.appState.seq = data.seq;
-    MP.appState.nextNoteStart = typeof data.nextNoteStart === 'number' ? data.nextNoteStart : MP.seqEndBeat();
+    MP.appState.seq = data.seq.filter(function(n) { return n.freq > 0 && n.start >= 0 && n.dur > 0; });
+    if (MP.appState.seq.length === 0) return false;
+    MP.appState.nextNoteStart = typeof data.nextNoteStart === 'number' && data.nextNoteStart >= 0 ? data.nextNoteStart : MP.seqEndBeat();
     MP.appState.melodyName = typeof data.melodyName === 'string' ? data.melodyName : null;
-    if (typeof data.bpm === 'number') document.getElementById('bpm').value = data.bpm;
-    if (typeof data.kbOctave === 'number') MP.appState.kbOctave = data.kbOctave;
-    if (typeof data.prZoom === 'number') MP.appState.prZoom = data.prZoom;
-    if (typeof data.selectedDur === 'number') MP.appState.selectedDur = data.selectedDur;
+    if (typeof data.bpm === 'number') document.getElementById('bpm').value = Math.max(MP.BPM_MIN, Math.min(MP.BPM_MAX, Math.round(data.bpm)));
+    if (typeof data.kbOctave === 'number') MP.appState.kbOctave = Math.max(0, Math.min(8, Math.floor(data.kbOctave)));
+    if (typeof data.prZoom === 'number') MP.appState.prZoom = Math.max(MP.ZOOM_MIN, Math.min(MP.ZOOM_MAX, data.prZoom));
+    if (typeof data.selectedDur === 'number') MP.appState.selectedDur = MP.DUR_NAMES[data.selectedDur] ? data.selectedDur : 4;
     if (Array.isArray(data.timeSig) && data.timeSig.length === 2) MP.appState.timeSig = data.timeSig;
     if (typeof data.snapEnabled === 'boolean') MP.appState.snapEnabled = data.snapEnabled;
     return true;
@@ -193,6 +193,19 @@ MP.ensureNextNoteStart = function() {
 
 MP.updateSequence = function() { MP.renderSequence(); MP.generateCode(); };
 
+MP.refreshPianoRoll = function() {
+  MP.renderPianoRoll();
+  if (MP.appState.playState) MP.startPlayhead();
+};
+
+MP.downloadBlob = function(blob, filename) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
 MP.loadRTTTL = function(rtttlString, opts) {
   var result = MP.parseRTTTL(rtttlString);
   if (!result) return null;
@@ -215,7 +228,6 @@ MP.sanitizeFilename = function(name) {
 
 MP.clearSelection = function() {
   MP.appState.selectedNoteIdxs.clear();
-  MP.appState.selectedNoteIdx = null;
   document.querySelectorAll('.pr-note.selected').forEach(function(b) { b.classList.remove('selected'); });
 };
 
@@ -244,10 +256,12 @@ MP.toggleRecording = function() {
   if (MP.appState.isRecording) {
     btn.classList.add('recording'); btn.innerHTML = '&#9679; Stop Rec';
     indicator.style.display = ''; MP.appState.lastNoteEndTime = 0;
+    document.getElementById('btn-mic-record').disabled = true;
     if (!MP.appState.metronomeOn) MP.startMetronome();
   } else {
     btn.classList.remove('recording'); btn.innerHTML = '&#9679; Record';
     indicator.style.display = 'none';
+    document.getElementById('btn-mic-record').disabled = false;
     if (MP.appState.metronomeOn) MP.stopMetronome();
   }
 };
