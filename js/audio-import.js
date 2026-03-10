@@ -353,6 +353,8 @@ MP.startMicRecording = function() {
     var btn = document.getElementById('btn-mic-record');
     btn.classList.add('recording');
     btn.innerHTML = '&#9632; Stop Mic';
+    document.getElementById('btn-play').disabled = true;
+    document.getElementById('btn-metronome').disabled = true;
   }).catch(function() {
     MP.showToast('Microphone access denied', true);
   });
@@ -376,6 +378,9 @@ MP.stopMicRecording = function() {
   var btn = document.getElementById('btn-mic-record');
   btn.classList.remove('recording');
   btn.innerHTML = '&#127908; Mic';
+  btn.blur();
+  document.getElementById('btn-play').disabled = false;
+  document.getElementById('btn-metronome').disabled = false;
 
   var chunks = MP.appState.micChunks;
   if (!chunks || chunks.length === 0) {

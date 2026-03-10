@@ -74,16 +74,17 @@ MP.autoLoad = function() {
     const raw = localStorage.getItem(MP.LS_AUTOSAVE);
     if (!raw) return false;
     const data = JSON.parse(raw);
-    if (!data.seq || data.seq.length === 0) return false;
+    if (!Array.isArray(data.seq) || data.seq.length === 0) return false;
+    if (!data.seq.every(function(n) { return typeof n.name === 'string' && typeof n.freq === 'number' && typeof n.start === 'number' && typeof n.dur === 'number'; })) return false;
     MP.appState.seq = data.seq;
-    MP.appState.nextNoteStart = data.nextNoteStart || MP.seqEndBeat();
-    MP.appState.melodyName = data.melodyName || null;
-    if (data.bpm) document.getElementById('bpm').value = data.bpm;
-    if (data.kbOctave !== undefined) MP.appState.kbOctave = data.kbOctave;
-    if (data.prZoom) MP.appState.prZoom = data.prZoom;
-    if (data.selectedDur) MP.appState.selectedDur = data.selectedDur;
-    if (data.timeSig) MP.appState.timeSig = data.timeSig;
-    if (data.snapEnabled !== undefined) MP.appState.snapEnabled = data.snapEnabled;
+    MP.appState.nextNoteStart = typeof data.nextNoteStart === 'number' ? data.nextNoteStart : MP.seqEndBeat();
+    MP.appState.melodyName = typeof data.melodyName === 'string' ? data.melodyName : null;
+    if (typeof data.bpm === 'number') document.getElementById('bpm').value = data.bpm;
+    if (typeof data.kbOctave === 'number') MP.appState.kbOctave = data.kbOctave;
+    if (typeof data.prZoom === 'number') MP.appState.prZoom = data.prZoom;
+    if (typeof data.selectedDur === 'number') MP.appState.selectedDur = data.selectedDur;
+    if (Array.isArray(data.timeSig) && data.timeSig.length === 2) MP.appState.timeSig = data.timeSig;
+    if (typeof data.snapEnabled === 'boolean') MP.appState.snapEnabled = data.snapEnabled;
     return true;
   } catch (e) { return false; }
 };
@@ -196,6 +197,7 @@ MP.loadRTTTL = function(rtttlString, opts) {
   var result = MP.parseRTTTL(rtttlString);
   if (!result) return null;
   MP.pushUndo();
+  MP.clearSelection();
   MP.appState.seq = MP.oldSeqToTimeline(result.notes);
   MP.resetNextNoteStart();
   MP.appState.melodyName = result.name;

@@ -89,8 +89,8 @@
 .metro-indicator.tick { opacity: 1; transform: scale(1.3); }
 .btn-record.recording { background: var(--error); color: #fff; border-color: var(--error); animation: pulse-rec 1s infinite; }
 #btn-mic-record.recording { background: var(--error); color: #fff; border-color: var(--error); animation: pulse-rec 1s infinite; }
-.btn:hover { opacity: 0.85; }
-.btn-clear:hover, .btn-record:not(.recording):hover, .btn-metronome:not(.active):hover, .btn-loop:not(.active):hover {
+.btn:hover:not(:disabled) { opacity: 0.85; }
+.btn-clear:hover:not(:disabled), .btn-record:not(.recording):hover:not(:disabled), .btn-metronome:not(.active):hover:not(:disabled), .btn-loop:not(.active):hover:not(:disabled) {
   opacity: 1; border-color: var(--muted); color: var(--text); background: var(--section-border);
 }
 .theme-toggle:hover { background: var(--section-border); }

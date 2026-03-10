@@ -226,8 +226,8 @@ body.drag-overlay::after {
 .metro-indicator.tick { opacity: 1; transform: scale(1.3); }
 .btn-record.recording { background: var(--error); color: #fff; border-color: var(--error); animation: pulse-rec 1s infinite; }
 #btn-mic-record.recording { background: var(--error); color: #fff; border-color: var(--error); animation: pulse-rec 1s infinite; }
-.btn:hover { opacity: 0.85; }
-.btn-clear:hover, .btn-record:not(.recording):hover, .btn-metronome:not(.active):hover, .btn-loop:not(.active):hover {
+.btn:hover:not(:disabled) { opacity: 0.85; }
+.btn-clear:hover:not(:disabled), .btn-record:not(.recording):hover:not(:disabled), .btn-metronome:not(.active):hover:not(:disabled), .btn-loop:not(.active):hover:not(:disabled) {
   opacity: 1; border-color: var(--muted); color: var(--text); background: var(--section-border);
 }
 .theme-toggle:hover { background: var(--section-border); }
@@ -1629,6 +1629,8 @@ MP.startMicRecording = function() {
     var btn = document.getElementById('btn-mic-record');
     btn.classList.add('recording');
     btn.innerHTML = '&#9632; Stop Mic';
+    document.getElementById('btn-play').disabled = true;
+    document.getElementById('btn-metronome').disabled = true;
   }).catch(function() {
     MP.showToast('Microphone access denied', true);
   });
@@ -1652,6 +1654,9 @@ MP.stopMicRecording = function() {
   var btn = document.getElementById('btn-mic-record');
   btn.classList.remove('recording');
   btn.innerHTML = '&#127908; Mic';
+  btn.blur();
+  document.getElementById('btn-play').disabled = false;
+  document.getElementById('btn-metronome').disabled = false;
 
   var chunks = MP.appState.micChunks;
   if (!chunks || chunks.length === 0) {
@@ -2011,16 +2016,17 @@ MP.autoLoad = function() {
     const raw = localStorage.getItem(MP.LS_AUTOSAVE);
     if (!raw) return false;
     const data = JSON.parse(raw);
-    if (!data.seq || data.seq.length === 0) return false;
+    if (!Array.isArray(data.seq) || data.seq.length === 0) return false;
+    if (!data.seq.every(function(n) { return typeof n.name === 'string' && typeof n.freq === 'number' && typeof n.start === 'number' && typeof n.dur === 'number'; })) return false;
     MP.appState.seq = data.seq;
-    MP.appState.nextNoteStart = data.nextNoteStart || MP.seqEndBeat();
-    MP.appState.melodyName = data.melodyName || null;
-    if (data.bpm) document.getElementById('bpm').value = data.bpm;
-    if (data.kbOctave !== undefined) MP.appState.kbOctave = data.kbOctave;
-    if (data.prZoom) MP.appState.prZoom = data.prZoom;
-    if (data.selectedDur) MP.appState.selectedDur = data.selectedDur;
-    if (data.timeSig) MP.appState.timeSig = data.timeSig;
-    if (data.snapEnabled !== undefined) MP.appState.snapEnabled = data.snapEnabled;
+    MP.appState.nextNoteStart = typeof data.nextNoteStart === 'number' ? data.nextNoteStart : MP.seqEndBeat();
+    MP.appState.melodyName = typeof data.melodyName === 'string' ? data.melodyName : null;
+    if (typeof data.bpm === 'number') document.getElementById('bpm').value = data.bpm;
+    if (typeof data.kbOctave === 'number') MP.appState.kbOctave = data.kbOctave;
+    if (typeof data.prZoom === 'number') MP.appState.prZoom = data.prZoom;
+    if (typeof data.selectedDur === 'number') MP.appState.selectedDur = data.selectedDur;
+    if (Array.isArray(data.timeSig) && data.timeSig.length === 2) MP.appState.timeSig = data.timeSig;
+    if (typeof data.snapEnabled === 'boolean') MP.appState.snapEnabled = data.snapEnabled;
     return true;
   } catch (e) { return false; }
 };
@@ -2133,6 +2139,7 @@ MP.loadRTTTL = function(rtttlString, opts) {
   var result = MP.parseRTTTL(rtttlString);
   if (!result) return null;
   MP.pushUndo();
+  MP.clearSelection();
   MP.appState.seq = MP.oldSeqToTimeline(result.notes);
   MP.resetNextNoteStart();
   MP.appState.melodyName = result.name;
@@ -3042,7 +3049,7 @@ function setupComputerKeyboard() {
   document.addEventListener('keydown', (e) => {
     if (e.repeat) return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-    if (e.key === ' ') { e.preventDefault(); if (MP.appState.playState) MP.stopPlayback(); else MP.playSequence(); return; }
+    if (e.key === ' ') { e.preventDefault(); if (!MP.appState.micRecording) { if (MP.appState.playState) MP.stopPlayback(); else MP.playSequence(); } return; }
     if (MP.modKey(e) && e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); MP.redo(); return; }
     if (MP.modKey(e) && e.key.toLowerCase() === 'z') { e.preventDefault(); MP.undo(); return; }
     if (MP.modKey(e) && e.key.toLowerCase() === 'y') { e.preventDefault(); MP.redo(); return; }

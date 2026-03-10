@@ -164,7 +164,7 @@ function setupComputerKeyboard() {
   document.addEventListener('keydown', (e) => {
     if (e.repeat) return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-    if (e.key === ' ') { e.preventDefault(); if (MP.appState.playState) MP.stopPlayback(); else MP.playSequence(); return; }
+    if (e.key === ' ') { e.preventDefault(); if (!MP.appState.micRecording) { if (MP.appState.playState) MP.stopPlayback(); else MP.playSequence(); } return; }
     if (MP.modKey(e) && e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); MP.redo(); return; }
     if (MP.modKey(e) && e.key.toLowerCase() === 'z') { e.preventDefault(); MP.undo(); return; }
     if (MP.modKey(e) && e.key.toLowerCase() === 'y') { e.preventDefault(); MP.redo(); return; }
