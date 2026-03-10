@@ -1,43 +1,90 @@
-# BuzzCraft
+<div align="center">
 
-A browser-based melody composer for Arduino buzzers. Create melodies with a piano keyboard and piano roll editor, then export as Arduino C++ code or RTTTL notation.
+# 🐝 BuzzCraft
 
-Open **[buzzcraft.html](buzzcraft.html)** — single file, no install, works offline.
+**Browser-based melody composer for Arduino buzzers**
 
-## Features
+Create melodies with a piano keyboard and piano roll editor, then export as Arduino C++ code or RTTTL notation.
 
-- **Piano keyboard** — click or use computer keys (`A S D F G H J K L ; '` for white, `W E T Y U I O [` for black)
-- **Piano roll editor** — drag, resize, clone (Shift+drag), multi-select, snap-to-grid
-- **Chip view** — simplified horizontal note display
-- **Arduino C++ export** — generates `tone()`/`noTone()` code for any Arduino-compatible board (ESP32, STM32, RP2040, ATmega, etc.)
-- **RTTTL export** — standard ringtone format, paste/drop `.rtttl` files to import
-- **MIDI export** — download as Standard MIDI file
-- **MIDI input** — connect a MIDI keyboard
-- **Serial upload** — send notes directly to Arduino over serial (Chromium-based browsers)
-- **Playback** with loop, metronome, tap tempo, time signatures (4/4, 3/4, 6/8, etc.)
-- **Audio import** — load WAV/MP3/OGG files and extract melody via pitch detection
-- **Mic recording** — record from microphone and detect pitches in real time
-- **Share links** — copy a shareable URL that encodes the melody
-- **57 preset melodies** — search and load classic tunes
-- **Recording mode** — auto-detect note duration from key hold time
-- **Undo/redo**, copy/paste, octave transpose
-- **Dark/light theme**
-- **Works from `file://`** — no server needed
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Try_It_Now-blue?style=for-the-badge)](https://mrotnik.github.io/buzzcraft/)
 
-## Quick Start
+*Single file · No install · Works offline · Works from `file://`*
 
-1. Download or clone this repo
-2. Open `buzzcraft.html` in your browser
-3. Play notes on the keyboard or piano roll
-4. Copy the generated Arduino code and upload to your board
+</div>
 
-### Arduino Wiring
+---
+
+![Piano roll editor](screenshots/01.png)
+
+## ✨ Features
+
+<table>
+<tr>
+<td width="50%">
+
+### 🎵 Compose
+- 🎹 **Piano keyboard** — mouse, touch, or computer keys
+- 🎼 **Piano roll editor** — drag, resize, clone, multi-select
+- 🧩 **Chip view** — simplified horizontal display
+- ⏺️ **Recording mode** — auto-detect duration from key hold
+- 🎶 **57 preset melodies** — search and load classic tunes
+
+</td>
+<td width="50%">
+
+### 📤 Export
+- 📟 **Arduino C++** — `tone()`/`noTone()` for any board (ESP32, STM32, RP2040, ATmega, etc.)
+- 📱 **RTTTL** — standard ringtone format, paste/drop to import
+- 🎵 **MIDI export** — download as Standard MIDI file
+- 🔌 **Serial upload** — send directly to Arduino (Chromium)
+- 🔗 **Share links** — shareable URL with encoded melody
+
+</td>
+</tr>
+<tr>
+<td>
+
+### 🎛️ Input
+- 🎛️ **MIDI keyboard** — plug and play
+- 📂 **Audio import** — extract melody from WAV/MP3/OGG
+- 🎙️ **Mic recording** — real-time pitch detection
+
+</td>
+<td>
+
+### ⚡ Playback & UX
+- ▶️ **Playback** — loop, metronome, tap tempo, time signatures
+- ↩️ **Undo/redo** — copy/paste, octave transpose
+- 🌗 **Dark/light theme**
+- 📁 **Zero dependencies** — no server needed
+
+</td>
+</tr>
+</table>
+
+## 🚀 Quick Start
+
+```bash
+# Option 1: Use online
+# Visit https://mrotnik.github.io/buzzcraft/
+
+# Option 2: Run locally
+git clone https://github.com/mrotnik/buzzcraft.git
+# Open buzzcraft.html in your browser
+```
+
+1. Play notes on the keyboard or piano roll
+2. Copy the generated Arduino code
+3. Upload to your board
+
+### 🔌 Arduino Wiring
 
 Connect a passive buzzer between any GPIO pin (default: pin 5) and GND, with VCC to 3.3V or 5V. The generated code uses the standard `tone()` API.
 
-## Screenshots
+## 📸 Screenshots
 
-![Piano roll editor](screenshots/01.png)
+<details>
+<summary>Click to expand</summary>
 
 ![Piano roll and Arduino C++ output](screenshots/02.png)
 
@@ -47,9 +94,11 @@ Connect a passive buzzer between any GPIO pin (default: pin 5) and GND, with VCC
 
 ![Keyboard shortcuts](screenshots/04.png)
 
-## Development
+</details>
 
-The project is plain HTML/JS/CSS with no dependencies. Source files are modular:
+## 🛠️ Development
+
+Plain HTML/JS/CSS with zero dependencies. Source files are modular:
 
 ```
 js/          16 modules (state, constants, audio, audio-import, rtttl, codegen, ui, ...)
@@ -65,7 +114,7 @@ bundle.py    build script
 python bundle.py
 ```
 
-This concatenates all JS/CSS, inlines melody presets, and produces `buzzcraft.html` — a single self-contained file.
+Concatenates all JS/CSS, inlines melody presets, and produces `buzzcraft.html` — a single self-contained file.
 
 ### Architecture
 
@@ -73,12 +122,12 @@ All JS modules attach to the `window.MP` namespace (no ES modules, no bundler to
 
 Notes are stored as timeline objects `{ name, freq, start, dur }` where `start` and `dur` are in beats (quarter note = 1 beat).
 
-Edit files in `js/`, `css/`, and `index.html` — never edit `buzzcraft.html` directly.
+> **Note:** Edit files in `js/`, `css/`, and `index.html` — never edit `buzzcraft.html` directly.
 
-## Credits
+## 🙏 Credits
 
 - Preset melodies from [rtttl.js](https://github.com/1j01/rtttl.js) by Isaiah Odhner (MIT License)
 
-## License
+## 📄 License
 
 [GNU GPLv3](LICENSE)
