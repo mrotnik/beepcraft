@@ -47,9 +47,12 @@ MP.renderSequence = function() {
   if (wasPlaying) MP.refreshPlayback();
   MP.autoSave();
   var nameEl = document.getElementById('melody-name');
-  if (nameEl) nameEl.textContent = MP.appState.melodyName || 'Melody';
+  if (nameEl) nameEl.textContent = MP.appState.melodyName || '';
   var searchEl = document.getElementById('melody-search');
-  if (searchEl && MP.appState.melodyName) { searchEl.placeholder = MP.appState.melodyName; searchEl.parentElement.dataset.tip = MP.appState.melodyName; }
+  if (searchEl) {
+    if (MP.appState.melodyName) { searchEl.placeholder = MP.appState.melodyName; searchEl.parentElement.dataset.tip = MP.appState.melodyName; }
+    else { searchEl.placeholder = 'Search presets...'; searchEl.parentElement.dataset.tip = 'Search presets'; }
+  }
 };
 
 MP.autoSave = function() {

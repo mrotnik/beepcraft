@@ -46,6 +46,7 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 
 ### 🎛️ Input
 - 🎛️ **MIDI keyboard** — plug and play
+- 🎹 **MIDI file import** — drop monophonic .mid files to load melodies
 - 📂 **Audio import** — extract melody from WAV/MP3/OGG
 - 🎙️ **Mic recording** — real-time pitch detection
 
@@ -103,7 +104,7 @@ Plain HTML/JS/CSS with zero dependencies. Source files are modular:
 ```
 js/          16 modules (state, constants, audio, audio-import, rtttl, codegen, ui, ...)
 css/         6 stylesheets (base, controls, keyboard, piano-roll, chips, dark)
-melodies/    58 RTTTL preset files
+melodies/    57 RTTTL preset files
 index.html   main HTML
 bundle.py    build script
 ```

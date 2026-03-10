@@ -85,6 +85,7 @@
 .btn {
   padding: 9px 18px; border: 1px solid transparent; border-radius: 6px;
   cursor: pointer; font-family: monospace; font-size: 0.9em; font-weight: bold;
+  display: inline-flex; align-items: center; gap: 4px;
 }
 .btn-sm { padding: 5px 10px; font-size: 0.8em; }
 .btn-play  { background: var(--success); color: #fff; border-color: var(--success); }

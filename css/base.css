@@ -46,7 +46,7 @@ h1 { color: var(--accent); font-size: 1.4em; margin: 0; white-space: nowrap; }
   box-shadow: 0 1px 3px var(--section-shadow);
 }
 .top-bar-bpm { font-size: 0.9em; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
-.top-bar .btn { height: 30px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; gap: 4px; }
+.top-bar .btn { height: 30px; justify-content: center; white-space: nowrap; }
 .top-bar-pinned {
   position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
   display: flex; align-items: center; gap: 8px;

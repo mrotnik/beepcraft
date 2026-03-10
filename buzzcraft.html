@@ -53,7 +53,7 @@ h1 { color: var(--accent); font-size: 1.4em; margin: 0; white-space: nowrap; }
   box-shadow: 0 1px 3px var(--section-shadow);
 }
 .top-bar-bpm { font-size: 0.9em; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
-.top-bar .btn { height: 30px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; gap: 4px; }
+.top-bar .btn { height: 30px; justify-content: center; white-space: nowrap; }
 .top-bar-pinned {
   position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
   display: flex; align-items: center; gap: 8px;
@@ -240,6 +240,7 @@ body.drag-overlay::after {
 .btn {
   padding: 9px 18px; border: 1px solid transparent; border-radius: 6px;
   cursor: pointer; font-family: monospace; font-size: 0.9em; font-weight: bold;
+  display: inline-flex; align-items: center; gap: 4px;
 }
 .btn-sm { padding: 5px 10px; font-size: 0.8em; }
 .btn-play  { background: var(--success); color: #fff; border-color: var(--success); }
@@ -772,7 +773,7 @@ kbd {
 
 <div class="top-bar" id="top-bar">
   <canvas id="dance-cat" width="32" height="32"></canvas>
-  <h1>BuzzCraft</h1>
+  <h1><a href="https://mrotnik.github.io/buzzcraft/" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">BuzzCraft</a></h1>
   <span class="preset-search-wrap tip-down" data-tip="Search presets">
     <input type="text" class="melody-search" id="melody-search" placeholder="Search presets..." autocomplete="off">
     <div class="preset-dropdown" id="preset-dropdown"></div>
@@ -2047,9 +2048,12 @@ MP.renderSequence = function() {
   if (wasPlaying) MP.refreshPlayback();
   MP.autoSave();
   var nameEl = document.getElementById('melody-name');
-  if (nameEl) nameEl.textContent = MP.appState.melodyName || 'Melody';
+  if (nameEl) nameEl.textContent = MP.appState.melodyName || '';
   var searchEl = document.getElementById('melody-search');
-  if (searchEl && MP.appState.melodyName) { searchEl.placeholder = MP.appState.melodyName; searchEl.parentElement.dataset.tip = MP.appState.melodyName; }
+  if (searchEl) {
+    if (MP.appState.melodyName) { searchEl.placeholder = MP.appState.melodyName; searchEl.parentElement.dataset.tip = MP.appState.melodyName; }
+    else { searchEl.placeholder = 'Search presets...'; searchEl.parentElement.dataset.tip = 'Search presets'; }
+  }
 };
 
 MP.autoSave = function() {
