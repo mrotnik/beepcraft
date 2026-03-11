@@ -28,6 +28,7 @@ MP.DUR_NAMES = { 1: 'whole', 2: 'half', 4: 'quarter', 8: 'eighth', 16: '16th', 3
 MP.DUR_VALUES = Object.keys(MP.DUR_NAMES).map(Number);
 MP.SNAP_BEATS = 0.125;
 MP.FINE_SNAP_BEATS = 0.03125;
+MP.MAGNETIC_THRESHOLD = 0.04;
 
 MP.KEY_MAP = {
   'a': {semi: 0, oct: 0}, 's': {semi: 2, oct: 0}, 'd': {semi: 4, oct: 0},

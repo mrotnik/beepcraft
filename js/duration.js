@@ -16,8 +16,13 @@ MP.durFromBeats = function(b) {
 };
 
 MP.snapBeats = function(b) {
-  var step = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
-  return Math.max(0, Math.round(b / step) * step);
+  if (MP.appState.snapEnabled) {
+    return Math.max(0, Math.round(b / MP.SNAP_BEATS) * MP.SNAP_BEATS);
+  }
+  var fine = Math.max(0, Math.round(b / MP.FINE_SNAP_BEATS) * MP.FINE_SNAP_BEATS);
+  var nearest = Math.round(fine / MP.SNAP_BEATS) * MP.SNAP_BEATS;
+  if (Math.abs(fine - nearest) < MP.MAGNETIC_THRESHOLD) return nearest;
+  return fine;
 };
 
 MP.seqEndBeat = function() {

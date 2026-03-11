@@ -227,7 +227,8 @@
 }
 .modal-content {
   background: var(--section-bg); border-radius: 10px; padding: 20px 24px;
-  max-width: var(--modal-max-w); width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  max-width: var(--modal-max-w); width: 90%; max-height: calc(100vh - 40px);
+  overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
 }
 .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .modal-header h3 { margin: 0; font-size: 1.1em; }

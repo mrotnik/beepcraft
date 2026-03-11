@@ -600,6 +600,7 @@ function syncGridToWidth(inner, newTotalBeats, beatW) {
 function edgeDragHandler(inner, edgeHandle, expandBtn, setEdgeX, beatW, e) {
   e.preventDefault(); e.stopPropagation();
   expandBtn.classList.add('active');
+  edgeHandle.classList.add('active');
   var wrapper = inner.parentElement;
   wrapper.style.minWidth = wrapper.offsetWidth + 'px';
   var startX = e.clientX;
@@ -616,6 +617,7 @@ function edgeDragHandler(inner, edgeHandle, expandBtn, setEdgeX, beatW, e) {
   };
   var onUp = function() {
     expandBtn.classList.remove('active');
+    edgeHandle.classList.remove('active');
     wrapper.style.minWidth = '';
     if (Math.abs(lastEnd - origEnd) > 0.001) {
       MP.pushUndo();
@@ -683,6 +685,7 @@ function buildPrEdgeHandle(wrapper, inner, gridH, totalW, beatW) {
     if (e.button !== 0) return;
     e.preventDefault(); e.stopPropagation();
     expandBtn.classList.add('active');
+    edgeHandle.classList.add('active');
     var wrapperEl = inner.parentElement;
     wrapperEl.style.minWidth = wrapperEl.offsetWidth + 'px';
     var startX = e.clientX, dragged = false;
@@ -704,6 +707,7 @@ function buildPrEdgeHandle(wrapper, inner, gridH, totalW, beatW) {
     };
     var onUp = function() {
       expandBtn.classList.remove('active');
+      edgeHandle.classList.remove('active');
       wrapperEl.style.minWidth = '';
       if (!dragged) {
         var tsBeats = MP.getTimeSigBeats();

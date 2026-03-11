@@ -89,6 +89,10 @@ Connect a **passive** buzzer to your board. For 3-pin modules: VCC to 3.3V/5V, G
 
 </details>
 
+## 🔊 Coming Soon — SFX Generator
+
+Sound effects from a passive buzzer. Lasers, explosions, animal calls, sci-fi noises — shape them visually, preview instantly, insert into your melody.
+
 ## 🛠️ Development
 
 Plain HTML/JS/CSS with zero dependencies. Source files are modular:
