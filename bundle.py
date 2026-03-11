@@ -37,7 +37,7 @@ html = html.replace('</body>',
     '<script>\nwindow.__BUNDLED_MELODIES__ = ' + json.dumps(melodies) + ';\n</script>\n' +
     '<script>\n' + js + '\n</script>\n</body>')
 
-out = os.path.join(ROOT, 'buzzcraft.html')
+out = os.path.join(ROOT, 'beepcraft.html')
 with open(out, 'w', encoding='utf-8') as f:
     f.write(html)
 

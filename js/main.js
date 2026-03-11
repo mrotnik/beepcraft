@@ -647,13 +647,19 @@ function setupAutoRestore() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  ['autosave', 'theme', 'serial-baud', 'buzzer-pin', 'input-collapsed'].forEach(function(k) {
+    var old = localStorage.getItem('buzzcraft-' + k);
+    if (old !== null && localStorage.getItem('beepcraft-' + k) === null) {
+      localStorage.setItem('beepcraft-' + k, old);
+    }
+  });
   document.querySelectorAll('[data-tip]').forEach(function(el) {
     el.dataset.tip = el.dataset.tip.replace(/Mod\+/g, MP.MOD_KEY + '+');
   });
   document.querySelectorAll('kbd').forEach(function(el) {
     el.textContent = el.textContent.replace(/Mod\+/g, MP.MOD_KEY + '+');
   });
-  document.getElementById('app-version').textContent = 'BuzzCraft ' + MP.VERSION;
+  document.getElementById('app-version').textContent = 'BeepCraft ' + MP.VERSION;
   ['top-bar', 'input-settings-bar'].forEach(function(cls) {
     var el = document.querySelector('.' + cls);
     if (el) el.addEventListener('mousedown', function(e) {

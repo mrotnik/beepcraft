@@ -70,11 +70,11 @@ MP.getTimeSigBeats = function() {
   return MP.appState.timeSig ? MP.appState.timeSig.beats : 4;
 };
 
-MP.LS_AUTOSAVE = 'buzzcraft-autosave';
-MP.LS_THEME = 'buzzcraft-theme';
-MP.LS_SERIAL_BAUD = 'buzzcraft-serial-baud';
-MP.LS_BUZZER_PIN = 'buzzcraft-buzzer-pin';
-MP.LS_INPUT_COLLAPSED = 'buzzcraft-input-collapsed';
+MP.LS_AUTOSAVE = 'beepcraft-autosave';
+MP.LS_THEME = 'beepcraft-theme';
+MP.LS_SERIAL_BAUD = 'beepcraft-serial-baud';
+MP.LS_BUZZER_PIN = 'beepcraft-buzzer-pin';
+MP.LS_INPUT_COLLAPSED = 'beepcraft-input-collapsed';
 
 MP.AUDIO_OSC_TYPE = 'square';
 MP.AUDIO_GAIN = 0.15;

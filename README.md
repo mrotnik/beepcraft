@@ -1,12 +1,12 @@
 <div align="center">
 
-# 🐝 BuzzCraft
+# 🐝 BeepCraft
 
 **Browser-based melody composer for Arduino buzzers**
 
 Create melodies with a piano keyboard and piano roll editor, then export as Arduino C++ code or RTTTL notation.
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Try_It_Now-blue?style=for-the-badge)](https://mrotnik.github.io/buzzcraft/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Try_It_Now-blue?style=for-the-badge)](https://mrotnik.github.io/beepcraft/)
 
 *Single file · No install · Works offline · Works from `file://`*
 
@@ -67,11 +67,11 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 
 ```bash
 # Option 1: Use online
-# Visit https://mrotnik.github.io/buzzcraft/
+# Visit https://mrotnik.github.io/beepcraft/
 
 # Option 2: Run locally
-git clone https://github.com/mrotnik/buzzcraft.git
-# Open buzzcraft.html in your browser
+git clone https://github.com/mrotnik/beepcraft.git
+# Open beepcraft.html in your browser
 ```
 
 1. Play notes on the keyboard or piano roll
@@ -115,7 +115,7 @@ bundle.py    build script
 python bundle.py
 ```
 
-Concatenates all JS/CSS, inlines melody presets, and produces `buzzcraft.html` — a single self-contained file.
+Concatenates all JS/CSS, inlines melody presets, and produces `beepcraft.html` — a single self-contained file.
 
 ### Architecture
 
@@ -123,7 +123,7 @@ All JS modules attach to the `window.MP` namespace (no ES modules, no bundler to
 
 Notes are stored as timeline objects `{ name, freq, start, dur }` where `start` and `dur` are in beats (quarter note = 1 beat).
 
-> **Note:** Edit files in `js/`, `css/`, and `index.html` — never edit `buzzcraft.html` directly.
+> **Note:** Edit files in `js/`, `css/`, and `index.html` — never edit `beepcraft.html` directly.
 
 ## 🙏 Credits
 
