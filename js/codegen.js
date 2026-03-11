@@ -5,7 +5,7 @@ MP.updateStats = function() {
   countEl.textContent = seq.length + ' note' + (seq.length !== 1 ? 's' : '');
   if (seq.length === 0) { statsEl.textContent = ''; return; }
   const bpm = MP.getBpm();
-  const totalBeats = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
+  const totalBeats = MP.totalBeats();
   const totalSec = (totalBeats * 60 / bpm).toFixed(1);
   const freqs = seq.map(n => n.freq).filter(f => f > 0);
   const minFreq = Math.min(...freqs);

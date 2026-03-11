@@ -7,20 +7,20 @@ MP.playSequence = function(fromBeat) {
   playBtn.classList.add('btn-stop');
   MP.dancingCat.start();
 
-  const bpm = MP.getBpm();
-  const beatSec = 60 / bpm;
-  const ctx = MP.getAudioCtx();
-  const startBeat = fromBeat || 0;
-  const sorted = [...MP.appState.seq].sort((a, b) => a.start - b.start);
-  const totalDur = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart) * beatSec;
+  var bpm = MP.getBpm();
+  var beatSec = 60 / bpm;
+  var ctx = MP.getAudioCtx();
+  var startBeat = fromBeat || 0;
+  var offsetSec = startBeat * beatSec;
 
-  let startIdx = 0;
-  if (startBeat > 0) {
-    while (startIdx < sorted.length && sorted[startIdx].start + sorted[startIdx].dur <= startBeat) startIdx++;
-  }
-
-  const offsetSec = startBeat * beatSec;
-  MP.appState.playState = { ctx, scheduleTimer: null, idx: startIdx, startTime: ctx.currentTime - offsetSec, beatSec, totalDur, sorted, loopOffset: 0 };
+  var totalDur = MP.totalBeats() * beatSec;
+  MP.appState.playState = {
+    ctx: ctx, scheduleTimer: null,
+    startTime: ctx.currentTime - offsetSec,
+    beatSec: beatSec, loopOffset: 0,
+    loopTotalDur: totalDur,
+    scheduled: new Map()
+  };
   scheduleChunk();
 
   if (MP.appState.metronomeOn) {
@@ -30,61 +30,82 @@ MP.playSequence = function(fromBeat) {
     MP.scheduleMetronomeChunk();
   }
 
-  if (!MP.appState.loopEnabled) {
-    MP.appState.playTimeout = setTimeout(MP.stopPlayback, (totalDur - offsetSec) * 1000 + MP.PLAYBACK_BUFFER_MS);
-  }
-
   if (MP.appState.currentView === 'roll') MP.startPlayhead();
   if (MP.appState.currentView === 'chips') MP.startChipHighlight();
 };
 
+function scheduleNote(ps, n) {
+  var ctx = ps.ctx, startTime = ps.startTime, beatSec = ps.beatSec;
+  var noteStart = ps.loopOffset + n.start * beatSec;
+  var noteDur = n.dur * beatSec;
+  var absStart = Math.max(ctx.currentTime, startTime + noteStart);
+  var absEnd = startTime + noteStart + noteDur;
+  if (absEnd <= ctx.currentTime) { ps.scheduled.set(n, { s: n.start, d: n.dur }); return; }
+  var entry = { s: n.start, d: n.dur };
+  if (MP._serialWriter) {
+    var delayMs = (absStart - ctx.currentTime) * 1000;
+    setTimeout(function(f, d) { return function() { MP.sendSerialNote(f, d); }; }(n.freq, noteDur * 1000), Math.max(0, delayMs));
+  } else {
+    var releaseTime = Math.min(0.08, (absEnd - absStart) * 0.15);
+    var og = MP.createOscGain(ctx);
+    og.osc.type = MP.AUDIO_OSC_TYPE; og.osc.frequency.value = n.freq;
+    og.gain.gain.setValueAtTime(MP.AUDIO_GAIN, absStart);
+    og.gain.gain.setValueAtTime(MP.AUDIO_GAIN, absEnd - releaseTime);
+    og.gain.gain.exponentialRampToValueAtTime(MP.AUDIO_RELEASE_MIN, absEnd);
+    og.osc.start(absStart); og.osc.stop(absEnd);
+    entry.osc = og.osc;
+  }
+  ps.scheduled.set(n, entry);
+}
+
 function scheduleChunk() {
   if (!MP.appState.playState) return;
   var ps = MP.appState.playState;
-  const { ctx, startTime, beatSec, sorted } = ps;
-  const LOOKAHEAD = 2;
-  const now = ctx.currentTime - startTime;
+  var beatSec = ps.beatSec;
+  var now = ps.ctx.currentTime - ps.startTime;
+  var seq = MP.appState.seq;
 
-  while (ps.idx < sorted.length) {
-    const n = sorted[ps.idx];
-    const noteStart = ps.loopOffset + n.start * beatSec;
-    if (noteStart > now + LOOKAHEAD) break;
-    ps.idx++;
-    const noteDur = n.dur * beatSec;
-    const absStart = Math.max(ctx.currentTime, startTime + noteStart);
-    const absEnd = startTime + noteStart + noteDur;
-    if (absEnd <= ctx.currentTime) continue;
-    if (MP._serialWriter) {
-      var delayMs = (absStart - ctx.currentTime) * 1000;
-      setTimeout(() => MP.sendSerialNote(n.freq, noteDur * 1000), Math.max(0, delayMs));
-    } else {
-      const releaseTime = Math.min(0.08, (absEnd - absStart) * 0.15);
-      const og = MP.createOscGain(ctx);
-      const osc = og.osc, gain = og.gain;
-      osc.type = MP.AUDIO_OSC_TYPE; osc.frequency.value = n.freq;
-      gain.gain.setValueAtTime(MP.AUDIO_GAIN, absStart);
-      gain.gain.setValueAtTime(MP.AUDIO_GAIN, absEnd - releaseTime);
-      gain.gain.exponentialRampToValueAtTime(MP.AUDIO_RELEASE_MIN, absEnd);
-      osc.start(absStart); osc.stop(absEnd);
+  for (var i = 0; i < seq.length; i++) {
+    var n = seq[i];
+    var prev = ps.scheduled.get(n);
+    if (prev) {
+      if (prev.s === n.start && prev.d === n.dur) continue;
+      if (prev.osc) try { prev.osc.stop(0); } catch(e) {}
+      ps.scheduled.delete(n);
     }
+    var noteStart = ps.loopOffset + n.start * beatSec;
+    if (noteStart > now + MP.SCHEDULE_LOOKAHEAD) continue;
+    scheduleNote(ps, n);
   }
 
-  if (ps.idx < sorted.length) {
-    ps.scheduleTimer = setTimeout(scheduleChunk, MP.SCHEDULE_INTERVAL);
-  } else if (MP.appState.loopEnabled) {
-    ps.loopOffset += ps.totalDur;
-    ps.idx = 0;
-    ps.scheduleTimer = setTimeout(scheduleChunk, MP.PLAYBACK_BUFFER_MS);
+  var liveTotalDur = MP.totalBeats() * beatSec;
+  var noteEndDur = MP.seqEndBeat() * beatSec;
+  if (liveTotalDur < ps.loopTotalDur) ps.loopTotalDur = liveTotalDur;
+  if (noteEndDur > ps.loopTotalDur) ps.loopTotalDur = liveTotalDur;
+  var loopDur = ps.loopTotalDur;
+  if (MP.appState.loopEnabled && loopDur > 0 && now >= ps.loopOffset + loopDur - MP.SCHEDULE_LOOKAHEAD) {
+    ps.loopOffset += loopDur;
+    ps.loopTotalDur = liveTotalDur;
+    ps.scheduled = new Map();
   }
+
+  if (!MP.appState.loopEnabled && now >= liveTotalDur) {
+    MP.stopPlayback();
+    return;
+  }
+
+  ps.scheduleTimer = setTimeout(scheduleChunk, MP.SCHEDULE_INTERVAL);
 }
 
 MP._internalStop = function() {
-  clearTimeout(MP.appState.playTimeout);
   MP.stopPlayhead();
   MP.stopChipHighlight();
   if (MP.appState.playState) {
     clearTimeout(MP.appState.playState.scheduleTimer);
     clearTimeout(MP.appState.playState.metroTimer);
+    MP.appState.playState.scheduled.forEach(function(entry) {
+      if (entry.osc) try { entry.osc.stop(0); } catch(e) {}
+    });
     MP.appState.playState = null;
   }
   var playBtn = document.getElementById('btn-play');
@@ -102,36 +123,35 @@ MP._internalStop = function() {
 
 MP.refreshPlayback = function() {
   if (!MP.appState.playState) return;
-  const elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
-  const currentBeat = elapsed / MP.appState.playState.beatSec;
+  var elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
+  var currentBeat = elapsed / MP.appState.playState.beatSec;
   MP.playSequence(currentBeat);
 };
 
 MP.stopPlayback = function() {
   var wasRecording = MP.appState.isRecording;
   MP._internalStop();
-  MP.closeAudioCtx();
   if (wasRecording) MP.toggleRecording();
 };
 
 MP.startPlayhead = function() {
   MP.stopPlayhead();
-  const container = document.getElementById('piano-roll');
-  const inner = container.querySelector('.piano-roll-inner');
+  var container = document.getElementById('piano-roll');
+  var inner = container.querySelector('.piano-roll-inner');
   if (!inner || !MP.appState.playState) return;
 
-  const existing = inner.querySelector('.pr-playhead');
+  var existing = inner.querySelector('.pr-playhead');
   if (existing) existing.remove();
 
-  const gridH = parseInt(inner.style.height) - MP.PR_TIMELINE_H;
-  const line = document.createElement('div');
+  var gridH = parseInt(inner.style.height) - MP.PR_TIMELINE_H;
+  var line = document.createElement('div');
   line.className = 'pr-playhead';
   line.style.left = MP.PR_LABEL_W + 'px';
   line.style.top = MP.PR_TIMELINE_H + 'px';
   line.style.height = gridH + 'px';
   inner.appendChild(line);
 
-  const measureHL = document.createElement('div');
+  var measureHL = document.createElement('div');
   measureHL.className = 'pr-measure-highlight';
   measureHL.style.top = MP.PR_TIMELINE_H + 'px';
   measureHL.style.height = gridH + 'px';
@@ -142,12 +162,18 @@ MP.startPlayhead = function() {
 
   function animate() {
     if (!MP.appState.playState) { MP.stopPlayhead(); return; }
-    const elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
-    if (MP.appState.playState.totalDur <= 0) { MP.stopPlayhead(); return; }
-    var currentBeat = elapsed / MP.appState.playState.beatSec;
-    var totalBeats = MP.appState.playState.totalDur / MP.appState.playState.beatSec;
-    if (MP.appState.loopEnabled && totalBeats > 0) currentBeat = ((currentBeat % totalBeats) + totalBeats) % totalBeats;
-    const px = currentBeat * beatW;
+    var elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
+    var totalBeats = MP.totalBeats();
+    if (totalBeats <= 0) { MP.stopPlayhead(); return; }
+    var currentBeat;
+    if (MP.appState.loopEnabled && totalBeats > 0) {
+      var loopBeats = MP.appState.playState.loopTotalDur / MP.appState.playState.beatSec;
+      currentBeat = (elapsed - MP.appState.playState.loopOffset) / MP.appState.playState.beatSec;
+      currentBeat = ((currentBeat % loopBeats) + loopBeats) % loopBeats;
+    } else {
+      currentBeat = elapsed / MP.appState.playState.beatSec;
+    }
+    var px = currentBeat * beatW;
     line.style.left = (MP.PR_LABEL_W + px) + 'px';
     MP.updateMetronomeIndicator(currentBeat);
 
@@ -160,9 +186,9 @@ MP.startPlayhead = function() {
       measureHL.style.width = ((measureEnd - measureStart) * beatW) + 'px';
     }
 
-    const visLeft = container.scrollLeft;
-    const visRight = visLeft + container.clientWidth;
-    const headPos = MP.PR_LABEL_W + px;
+    var visLeft = container.scrollLeft;
+    var visRight = visLeft + container.clientWidth;
+    var headPos = MP.PR_LABEL_W + px;
     if (headPos > visRight - 40 || headPos < visLeft + MP.PR_LABEL_W + 10) {
       container.scrollLeft = Math.max(0, headPos - container.clientWidth / 3);
     }
@@ -174,22 +200,28 @@ MP.startPlayhead = function() {
 MP.startChipHighlight = function() {
   MP.stopChipHighlight();
   if (!MP.appState.playState) return;
-  const flat = MP.seqToFlat();
+  var flat = MP.seqToFlat();
   if (flat.length === 0) return;
-  const cumBeats = [];
-  let cursor = 0;
-  flat.forEach(n => { cumBeats.push(cursor); cursor += n._beats; });
-  const totalBeats = cursor;
-  const chips = document.querySelectorAll('#sequence .note-chip');
-  let lastIdx = -1;
+  var cumBeats = [];
+  var cursor = 0;
+  flat.forEach(function(n) { cumBeats.push(cursor); cursor += n._beats; });
+  var totalBeats = cursor;
+  var chips = document.querySelectorAll('#sequence .note-chip');
+  var lastIdx = -1;
 
   function animate() {
     if (!MP.appState.playState) { MP.stopChipHighlight(); return; }
-    const elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
-    let beat = elapsed / MP.appState.playState.beatSec;
-    if (MP.appState.loopEnabled && totalBeats > 0) beat = ((beat % totalBeats) + totalBeats) % totalBeats;
-    let idx = 0;
-    for (let i = cumBeats.length - 1; i >= 0; i--) {
+    var elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
+    var beat;
+    if (MP.appState.loopEnabled && totalBeats > 0) {
+      var loopBeats = MP.appState.playState.loopTotalDur / MP.appState.playState.beatSec;
+      beat = (elapsed - MP.appState.playState.loopOffset) / MP.appState.playState.beatSec;
+      beat = ((beat % loopBeats) + loopBeats) % loopBeats;
+    } else {
+      beat = elapsed / MP.appState.playState.beatSec;
+    }
+    var idx = 0;
+    for (var i = cumBeats.length - 1; i >= 0; i--) {
       if (beat >= cumBeats[i]) { idx = i; break; }
     }
     if (idx !== lastIdx) {
@@ -210,7 +242,7 @@ MP.stopChipHighlight = function() {
     cancelAnimationFrame(MP.appState.chipHighlightRAF);
     MP.appState.chipHighlightRAF = null;
   }
-  document.querySelectorAll('#sequence .note-chip.playing').forEach(c => c.classList.remove('playing'));
+  document.querySelectorAll('#sequence .note-chip.playing').forEach(function(c) { c.classList.remove('playing'); });
 };
 
 MP.stopPlayhead = function() {
@@ -218,9 +250,9 @@ MP.stopPlayhead = function() {
     cancelAnimationFrame(MP.appState.playheadRAF);
     MP.appState.playheadRAF = null;
   }
-  const inner = document.querySelector('.piano-roll-inner');
+  var inner = document.querySelector('.piano-roll-inner');
   if (inner) {
-    const ph = inner.querySelector('.pr-playhead'); if (ph) ph.remove();
-    const mh = inner.querySelector('.pr-measure-highlight'); if (mh) mh.remove();
+    var ph = inner.querySelector('.pr-playhead'); if (ph) ph.remove();
+    var mh = inner.querySelector('.pr-measure-highlight'); if (mh) mh.remove();
   }
 };

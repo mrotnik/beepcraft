@@ -81,6 +81,10 @@ MP._onMIDIMessage = function(msg) {
 };
 
 MP.importMidiFile = function(file) {
+  if (file.size > MP.IMPORT_MAX_FILE_SIZE) {
+    MP.showToast('MIDI file too large (max ' + Math.round(MP.IMPORT_MAX_FILE_SIZE / 1024 / 1024) + 'MB)', true);
+    return;
+  }
   file.arrayBuffer().then(function(buf) {
     var d = new DataView(buf);
     var pos = 0;
@@ -89,6 +93,7 @@ MP.importMidiFile = function(file) {
     function readVLQ() {
       var val = 0;
       for (var i = 0; i < 4; i++) {
+        if (pos >= d.byteLength) return val;
         var b = d.getUint8(pos++);
         val = (val << 7) | (b & 0x7f);
         if (!(b & 0x80)) break;
@@ -103,12 +108,13 @@ MP.importMidiFile = function(file) {
     var timeDivision = readU16();
     if (timeDivision & 0x8000) { MP.showToast('SMPTE time division not supported', true); return; }
     var ticksPerBeat = timeDivision;
+    if (ticksPerBeat <= 0) { MP.showToast('Invalid MIDI time division', true); return; }
 
     var events = [];
-    for (var t = 0; t < numTracks; t++) {
+    for (var t = 0; t < Math.min(numTracks, MP.MIDI_MAX_TRACKS); t++) {
       if (readU32() !== 0x4d54726b) { MP.showToast('Invalid track chunk', true); return; }
       var trackLen = readU32();
-      var trackEnd = pos + trackLen;
+      var trackEnd = Math.min(pos + trackLen, d.byteLength);
       var absTick = 0;
       var runningStatus = 0;
       while (pos < trackEnd) {
@@ -119,7 +125,7 @@ MP.importMidiFile = function(file) {
         if (cmd === 0x90 || cmd === 0x80) {
           var note = d.getUint8(pos++);
           var vel = d.getUint8(pos++);
-          events.push({ tick: absTick, cmd: cmd, note: note, vel: vel });
+          if (events.length < MP.MIDI_MAX_EVENTS) events.push({ tick: absTick, cmd: cmd, note: note, vel: vel });
         } else if (cmd === 0xa0 || cmd === 0xb0 || cmd === 0xe0) {
           pos += 2;
         } else if (cmd === 0xc0 || cmd === 0xd0) {
@@ -169,7 +175,7 @@ MP.importMidiFile = function(file) {
       for (var i = 0; i < seq.length; i++) seq[i].start -= minStart;
     }
 
-    var fileName = file.name.replace(/\.midi?$/i, '');
+    var fileName = MP.sanitizeFilename(file.name.replace(/\.midi?$/i, ''));
     MP.pushUndo();
     MP.clearSelection();
     MP.appState.seq = seq;

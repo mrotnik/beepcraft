@@ -1,9 +1,13 @@
-import os, json, glob, re
+import os, json, glob, re, sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 def read(path):
-    with open(os.path.join(ROOT, path), 'r', encoding='utf-8') as f:
+    full = os.path.join(ROOT, path)
+    if not os.path.isfile(full):
+        print(f'Error: missing file {path}', file=sys.stderr)
+        sys.exit(1)
+    with open(full, 'r', encoding='utf-8') as f:
         return f.read()
 
 css_files = ['css/base.css', 'css/controls.css', 'css/keyboard.css', 'css/piano-roll.css', 'css/chips.css', 'css/dark.css']

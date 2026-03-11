@@ -25,6 +25,7 @@ for (let octave = 0; octave <= 9; octave++) {
 }
 
 MP.DUR_NAMES = { 1: 'whole', 2: 'half', 4: 'quarter', 8: 'eighth', 16: '16th', 32: '32nd', 64: '64th', 128: '128th' };
+MP.DUR_VALUES = Object.keys(MP.DUR_NAMES).map(Number);
 MP.SNAP_BEATS = 0.125;
 MP.FINE_SNAP_BEATS = 0.03125;
 
@@ -86,6 +87,7 @@ MP.METRO_FREQ_UP = 800;
 MP.METRO_GAIN_DOWN = 0.7;
 MP.METRO_GAIN_UP = 0.4;
 MP.METRO_FLASH_MS = 80;
+MP.METRO_RELEASE = 0.05;
 
 MP.escHtml = function(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
 
@@ -98,9 +100,15 @@ MP.COPY_FEEDBACK_MS = 1500;
 MP.TOAST_MS = 3000;
 MP.MIDI_INFO_MS = 6000;
 MP.SCHEDULE_INTERVAL = 500;
+MP.SCHEDULE_LOOKAHEAD = 2;
 MP.PLAYBACK_BUFFER_MS = 200;
 MP.REST_GAP_THRESHOLD = 0.03;
 MP.IMPORT_MAX_FILE_SIZE = 50 * 1024 * 1024;
+MP.IMPORT_MAX_RTTTL_FILES = 500;
+MP.IMPORT_MAX_RTTTL_FILE_SIZE = 100 * 1024;
+MP.IMPORT_MAX_HASH_LEN = 200000;
+MP.MIDI_MAX_TRACKS = 100;
+MP.MIDI_MAX_EVENTS = 100000;
 MP.MIC_MAX_DURATION_SEC = 300;
 
 MP.IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);

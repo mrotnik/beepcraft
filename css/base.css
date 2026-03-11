@@ -20,6 +20,11 @@
   --dropdown-bg: #e6e8ec;
   --dropdown-border: #b8bcc6;
   --dropdown-hover: #dee0e5;
+  --selection: #d03830;
+  --pr-label-w: 50px;
+  --pr-row-h: 20px;
+  --pr-timeline-h: 20px;
+  --modal-max-w: 460px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }

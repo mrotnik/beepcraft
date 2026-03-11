@@ -44,7 +44,7 @@ MP.renderSequence = function() {
   const wasPlaying = !!MP.appState.playState;
   MP.renderChips();
   if (MP.appState.currentView === 'roll') MP.renderPianoRoll();
-  if (wasPlaying) MP.refreshPlayback();
+  if (wasPlaying && MP.appState.currentView === 'roll') MP.startPlayhead();
   MP.autoSave();
   var nameEl = document.getElementById('melody-name');
   if (nameEl) nameEl.textContent = MP.appState.melodyName || '';
@@ -77,16 +77,16 @@ MP.autoLoad = function() {
     if (!raw) return false;
     const data = JSON.parse(raw);
     if (!Array.isArray(data.seq) || data.seq.length === 0) return false;
-    if (!data.seq.every(function(n) { return typeof n.name === 'string' && typeof n.freq === 'number' && typeof n.start === 'number' && typeof n.dur === 'number'; })) return false;
+    if (!data.seq.every(function(n) { return typeof n.name === 'string' && Number.isFinite(n.freq) && Number.isFinite(n.start) && Number.isFinite(n.dur); })) return false;
     MP.appState.seq = data.seq.filter(function(n) { return n.freq > 0 && n.start >= 0 && n.dur > 0; });
     if (MP.appState.seq.length === 0) return false;
-    MP.appState.nextNoteStart = typeof data.nextNoteStart === 'number' && data.nextNoteStart >= 0 ? data.nextNoteStart : MP.seqEndBeat();
+    MP.appState.nextNoteStart = Number.isFinite(data.nextNoteStart) && data.nextNoteStart >= 0 ? data.nextNoteStart : MP.seqEndBeat();
     MP.appState.melodyName = typeof data.melodyName === 'string' ? data.melodyName : null;
-    if (typeof data.bpm === 'number') document.getElementById('bpm').value = Math.max(MP.BPM_MIN, Math.min(MP.BPM_MAX, Math.round(data.bpm)));
-    if (typeof data.kbOctave === 'number') MP.appState.kbOctave = Math.max(0, Math.min(8, Math.floor(data.kbOctave)));
-    if (typeof data.prZoom === 'number') MP.appState.prZoom = Math.max(MP.ZOOM_MIN, Math.min(MP.ZOOM_MAX, data.prZoom));
-    if (typeof data.selectedDur === 'number') MP.appState.selectedDur = MP.DUR_NAMES[data.selectedDur] ? data.selectedDur : 4;
-    if (Array.isArray(data.timeSig) && data.timeSig.length === 2) MP.appState.timeSig = data.timeSig;
+    if (Number.isFinite(data.bpm)) document.getElementById('bpm').value = Math.max(MP.BPM_MIN, Math.min(MP.BPM_MAX, Math.round(data.bpm)));
+    if (Number.isFinite(data.kbOctave)) MP.appState.kbOctave = Math.max(0, Math.min(8, Math.floor(data.kbOctave)));
+    if (Number.isFinite(data.prZoom)) MP.appState.prZoom = Math.max(MP.ZOOM_MIN, Math.min(MP.ZOOM_MAX, data.prZoom));
+    if (Number.isFinite(data.selectedDur)) MP.appState.selectedDur = MP.DUR_NAMES[data.selectedDur] ? data.selectedDur : 4;
+    if (data.timeSig && Number.isFinite(data.timeSig.beats) && Number.isFinite(data.timeSig.value) && data.timeSig.beats > 0 && data.timeSig.value > 0) MP.appState.timeSig = data.timeSig;
     if (typeof data.snapEnabled === 'boolean') MP.appState.snapEnabled = data.snapEnabled;
     return true;
   } catch (e) { return false; }
@@ -122,8 +122,8 @@ function playMetroTick(ctx, absTime, isDownbeat) {
   og.osc.type = 'sine';
   og.osc.frequency.value = isDownbeat ? MP.METRO_FREQ_DOWN : MP.METRO_FREQ_UP;
   og.gain.gain.setValueAtTime(isDownbeat ? MP.METRO_GAIN_DOWN : MP.METRO_GAIN_UP, absTime);
-  og.gain.gain.exponentialRampToValueAtTime(MP.AUDIO_RELEASE_MIN, absTime + 0.05);
-  og.osc.start(absTime); og.osc.stop(absTime + 0.05);
+  og.gain.gain.exponentialRampToValueAtTime(MP.AUDIO_RELEASE_MIN, absTime + MP.METRO_RELEASE);
+  og.osc.start(absTime); og.osc.stop(absTime + MP.METRO_RELEASE);
 }
 
 function flashMetroIndicator(isDownbeat) {
@@ -159,8 +159,7 @@ MP.scheduleMetronomeChunk = function() {
   var tsBeats = MP.getTimeSigBeats();
   var elapsed = ps.ctx.currentTime - ps.startTime;
   var currentBeat = elapsed / ps.beatSec;
-  var LOOKAHEAD = 2;
-  var lookaheadBeat = currentBeat + LOOKAHEAD / ps.beatSec;
+  var lookaheadBeat = currentBeat + MP.SCHEDULE_LOOKAHEAD / ps.beatSec;
   if (ps.nextMetroBeat === undefined) {
     ps.nextMetroBeat = Math.max(0, Math.ceil(currentBeat));
   }
@@ -187,10 +186,17 @@ MP.updateMetronomeIndicator = function(currentBeat) {
 MP.resetNextNoteStart = function() { MP.appState.nextNoteStart = MP.seqEndBeat(); };
 
 MP.ensureNextNoteStart = function() {
-  MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
+  var end = MP.seqEndBeat();
+  MP.appState.nextNoteStart = end > 0 ? Math.max(MP.appState.nextNoteStart, end) : 0;
 };
 
-MP.updateSequence = function() { MP.renderSequence(); MP.generateCode(); };
+MP._updateRaf = 0;
+MP.updateSequence = function(immediate) {
+  if (immediate) { MP.renderSequence(); MP.generateCode(); return; }
+  if (!MP._updateRaf) {
+    MP._updateRaf = requestAnimationFrame(function() { MP._updateRaf = 0; MP.renderSequence(); MP.generateCode(); });
+  }
+};
 
 MP.clearAll = function() {
   MP.pushUndo(); MP.appState.seq = [];

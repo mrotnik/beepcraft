@@ -7,9 +7,9 @@
   background: var(--accent-bg); color: var(--accent); font-family: monospace; font-size: 1.2em; font-weight: bold;
   padding: 0 6px; border-radius: 4px 0 0 4px; border: 1px solid var(--section-border);
   min-width: 38px; text-align: center; letter-spacing: 1px; cursor: pointer;
-  text-shadow: 0 0 6px rgba(112,93,207,0.4); line-height: 28px; height: 28px;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 40%, transparent); line-height: 28px; height: 28px;
 }
-.led-display:hover { text-shadow: 0 0 10px rgba(112,93,207,0.6); }
+.led-display:hover { text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent); }
 .bpm-input {
   width: 52px; padding: 6px 4px; border: 1px solid var(--input-border); border-radius: 0;
   font-family: monospace; font-size: 1em; text-align: center;
@@ -74,7 +74,7 @@
 .seq-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; position: relative; }
 .seq-header .info { margin: 0; }
 .seq-header-left { display: flex; align-items: center; gap: 8px; z-index: 1; }
-.seq-header-right { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: wrap; z-index: 1; }
+.seq-header-right { display: flex; align-items: center; gap: 6px; margin-left: auto; z-index: 1; }
 .seq-header.compact-1 #melody-stats { display: none; }
 .seq-header.compact-2 .seq-header-left { gap: 4px; }
 .seq-header.compact-2 .seq-header-left .btn-sm { padding: 4px 6px; }
@@ -188,9 +188,11 @@
 }
 .pin-input { width: 46px; text-align: center; }
 
+.melody-name-wrap {
+  flex: 1 1 0; min-width: 0; display: flex; justify-content: center;
+}
 .melody-name {
-  flex: 1 1 0; min-width: 0;
-  font-weight: bold; font-size: 1.2em; text-align: center;
+  max-width: 100%; font-weight: bold; font-size: 1.2em; text-align: center;
   color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   cursor: pointer;
 }
@@ -225,7 +227,7 @@
 }
 .modal-content {
   background: var(--section-bg); border-radius: 10px; padding: 20px 24px;
-  max-width: 460px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  max-width: var(--modal-max-w); width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
 }
 .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .modal-header h3 { margin: 0; font-size: 1.1em; }

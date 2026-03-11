@@ -8,7 +8,7 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Try_It_Now-blue?style=for-the-badge)](https://mrotnik.github.io/beepcraft/)
 
-*Single file · No install · Works offline · Works from `file://`*
+*Single file · No install · Works offline · Share melodies via link with friends*
 
 </div>
 
@@ -65,14 +65,11 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 
 ## 🚀 Quick Start
 
-```bash
-# Option 1: Use online
-# Visit https://mrotnik.github.io/beepcraft/
+**[Use online](https://mrotnik.github.io/beepcraft/)** — nothing to install
 
-# Option 2: Run locally
-git clone https://github.com/mrotnik/beepcraft.git
-# Open beepcraft.html in your browser
-```
+**Run offline** — [download beepcraft.html](https://raw.githubusercontent.com/mrotnik/beepcraft/public/beepcraft.html) (right-click → Save As) and open in your browser. It's a single self-contained file — easy to share with friends.
+
+**Development** — `git clone https://github.com/mrotnik/beepcraft.git`
 
 1. Play notes on the keyboard or piano roll
 2. Copy the generated Arduino code

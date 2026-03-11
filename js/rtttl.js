@@ -38,6 +38,7 @@ MP.generateRTTTL = function(flat, bpm) {
 };
 
 MP.parseRTTTL = function(rtttl) {
+  if (rtttl.length > 100000) return null;
   const match = rtttl.match(/^([^:]+):([^:]+):(.+)$/);
   if (!match) return null;
 

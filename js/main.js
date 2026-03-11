@@ -285,7 +285,7 @@ function setupOutputControls() {
     MP.downloadBlob(new Blob([data], { type: 'audio/midi' }), name + '.mid');
     MP.showToast('Saved ' + name + '.mid');
   });
-  document.getElementById('btn-share').addEventListener('click', function() {
+  function shareLink() {
     var rtttl = document.getElementById('rtttl-output').value.trim();
     if (!rtttl) { MP.showToast('Nothing to share', true); return; }
     var url = location.href.split('#')[0] + '#r=' + btoa(unescape(encodeURIComponent(rtttl)));
@@ -294,7 +294,9 @@ function setupOutputControls() {
     } else {
       MP.showToast('Could not copy link', true);
     }
-  });
+  }
+  document.getElementById('btn-share').addEventListener('click', shareLink);
+  document.getElementById('btn-share-seq').addEventListener('click', shareLink);
   function parseRtttlInput() {
     var raw = document.getElementById('rtttl-output').value.trim();
     if (!raw) return;
@@ -504,6 +506,9 @@ function setupFileHandling() {
   var RTTTL_RE = /^[^:]+:\s*[dob]=\d+.*:.+$/;
   function loadRtttlFilesFromList(files, verb) {
     if (files.length === 0) { MP.showToast('No .rtttl or .txt files found', true); return; }
+    files = files.slice(0, MP.IMPORT_MAX_RTTTL_FILES);
+    files = files.filter(function(f) { return f.size <= MP.IMPORT_MAX_RTTTL_FILE_SIZE; });
+    if (files.length === 0) { MP.showToast('All files too large (max 100KB each)', true); return; }
     var loaded = 0, skipped = 0, dupes = 0;
     var seen = new Set();
     var customs = [];
@@ -590,7 +595,7 @@ function setupFileHandling() {
 
 function setupAutoRestore() {
   var hash = location.hash;
-  if (hash.startsWith('#r=')) {
+  if (hash.startsWith('#r=') && hash.length <= MP.IMPORT_MAX_HASH_LEN) {
     try {
       var rtttl = decodeURIComponent(escape(atob(hash.slice(3))));
       var result = MP.loadRTTTL(rtttl);

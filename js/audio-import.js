@@ -289,6 +289,27 @@ MP._analyzeAudioBuffer = function(audioBuffer, bpm) {
   return notes;
 };
 
+MP._processAudioBuffer = function(audioBuffer, melodyName) {
+  var modal = document.getElementById('import-modal');
+  var status = document.getElementById('import-status');
+  modal.style.display = '';
+  status.textContent = 'Analyzing pitches...';
+  setTimeout(function() {
+    var notes = MP._analyzeAudioBuffer(audioBuffer, MP.getBpm());
+    modal.style.display = 'none';
+    if (notes.length === 0) {
+      MP.showToast('No pitches detected \u2014 try a clearer monophonic recording', true);
+      return;
+    }
+    MP.pushUndo();
+    MP.appState.seq = notes;
+    MP.resetNextNoteStart();
+    MP.appState.melodyName = melodyName;
+    MP.updateSequence();
+    MP.showToast('Imported ' + notes.length + ' notes from ' + melodyName);
+  }, 50);
+};
+
 MP.importAudioFile = function(file) {
   if (!file) return;
   if (file.size > MP.IMPORT_MAX_FILE_SIZE) {
@@ -305,22 +326,8 @@ MP.importAudioFile = function(file) {
     status.textContent = 'Decoding audio...';
     var ctx = MP.getAudioCtx();
     ctx.decodeAudioData(reader.result, function(audioBuffer) {
-      status.textContent = 'Analyzing pitches...';
-      setTimeout(function() {
-        var notes = MP._analyzeAudioBuffer(audioBuffer, MP.getBpm());
-        modal.style.display = 'none';
-        if (notes.length === 0) {
-          MP.showToast('No pitches detected — try a clearer monophonic recording', true);
-          return;
-        }
-        MP.pushUndo();
-        MP.appState.seq = notes;
-        MP.resetNextNoteStart();
-        var name = file.name.replace(/\.[^.]+$/, '');
-        MP.appState.melodyName = name;
-        MP.updateSequence();
-        MP.showToast('Imported ' + notes.length + ' notes from ' + file.name);
-      }, 50);
+      var name = MP.sanitizeFilename(file.name.replace(/\.[^.]+$/, ''));
+      MP._processAudioBuffer(audioBuffer, name);
     }, function() {
       modal.style.display = 'none';
       MP.showToast('Failed to decode audio file', true);
@@ -413,23 +420,5 @@ MP.stopMicRecording = function() {
   var audioBuffer = ctx.createBuffer(1, merged.length, ctx.sampleRate);
   audioBuffer.getChannelData(0).set(merged);
 
-  var modal = document.getElementById('import-modal');
-  var status = document.getElementById('import-status');
-  modal.style.display = '';
-  status.textContent = 'Analyzing pitches...';
-
-  setTimeout(function() {
-    var notes = MP._analyzeAudioBuffer(audioBuffer, MP.getBpm());
-    modal.style.display = 'none';
-    if (notes.length === 0) {
-      MP.showToast('No pitches detected — try a clearer recording', true);
-      return;
-    }
-    MP.pushUndo();
-    MP.appState.seq = notes;
-    MP.resetNextNoteStart();
-    MP.appState.melodyName = 'Mic Recording';
-    MP.updateSequence();
-    MP.showToast('Imported ' + notes.length + ' notes from microphone');
-  }, 50);
+  MP._processAudioBuffer(audioBuffer, 'Mic Recording');
 };

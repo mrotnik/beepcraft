@@ -18,6 +18,7 @@ MP.createOscGain = function(ctx) {
 };
 
 MP.playNotePreview = function(freq) {
+  if (MP.appState.playState) return null;
   if (MP._serialWriter) {
     MP.sendSerialNote(freq, 300);
     return { serial: true };

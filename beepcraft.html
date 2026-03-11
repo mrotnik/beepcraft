@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'">
 <title>BeepCraft</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#127925;</text></svg>">
 <style>
@@ -27,6 +28,11 @@
   --dropdown-bg: #e6e8ec;
   --dropdown-border: #b8bcc6;
   --dropdown-hover: #dee0e5;
+  --selection: #d03830;
+  --pr-label-w: 50px;
+  --pr-row-h: 20px;
+  --pr-timeline-h: 20px;
+  --modal-max-w: 460px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
@@ -162,9 +168,9 @@ body.drag-overlay::after {
   background: var(--accent-bg); color: var(--accent); font-family: monospace; font-size: 1.2em; font-weight: bold;
   padding: 0 6px; border-radius: 4px 0 0 4px; border: 1px solid var(--section-border);
   min-width: 38px; text-align: center; letter-spacing: 1px; cursor: pointer;
-  text-shadow: 0 0 6px rgba(112,93,207,0.4); line-height: 28px; height: 28px;
+  text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 40%, transparent); line-height: 28px; height: 28px;
 }
-.led-display:hover { text-shadow: 0 0 10px rgba(112,93,207,0.6); }
+.led-display:hover { text-shadow: 0 0 10px color-mix(in srgb, var(--accent) 60%, transparent); }
 .bpm-input {
   width: 52px; padding: 6px 4px; border: 1px solid var(--input-border); border-radius: 0;
   font-family: monospace; font-size: 1em; text-align: center;
@@ -229,7 +235,7 @@ body.drag-overlay::after {
 .seq-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; position: relative; }
 .seq-header .info { margin: 0; }
 .seq-header-left { display: flex; align-items: center; gap: 8px; z-index: 1; }
-.seq-header-right { display: flex; align-items: center; gap: 6px; margin-left: auto; flex-wrap: wrap; z-index: 1; }
+.seq-header-right { display: flex; align-items: center; gap: 6px; margin-left: auto; z-index: 1; }
 .seq-header.compact-1 #melody-stats { display: none; }
 .seq-header.compact-2 .seq-header-left { gap: 4px; }
 .seq-header.compact-2 .seq-header-left .btn-sm { padding: 4px 6px; }
@@ -343,9 +349,11 @@ body.drag-overlay::after {
 }
 .pin-input { width: 46px; text-align: center; }
 
+.melody-name-wrap {
+  flex: 1 1 0; min-width: 0; display: flex; justify-content: center;
+}
 .melody-name {
-  flex: 1 1 0; min-width: 0;
-  font-weight: bold; font-size: 1.2em; text-align: center;
+  max-width: 100%; font-weight: bold; font-size: 1.2em; text-align: center;
   color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   cursor: pointer;
 }
@@ -380,7 +388,7 @@ body.drag-overlay::after {
 }
 .modal-content {
   background: var(--section-bg); border-radius: 10px; padding: 20px 24px;
-  max-width: 460px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  max-width: var(--modal-max-w); width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
 }
 .modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
 .modal-header h3 { margin: 0; font-size: 1.1em; }
@@ -457,7 +465,7 @@ kbd {
 .piano-roll { position: relative; overflow: auto; border: 1px solid var(--section-border); border-radius: 6px; background: var(--subtle-bg); height: 400px; resize: vertical; min-height: 150px; max-height: 90vh; }
 .piano-roll-inner { position: relative; overflow: clip; }
 .pr-label {
-  width: 50px; height: 20px; display: flex; align-items: center; justify-content: flex-end;
+  width: var(--pr-label-w); height: var(--pr-row-h); display: flex; align-items: center; justify-content: flex-end;
   padding-right: 6px; font-size: 0.65em; color: #555; background: #dddfe3;
   border-bottom: 1px solid var(--section-border); border-right: 1px solid var(--input-border); box-sizing: border-box;
   flex-shrink: 0; user-select: none; cursor: pointer;
@@ -466,12 +474,12 @@ kbd {
 .pr-label.black-key-row:hover { background: #555; }
 .pr-label.octave-c:hover { background: #d0ccec; }
 .pr-labels-sticky {
-  position: sticky; left: 0; z-index: 5; width: 50px; height: 100%;
+  position: sticky; left: 0; z-index: 5; width: var(--pr-label-w); height: 100%;
   flex-shrink: 0; pointer-events: auto;
 }
 .pr-label.octave-c { background: var(--accent-bg); color: var(--accent); font-weight: 700; font-size: 0.75em; }
 .pr-label.black-key-row { background: #b0b4bc; color: #666; }
-.pr-row-bg { position: absolute; left: 50px; height: 20px; pointer-events: none; }
+.pr-row-bg { position: absolute; left: var(--pr-label-w); height: var(--pr-row-h); pointer-events: none; }
 .pr-row-bg.black-key-row { background: rgba(0,0,0,0.04); }
 .pr-gridline-h {
   position: absolute; left: 0; height: 1px; background: var(--section-border); pointer-events: none;
@@ -490,7 +498,7 @@ kbd {
   box-shadow: 0 1px 2px rgba(0,0,0,0.15); min-width: 8px; z-index: 2;
 }
 .pr-note:hover { filter: brightness(1.15); }
-.pr-note.selected { outline: 2px solid #d03830; outline-offset: -1px; box-shadow: 0 0 0 1px #d03830, 0 1px 6px rgba(208,56,48,0.45); z-index: 3; }
+.pr-note.selected { outline: 2px solid var(--selection); outline-offset: -1px; box-shadow: 0 0 0 1px var(--selection), 0 1px 6px color-mix(in srgb, var(--selection) 45%, transparent); z-index: 3; }
 .pr-note-label { pointer-events: none; }
 .pr-note .pr-resize {
   position: absolute; right: 0; top: 0; width: 6px; height: 100%;
@@ -500,21 +508,16 @@ kbd {
 .pr-note .pr-resize:hover { background: rgba(255,255,255,0.7); }
 .piano-roll .pr-empty { padding: 20px; text-align: center; color: var(--muted); font-size: 0.85em; }
 .pr-timeline {
-  position: sticky; top: 0; z-index: 11; height: 20px; min-width: 100%; background: var(--bg);
+  position: sticky; top: 0; z-index: 11; height: var(--pr-timeline-h); min-width: 100%; background: var(--bg);
   border-bottom: 1px solid var(--input-border); cursor: pointer; user-select: none; display: flex;
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
-.pr-timeline-label {
-  position: absolute; width: 50px; height: 20px; background: var(--bg);
-  border-right: 1px solid var(--input-border); border-bottom: 1px solid var(--input-border);
-  z-index: 12; left: 0; top: 0; display: flex; align-items: center;
-  justify-content: center; font-size: 0.6em; color: var(--muted);
-}
+.pr-timeline-label { display: none; }
 .pr-timeline-inner {
-  position: relative; height: 20px; margin-left: 50px; overflow: hidden;
+  position: relative; height: var(--pr-timeline-h); margin-left: var(--pr-label-w);
 }
 .pr-timeline-beat {
-  position: absolute; top: 0; height: 20px; display: flex; align-items: center;
+  position: absolute; top: 0; height: var(--pr-timeline-h); display: flex; align-items: center;
   padding-left: 3px; font-size: 0.55em; color: var(--muted); border-left: 1px solid var(--input-border);
   box-sizing: border-box;
 }
@@ -538,6 +541,11 @@ kbd {
 .pr-hover-line {
   position: absolute; top: 0; width: 1px; background: var(--accent); z-index: 9;
   pointer-events: none; opacity: 0.6;
+}
+.pr-hover-marker {
+  position: absolute; top: 0; width: 0; height: 0; pointer-events: none; z-index: 12;
+  border-left: 8px solid transparent; border-right: 8px solid transparent;
+  border-top: 12px solid var(--accent);
 }
 .pr-edge-handle {
   position: absolute; width: 6px; cursor: ew-resize; z-index: 8;
@@ -623,7 +631,7 @@ kbd {
 }
 .empty-msg { color: var(--muted); font-size: 0.85em; align-self: center; padding: 4px; }
 
-[data-theme="dark"] { color-scheme: dark; --led-color: #ffaa00; }
+[data-theme="dark"] { color-scheme: dark; --led-color: #ffaa00; --selection: #e5c07b; }
 [data-theme="dark"] body {
   background: #282c34; color: #abb2bf;
   background-image:
@@ -704,7 +712,7 @@ kbd {
 [data-theme="dark"] .pr-gridline-v.measure { background: #636d83; }
 [data-theme="dark"] .pr-select-rect { border-color: #61afef; background: rgba(97,175,239,0.1); }
 [data-theme="dark"] .pr-note { background: #61afef; color: #282c34; }
-[data-theme="dark"] .pr-note.selected { outline-color: #e5c07b; box-shadow: 0 0 0 1px #e5c07b, 0 1px 6px rgba(229,192,123,0.5); }
+[data-theme="dark"] .pr-note.selected { outline-color: var(--selection); box-shadow: 0 0 0 1px var(--selection), 0 1px 6px color-mix(in srgb, var(--selection) 50%, transparent); }
 [data-theme="dark"] .pr-edge-expand { background: #3e4451; border-color: #4b5263; color: #636d83; }
 [data-theme="dark"] .pr-edge-expand:hover, [data-theme="dark"] .pr-edge-expand.active { background: #61afef; color: #282c34; border-color: #61afef; }
 [data-theme="dark"] .pr-playhead { background: #e06c75; box-shadow: 0 0 4px rgba(224,108,117,0.5); }
@@ -873,8 +881,9 @@ kbd {
       <span class="info" id="note-count">0 notes</span>
       <span class="info" id="melody-stats"></span>
     </div>
-    <span class="melody-name" id="melody-name" data-tip="Click to rename"></span>
+    <span class="melody-name-wrap"><span class="melody-name" id="melody-name" data-tip="Click to rename"></span></span>
     <div class="seq-header-right">
+      <button class="btn btn-clear btn-sm" id="btn-share-seq" data-tip="Copy shareable link">&#128279;</button>
       <button class="btn btn-danger btn-sm" id="btn-clear" data-tip="Clear all notes (C)">&#10005;<span class="btn-text">Clear</span></button>
     </div>
   </div>
@@ -988,7 +997,7 @@ window.__BUNDLED_MELODIES__ = ["007:d=4,o=5,b=320:c,8d,8d,d,2d,c,c,c,c,8d#,8d#,d
 </script>
 <script>
 window.MP = window.MP || {};
-MP.VERSION = 'v0.0.8';
+MP.VERSION = 'v0.0.9';
 
 MP.appState = {
   seq: [],
@@ -1018,7 +1027,6 @@ MP.appState = {
   _lastMetroIndicatorBeat: -1,
 
   playState: null,
-  playTimeout: null,
   playheadRAF: null,
 
   undoStack: [],
@@ -1064,6 +1072,7 @@ for (let octave = 0; octave <= 9; octave++) {
 }
 
 MP.DUR_NAMES = { 1: 'whole', 2: 'half', 4: 'quarter', 8: 'eighth', 16: '16th', 32: '32nd', 64: '64th', 128: '128th' };
+MP.DUR_VALUES = Object.keys(MP.DUR_NAMES).map(Number);
 MP.SNAP_BEATS = 0.125;
 MP.FINE_SNAP_BEATS = 0.03125;
 
@@ -1125,6 +1134,7 @@ MP.METRO_FREQ_UP = 800;
 MP.METRO_GAIN_DOWN = 0.7;
 MP.METRO_GAIN_UP = 0.4;
 MP.METRO_FLASH_MS = 80;
+MP.METRO_RELEASE = 0.05;
 
 MP.escHtml = function(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
 
@@ -1137,9 +1147,15 @@ MP.COPY_FEEDBACK_MS = 1500;
 MP.TOAST_MS = 3000;
 MP.MIDI_INFO_MS = 6000;
 MP.SCHEDULE_INTERVAL = 500;
+MP.SCHEDULE_LOOKAHEAD = 2;
 MP.PLAYBACK_BUFFER_MS = 200;
 MP.REST_GAP_THRESHOLD = 0.03;
 MP.IMPORT_MAX_FILE_SIZE = 50 * 1024 * 1024;
+MP.IMPORT_MAX_RTTTL_FILES = 500;
+MP.IMPORT_MAX_RTTTL_FILE_SIZE = 100 * 1024;
+MP.IMPORT_MAX_HASH_LEN = 200000;
+MP.MIDI_MAX_TRACKS = 100;
+MP.MIDI_MAX_EVENTS = 100000;
 MP.MIC_MAX_DURATION_SEC = 300;
 
 MP.IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
@@ -1150,7 +1166,7 @@ MP.beatsFromDur = function(d) { return 4 / d; };
 
 MP.durFromBeats = function(b) {
   if (b <= 0) return { dur: 64, dotted: false };
-  const options = [1, 2, 4, 8, 16, 32, 64, 128];
+  var options = MP.DUR_VALUES;
   let best = 4, bestDist = Infinity, bestDotted = false;
   options.forEach(d => {
     const plain = 4 / d;
@@ -1172,6 +1188,10 @@ MP.seqEndBeat = function() {
   const seq = MP.appState.seq;
   if (seq.length === 0) return 0;
   return Math.max(...seq.map(n => n.start + n.dur));
+};
+
+MP.totalBeats = function() {
+  return Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
 };
 
 MP.seqToFlat = function() {
@@ -1240,12 +1260,7 @@ MP.msToClosestDuration = function(ms) {
   const bpm = MP.getBpm();
   const quarterMs = 60000 / bpm;
   if (ms <= 0) return 128;
-  const durations = [
-    { val: 1, ms: quarterMs * 4 }, { val: 2, ms: quarterMs * 2 },
-    { val: 4, ms: quarterMs }, { val: 8, ms: quarterMs / 2 },
-    { val: 16, ms: quarterMs / 4 }, { val: 32, ms: quarterMs / 8 },
-    { val: 64, ms: quarterMs / 16 }, { val: 128, ms: quarterMs / 32 },
-  ];
+  var durations = MP.DUR_VALUES.map(function(d) { return { val: d, ms: quarterMs * 4 / d }; });
   let best = durations[2], bestDist = Infinity;
   durations.forEach(d => {
     const dist = Math.abs(Math.log(ms) - Math.log(d.ms));
@@ -1274,6 +1289,7 @@ MP.createOscGain = function(ctx) {
 };
 
 MP.playNotePreview = function(freq) {
+  if (MP.appState.playState) return null;
   if (MP._serialWriter) {
     MP.sendSerialNote(freq, 300);
     return { serial: true };
@@ -1611,6 +1627,27 @@ MP._analyzeAudioBuffer = function(audioBuffer, bpm) {
   return notes;
 };
 
+MP._processAudioBuffer = function(audioBuffer, melodyName) {
+  var modal = document.getElementById('import-modal');
+  var status = document.getElementById('import-status');
+  modal.style.display = '';
+  status.textContent = 'Analyzing pitches...';
+  setTimeout(function() {
+    var notes = MP._analyzeAudioBuffer(audioBuffer, MP.getBpm());
+    modal.style.display = 'none';
+    if (notes.length === 0) {
+      MP.showToast('No pitches detected \u2014 try a clearer monophonic recording', true);
+      return;
+    }
+    MP.pushUndo();
+    MP.appState.seq = notes;
+    MP.resetNextNoteStart();
+    MP.appState.melodyName = melodyName;
+    MP.updateSequence();
+    MP.showToast('Imported ' + notes.length + ' notes from ' + melodyName);
+  }, 50);
+};
+
 MP.importAudioFile = function(file) {
   if (!file) return;
   if (file.size > MP.IMPORT_MAX_FILE_SIZE) {
@@ -1627,22 +1664,8 @@ MP.importAudioFile = function(file) {
     status.textContent = 'Decoding audio...';
     var ctx = MP.getAudioCtx();
     ctx.decodeAudioData(reader.result, function(audioBuffer) {
-      status.textContent = 'Analyzing pitches...';
-      setTimeout(function() {
-        var notes = MP._analyzeAudioBuffer(audioBuffer, MP.getBpm());
-        modal.style.display = 'none';
-        if (notes.length === 0) {
-          MP.showToast('No pitches detected — try a clearer monophonic recording', true);
-          return;
-        }
-        MP.pushUndo();
-        MP.appState.seq = notes;
-        MP.resetNextNoteStart();
-        var name = file.name.replace(/\.[^.]+$/, '');
-        MP.appState.melodyName = name;
-        MP.updateSequence();
-        MP.showToast('Imported ' + notes.length + ' notes from ' + file.name);
-      }, 50);
+      var name = MP.sanitizeFilename(file.name.replace(/\.[^.]+$/, ''));
+      MP._processAudioBuffer(audioBuffer, name);
     }, function() {
       modal.style.display = 'none';
       MP.showToast('Failed to decode audio file', true);
@@ -1735,25 +1758,7 @@ MP.stopMicRecording = function() {
   var audioBuffer = ctx.createBuffer(1, merged.length, ctx.sampleRate);
   audioBuffer.getChannelData(0).set(merged);
 
-  var modal = document.getElementById('import-modal');
-  var status = document.getElementById('import-status');
-  modal.style.display = '';
-  status.textContent = 'Analyzing pitches...';
-
-  setTimeout(function() {
-    var notes = MP._analyzeAudioBuffer(audioBuffer, MP.getBpm());
-    modal.style.display = 'none';
-    if (notes.length === 0) {
-      MP.showToast('No pitches detected — try a clearer recording', true);
-      return;
-    }
-    MP.pushUndo();
-    MP.appState.seq = notes;
-    MP.resetNextNoteStart();
-    MP.appState.melodyName = 'Mic Recording';
-    MP.updateSequence();
-    MP.showToast('Imported ' + notes.length + ' notes from microphone');
-  }, 50);
+  MP._processAudioBuffer(audioBuffer, 'Mic Recording');
 };
 
 MP.generateRTTTL = function(flat, bpm) {
@@ -1796,6 +1801,7 @@ MP.generateRTTTL = function(flat, bpm) {
 };
 
 MP.parseRTTTL = function(rtttl) {
+  if (rtttl.length > 100000) return null;
   const match = rtttl.match(/^([^:]+):([^:]+):(.+)$/);
   if (!match) return null;
 
@@ -1862,7 +1868,7 @@ MP.updateStats = function() {
   countEl.textContent = seq.length + ' note' + (seq.length !== 1 ? 's' : '');
   if (seq.length === 0) { statsEl.textContent = ''; return; }
   const bpm = MP.getBpm();
-  const totalBeats = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
+  const totalBeats = MP.totalBeats();
   const totalSec = (totalBeats * 60 / bpm).toFixed(1);
   const freqs = seq.map(n => n.freq).filter(f => f > 0);
   const minFreq = Math.min(...freqs);
@@ -2045,7 +2051,7 @@ MP.renderSequence = function() {
   const wasPlaying = !!MP.appState.playState;
   MP.renderChips();
   if (MP.appState.currentView === 'roll') MP.renderPianoRoll();
-  if (wasPlaying) MP.refreshPlayback();
+  if (wasPlaying && MP.appState.currentView === 'roll') MP.startPlayhead();
   MP.autoSave();
   var nameEl = document.getElementById('melody-name');
   if (nameEl) nameEl.textContent = MP.appState.melodyName || '';
@@ -2078,16 +2084,16 @@ MP.autoLoad = function() {
     if (!raw) return false;
     const data = JSON.parse(raw);
     if (!Array.isArray(data.seq) || data.seq.length === 0) return false;
-    if (!data.seq.every(function(n) { return typeof n.name === 'string' && typeof n.freq === 'number' && typeof n.start === 'number' && typeof n.dur === 'number'; })) return false;
+    if (!data.seq.every(function(n) { return typeof n.name === 'string' && Number.isFinite(n.freq) && Number.isFinite(n.start) && Number.isFinite(n.dur); })) return false;
     MP.appState.seq = data.seq.filter(function(n) { return n.freq > 0 && n.start >= 0 && n.dur > 0; });
     if (MP.appState.seq.length === 0) return false;
-    MP.appState.nextNoteStart = typeof data.nextNoteStart === 'number' && data.nextNoteStart >= 0 ? data.nextNoteStart : MP.seqEndBeat();
+    MP.appState.nextNoteStart = Number.isFinite(data.nextNoteStart) && data.nextNoteStart >= 0 ? data.nextNoteStart : MP.seqEndBeat();
     MP.appState.melodyName = typeof data.melodyName === 'string' ? data.melodyName : null;
-    if (typeof data.bpm === 'number') document.getElementById('bpm').value = Math.max(MP.BPM_MIN, Math.min(MP.BPM_MAX, Math.round(data.bpm)));
-    if (typeof data.kbOctave === 'number') MP.appState.kbOctave = Math.max(0, Math.min(8, Math.floor(data.kbOctave)));
-    if (typeof data.prZoom === 'number') MP.appState.prZoom = Math.max(MP.ZOOM_MIN, Math.min(MP.ZOOM_MAX, data.prZoom));
-    if (typeof data.selectedDur === 'number') MP.appState.selectedDur = MP.DUR_NAMES[data.selectedDur] ? data.selectedDur : 4;
-    if (Array.isArray(data.timeSig) && data.timeSig.length === 2) MP.appState.timeSig = data.timeSig;
+    if (Number.isFinite(data.bpm)) document.getElementById('bpm').value = Math.max(MP.BPM_MIN, Math.min(MP.BPM_MAX, Math.round(data.bpm)));
+    if (Number.isFinite(data.kbOctave)) MP.appState.kbOctave = Math.max(0, Math.min(8, Math.floor(data.kbOctave)));
+    if (Number.isFinite(data.prZoom)) MP.appState.prZoom = Math.max(MP.ZOOM_MIN, Math.min(MP.ZOOM_MAX, data.prZoom));
+    if (Number.isFinite(data.selectedDur)) MP.appState.selectedDur = MP.DUR_NAMES[data.selectedDur] ? data.selectedDur : 4;
+    if (data.timeSig && Number.isFinite(data.timeSig.beats) && Number.isFinite(data.timeSig.value) && data.timeSig.beats > 0 && data.timeSig.value > 0) MP.appState.timeSig = data.timeSig;
     if (typeof data.snapEnabled === 'boolean') MP.appState.snapEnabled = data.snapEnabled;
     return true;
   } catch (e) { return false; }
@@ -2123,8 +2129,8 @@ function playMetroTick(ctx, absTime, isDownbeat) {
   og.osc.type = 'sine';
   og.osc.frequency.value = isDownbeat ? MP.METRO_FREQ_DOWN : MP.METRO_FREQ_UP;
   og.gain.gain.setValueAtTime(isDownbeat ? MP.METRO_GAIN_DOWN : MP.METRO_GAIN_UP, absTime);
-  og.gain.gain.exponentialRampToValueAtTime(MP.AUDIO_RELEASE_MIN, absTime + 0.05);
-  og.osc.start(absTime); og.osc.stop(absTime + 0.05);
+  og.gain.gain.exponentialRampToValueAtTime(MP.AUDIO_RELEASE_MIN, absTime + MP.METRO_RELEASE);
+  og.osc.start(absTime); og.osc.stop(absTime + MP.METRO_RELEASE);
 }
 
 function flashMetroIndicator(isDownbeat) {
@@ -2160,8 +2166,7 @@ MP.scheduleMetronomeChunk = function() {
   var tsBeats = MP.getTimeSigBeats();
   var elapsed = ps.ctx.currentTime - ps.startTime;
   var currentBeat = elapsed / ps.beatSec;
-  var LOOKAHEAD = 2;
-  var lookaheadBeat = currentBeat + LOOKAHEAD / ps.beatSec;
+  var lookaheadBeat = currentBeat + MP.SCHEDULE_LOOKAHEAD / ps.beatSec;
   if (ps.nextMetroBeat === undefined) {
     ps.nextMetroBeat = Math.max(0, Math.ceil(currentBeat));
   }
@@ -2188,10 +2193,17 @@ MP.updateMetronomeIndicator = function(currentBeat) {
 MP.resetNextNoteStart = function() { MP.appState.nextNoteStart = MP.seqEndBeat(); };
 
 MP.ensureNextNoteStart = function() {
-  MP.appState.nextNoteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
+  var end = MP.seqEndBeat();
+  MP.appState.nextNoteStart = end > 0 ? Math.max(MP.appState.nextNoteStart, end) : 0;
 };
 
-MP.updateSequence = function() { MP.renderSequence(); MP.generateCode(); };
+MP._updateRaf = 0;
+MP.updateSequence = function(immediate) {
+  if (immediate) { MP.renderSequence(); MP.generateCode(); return; }
+  if (!MP._updateRaf) {
+    MP._updateRaf = requestAnimationFrame(function() { MP._updateRaf = 0; MP.renderSequence(); MP.generateCode(); });
+  }
+};
 
 MP.clearAll = function() {
   MP.pushUndo(); MP.appState.seq = [];
@@ -2748,20 +2760,20 @@ MP.playSequence = function(fromBeat) {
   playBtn.classList.add('btn-stop');
   MP.dancingCat.start();
 
-  const bpm = MP.getBpm();
-  const beatSec = 60 / bpm;
-  const ctx = MP.getAudioCtx();
-  const startBeat = fromBeat || 0;
-  const sorted = [...MP.appState.seq].sort((a, b) => a.start - b.start);
-  const totalDur = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart) * beatSec;
+  var bpm = MP.getBpm();
+  var beatSec = 60 / bpm;
+  var ctx = MP.getAudioCtx();
+  var startBeat = fromBeat || 0;
+  var offsetSec = startBeat * beatSec;
 
-  let startIdx = 0;
-  if (startBeat > 0) {
-    while (startIdx < sorted.length && sorted[startIdx].start + sorted[startIdx].dur <= startBeat) startIdx++;
-  }
-
-  const offsetSec = startBeat * beatSec;
-  MP.appState.playState = { ctx, scheduleTimer: null, idx: startIdx, startTime: ctx.currentTime - offsetSec, beatSec, totalDur, sorted, loopOffset: 0 };
+  var totalDur = MP.totalBeats() * beatSec;
+  MP.appState.playState = {
+    ctx: ctx, scheduleTimer: null,
+    startTime: ctx.currentTime - offsetSec,
+    beatSec: beatSec, loopOffset: 0,
+    loopTotalDur: totalDur,
+    scheduled: new Map()
+  };
   scheduleChunk();
 
   if (MP.appState.metronomeOn) {
@@ -2771,61 +2783,82 @@ MP.playSequence = function(fromBeat) {
     MP.scheduleMetronomeChunk();
   }
 
-  if (!MP.appState.loopEnabled) {
-    MP.appState.playTimeout = setTimeout(MP.stopPlayback, (totalDur - offsetSec) * 1000 + MP.PLAYBACK_BUFFER_MS);
-  }
-
   if (MP.appState.currentView === 'roll') MP.startPlayhead();
   if (MP.appState.currentView === 'chips') MP.startChipHighlight();
 };
 
+function scheduleNote(ps, n) {
+  var ctx = ps.ctx, startTime = ps.startTime, beatSec = ps.beatSec;
+  var noteStart = ps.loopOffset + n.start * beatSec;
+  var noteDur = n.dur * beatSec;
+  var absStart = Math.max(ctx.currentTime, startTime + noteStart);
+  var absEnd = startTime + noteStart + noteDur;
+  if (absEnd <= ctx.currentTime) { ps.scheduled.set(n, { s: n.start, d: n.dur }); return; }
+  var entry = { s: n.start, d: n.dur };
+  if (MP._serialWriter) {
+    var delayMs = (absStart - ctx.currentTime) * 1000;
+    setTimeout(function(f, d) { return function() { MP.sendSerialNote(f, d); }; }(n.freq, noteDur * 1000), Math.max(0, delayMs));
+  } else {
+    var releaseTime = Math.min(0.08, (absEnd - absStart) * 0.15);
+    var og = MP.createOscGain(ctx);
+    og.osc.type = MP.AUDIO_OSC_TYPE; og.osc.frequency.value = n.freq;
+    og.gain.gain.setValueAtTime(MP.AUDIO_GAIN, absStart);
+    og.gain.gain.setValueAtTime(MP.AUDIO_GAIN, absEnd - releaseTime);
+    og.gain.gain.exponentialRampToValueAtTime(MP.AUDIO_RELEASE_MIN, absEnd);
+    og.osc.start(absStart); og.osc.stop(absEnd);
+    entry.osc = og.osc;
+  }
+  ps.scheduled.set(n, entry);
+}
+
 function scheduleChunk() {
   if (!MP.appState.playState) return;
   var ps = MP.appState.playState;
-  const { ctx, startTime, beatSec, sorted } = ps;
-  const LOOKAHEAD = 2;
-  const now = ctx.currentTime - startTime;
+  var beatSec = ps.beatSec;
+  var now = ps.ctx.currentTime - ps.startTime;
+  var seq = MP.appState.seq;
 
-  while (ps.idx < sorted.length) {
-    const n = sorted[ps.idx];
-    const noteStart = ps.loopOffset + n.start * beatSec;
-    if (noteStart > now + LOOKAHEAD) break;
-    ps.idx++;
-    const noteDur = n.dur * beatSec;
-    const absStart = Math.max(ctx.currentTime, startTime + noteStart);
-    const absEnd = startTime + noteStart + noteDur;
-    if (absEnd <= ctx.currentTime) continue;
-    if (MP._serialWriter) {
-      var delayMs = (absStart - ctx.currentTime) * 1000;
-      setTimeout(() => MP.sendSerialNote(n.freq, noteDur * 1000), Math.max(0, delayMs));
-    } else {
-      const releaseTime = Math.min(0.08, (absEnd - absStart) * 0.15);
-      const og = MP.createOscGain(ctx);
-      const osc = og.osc, gain = og.gain;
-      osc.type = MP.AUDIO_OSC_TYPE; osc.frequency.value = n.freq;
-      gain.gain.setValueAtTime(MP.AUDIO_GAIN, absStart);
-      gain.gain.setValueAtTime(MP.AUDIO_GAIN, absEnd - releaseTime);
-      gain.gain.exponentialRampToValueAtTime(MP.AUDIO_RELEASE_MIN, absEnd);
-      osc.start(absStart); osc.stop(absEnd);
+  for (var i = 0; i < seq.length; i++) {
+    var n = seq[i];
+    var prev = ps.scheduled.get(n);
+    if (prev) {
+      if (prev.s === n.start && prev.d === n.dur) continue;
+      if (prev.osc) try { prev.osc.stop(0); } catch(e) {}
+      ps.scheduled.delete(n);
     }
+    var noteStart = ps.loopOffset + n.start * beatSec;
+    if (noteStart > now + MP.SCHEDULE_LOOKAHEAD) continue;
+    scheduleNote(ps, n);
   }
 
-  if (ps.idx < sorted.length) {
-    ps.scheduleTimer = setTimeout(scheduleChunk, MP.SCHEDULE_INTERVAL);
-  } else if (MP.appState.loopEnabled) {
-    ps.loopOffset += ps.totalDur;
-    ps.idx = 0;
-    ps.scheduleTimer = setTimeout(scheduleChunk, MP.PLAYBACK_BUFFER_MS);
+  var liveTotalDur = MP.totalBeats() * beatSec;
+  var noteEndDur = MP.seqEndBeat() * beatSec;
+  if (liveTotalDur < ps.loopTotalDur) ps.loopTotalDur = liveTotalDur;
+  if (noteEndDur > ps.loopTotalDur) ps.loopTotalDur = liveTotalDur;
+  var loopDur = ps.loopTotalDur;
+  if (MP.appState.loopEnabled && loopDur > 0 && now >= ps.loopOffset + loopDur - MP.SCHEDULE_LOOKAHEAD) {
+    ps.loopOffset += loopDur;
+    ps.loopTotalDur = liveTotalDur;
+    ps.scheduled = new Map();
   }
+
+  if (!MP.appState.loopEnabled && now >= liveTotalDur) {
+    MP.stopPlayback();
+    return;
+  }
+
+  ps.scheduleTimer = setTimeout(scheduleChunk, MP.SCHEDULE_INTERVAL);
 }
 
 MP._internalStop = function() {
-  clearTimeout(MP.appState.playTimeout);
   MP.stopPlayhead();
   MP.stopChipHighlight();
   if (MP.appState.playState) {
     clearTimeout(MP.appState.playState.scheduleTimer);
     clearTimeout(MP.appState.playState.metroTimer);
+    MP.appState.playState.scheduled.forEach(function(entry) {
+      if (entry.osc) try { entry.osc.stop(0); } catch(e) {}
+    });
     MP.appState.playState = null;
   }
   var playBtn = document.getElementById('btn-play');
@@ -2843,36 +2876,35 @@ MP._internalStop = function() {
 
 MP.refreshPlayback = function() {
   if (!MP.appState.playState) return;
-  const elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
-  const currentBeat = elapsed / MP.appState.playState.beatSec;
+  var elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
+  var currentBeat = elapsed / MP.appState.playState.beatSec;
   MP.playSequence(currentBeat);
 };
 
 MP.stopPlayback = function() {
   var wasRecording = MP.appState.isRecording;
   MP._internalStop();
-  MP.closeAudioCtx();
   if (wasRecording) MP.toggleRecording();
 };
 
 MP.startPlayhead = function() {
   MP.stopPlayhead();
-  const container = document.getElementById('piano-roll');
-  const inner = container.querySelector('.piano-roll-inner');
+  var container = document.getElementById('piano-roll');
+  var inner = container.querySelector('.piano-roll-inner');
   if (!inner || !MP.appState.playState) return;
 
-  const existing = inner.querySelector('.pr-playhead');
+  var existing = inner.querySelector('.pr-playhead');
   if (existing) existing.remove();
 
-  const gridH = parseInt(inner.style.height) - MP.PR_TIMELINE_H;
-  const line = document.createElement('div');
+  var gridH = parseInt(inner.style.height) - MP.PR_TIMELINE_H;
+  var line = document.createElement('div');
   line.className = 'pr-playhead';
   line.style.left = MP.PR_LABEL_W + 'px';
   line.style.top = MP.PR_TIMELINE_H + 'px';
   line.style.height = gridH + 'px';
   inner.appendChild(line);
 
-  const measureHL = document.createElement('div');
+  var measureHL = document.createElement('div');
   measureHL.className = 'pr-measure-highlight';
   measureHL.style.top = MP.PR_TIMELINE_H + 'px';
   measureHL.style.height = gridH + 'px';
@@ -2883,12 +2915,18 @@ MP.startPlayhead = function() {
 
   function animate() {
     if (!MP.appState.playState) { MP.stopPlayhead(); return; }
-    const elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
-    if (MP.appState.playState.totalDur <= 0) { MP.stopPlayhead(); return; }
-    var currentBeat = elapsed / MP.appState.playState.beatSec;
-    var totalBeats = MP.appState.playState.totalDur / MP.appState.playState.beatSec;
-    if (MP.appState.loopEnabled && totalBeats > 0) currentBeat = ((currentBeat % totalBeats) + totalBeats) % totalBeats;
-    const px = currentBeat * beatW;
+    var elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
+    var totalBeats = MP.totalBeats();
+    if (totalBeats <= 0) { MP.stopPlayhead(); return; }
+    var currentBeat;
+    if (MP.appState.loopEnabled && totalBeats > 0) {
+      var loopBeats = MP.appState.playState.loopTotalDur / MP.appState.playState.beatSec;
+      currentBeat = (elapsed - MP.appState.playState.loopOffset) / MP.appState.playState.beatSec;
+      currentBeat = ((currentBeat % loopBeats) + loopBeats) % loopBeats;
+    } else {
+      currentBeat = elapsed / MP.appState.playState.beatSec;
+    }
+    var px = currentBeat * beatW;
     line.style.left = (MP.PR_LABEL_W + px) + 'px';
     MP.updateMetronomeIndicator(currentBeat);
 
@@ -2901,9 +2939,9 @@ MP.startPlayhead = function() {
       measureHL.style.width = ((measureEnd - measureStart) * beatW) + 'px';
     }
 
-    const visLeft = container.scrollLeft;
-    const visRight = visLeft + container.clientWidth;
-    const headPos = MP.PR_LABEL_W + px;
+    var visLeft = container.scrollLeft;
+    var visRight = visLeft + container.clientWidth;
+    var headPos = MP.PR_LABEL_W + px;
     if (headPos > visRight - 40 || headPos < visLeft + MP.PR_LABEL_W + 10) {
       container.scrollLeft = Math.max(0, headPos - container.clientWidth / 3);
     }
@@ -2915,22 +2953,28 @@ MP.startPlayhead = function() {
 MP.startChipHighlight = function() {
   MP.stopChipHighlight();
   if (!MP.appState.playState) return;
-  const flat = MP.seqToFlat();
+  var flat = MP.seqToFlat();
   if (flat.length === 0) return;
-  const cumBeats = [];
-  let cursor = 0;
-  flat.forEach(n => { cumBeats.push(cursor); cursor += n._beats; });
-  const totalBeats = cursor;
-  const chips = document.querySelectorAll('#sequence .note-chip');
-  let lastIdx = -1;
+  var cumBeats = [];
+  var cursor = 0;
+  flat.forEach(function(n) { cumBeats.push(cursor); cursor += n._beats; });
+  var totalBeats = cursor;
+  var chips = document.querySelectorAll('#sequence .note-chip');
+  var lastIdx = -1;
 
   function animate() {
     if (!MP.appState.playState) { MP.stopChipHighlight(); return; }
-    const elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
-    let beat = elapsed / MP.appState.playState.beatSec;
-    if (MP.appState.loopEnabled && totalBeats > 0) beat = ((beat % totalBeats) + totalBeats) % totalBeats;
-    let idx = 0;
-    for (let i = cumBeats.length - 1; i >= 0; i--) {
+    var elapsed = MP.appState.playState.ctx.currentTime - MP.appState.playState.startTime;
+    var beat;
+    if (MP.appState.loopEnabled && totalBeats > 0) {
+      var loopBeats = MP.appState.playState.loopTotalDur / MP.appState.playState.beatSec;
+      beat = (elapsed - MP.appState.playState.loopOffset) / MP.appState.playState.beatSec;
+      beat = ((beat % loopBeats) + loopBeats) % loopBeats;
+    } else {
+      beat = elapsed / MP.appState.playState.beatSec;
+    }
+    var idx = 0;
+    for (var i = cumBeats.length - 1; i >= 0; i--) {
       if (beat >= cumBeats[i]) { idx = i; break; }
     }
     if (idx !== lastIdx) {
@@ -2951,7 +2995,7 @@ MP.stopChipHighlight = function() {
     cancelAnimationFrame(MP.appState.chipHighlightRAF);
     MP.appState.chipHighlightRAF = null;
   }
-  document.querySelectorAll('#sequence .note-chip.playing').forEach(c => c.classList.remove('playing'));
+  document.querySelectorAll('#sequence .note-chip.playing').forEach(function(c) { c.classList.remove('playing'); });
 };
 
 MP.stopPlayhead = function() {
@@ -2959,10 +3003,10 @@ MP.stopPlayhead = function() {
     cancelAnimationFrame(MP.appState.playheadRAF);
     MP.appState.playheadRAF = null;
   }
-  const inner = document.querySelector('.piano-roll-inner');
+  var inner = document.querySelector('.piano-roll-inner');
   if (inner) {
-    const ph = inner.querySelector('.pr-playhead'); if (ph) ph.remove();
-    const mh = inner.querySelector('.pr-measure-highlight'); if (mh) mh.remove();
+    var ph = inner.querySelector('.pr-playhead'); if (ph) ph.remove();
+    var mh = inner.querySelector('.pr-measure-highlight'); if (mh) mh.remove();
   }
 };
 
@@ -3146,36 +3190,30 @@ function setupComputerKeyboard() {
     if (MP.modKey(e) && e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); MP.redo(); return; }
     if (MP.modKey(e) && e.key.toLowerCase() === 'z') { e.preventDefault(); MP.undo(); return; }
     if (MP.modKey(e) && e.key.toLowerCase() === 'y') { e.preventDefault(); MP.redo(); return; }
-    if (MP.modKey(e) && e.key.toLowerCase() === 'c') {
+    if (MP.modKey(e) && (e.key.toLowerCase() === 'c' || e.key.toLowerCase() === 'x')) {
       e.preventDefault();
-      if (MP.appState.selectedNoteIdxs.size === 0) return;
-      var selected = [...MP.appState.selectedNoteIdxs].map(i => MP.appState.seq[i]).filter(Boolean);
-      if (selected.length === 0) return;
-      var minStart = Math.min(...selected.map(n => n.start));
-      MP.appState.clipboard = selected.map(n => ({ name: n.name, freq: n.freq, dur: n.dur, startOffset: n.start - minStart }));
-      MP.showToast('Copied ' + selected.length + ' note' + (selected.length !== 1 ? 's' : ''));
-      return;
-    }
-    if (MP.modKey(e) && e.key.toLowerCase() === 'x') {
-      e.preventDefault();
+      var isCut = e.key.toLowerCase() === 'x';
       if (MP.appState.selectedNoteIdxs.size === 0) return;
       var selected = [...MP.appState.selectedNoteIdxs].sort((a, b) => a - b).map(i => MP.appState.seq[i]).filter(Boolean);
       if (selected.length === 0) return;
       var minStart = Math.min(...selected.map(n => n.start));
       MP.appState.clipboard = selected.map(n => ({ name: n.name, freq: n.freq, dur: n.dur, startOffset: n.start - minStart }));
-      MP.pushUndo();
-      [...MP.appState.selectedNoteIdxs].sort((a, b) => b - a).forEach(idx => MP.appState.seq.splice(idx, 1));
-      MP.clearSelection();
-      MP.resetNextNoteStart();
-      MP.updateSequence();
-      MP.showToast('Cut ' + selected.length + ' note' + (selected.length !== 1 ? 's' : ''));
+      if (isCut) {
+        MP.pushUndo();
+        [...MP.appState.selectedNoteIdxs].sort((a, b) => b - a).forEach(idx => MP.appState.seq.splice(idx, 1));
+        MP.clearSelection();
+        MP.resetNextNoteStart();
+        MP.updateSequence();
+      }
+      var action = isCut ? 'Cut' : 'Copied';
+      MP.showToast(action + ' ' + selected.length + ' note' + (selected.length !== 1 ? 's' : ''));
       return;
     }
     if (MP.modKey(e) && e.key.toLowerCase() === 'v') {
       e.preventDefault();
       if (!MP.appState.clipboard || MP.appState.clipboard.length === 0) return;
       MP.pushUndo();
-      var pasteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
+      var pasteStart = MP.totalBeats();
       var newIdxs = new Set();
       MP.appState.clipboard.forEach(n => {
         var idx = MP.appState.seq.length;
@@ -3272,6 +3310,11 @@ function setupComputerKeyboard() {
   });
 }
 
+var PR_NOTE_LABEL_MIN_W = 30;
+
+function prX(beat, beatW) { return MP.PR_LABEL_W + beat * beatW; }
+function prY(row) { return MP.PR_TIMELINE_H + row * MP.PR_ROW_H; }
+
 function startDrag(onMove, onUp) {
   document.addEventListener('mousemove', onMove);
   document.addEventListener('mouseup', function handler(e) {
@@ -3321,7 +3364,6 @@ function buildPrTimeline(inner, totalBeats, beatW, tsBeats, gridH) {
   var tlLabel = document.createElement('div');
   tlLabel.className = 'pr-timeline-label';
   tlLabel.style.position = 'sticky'; tlLabel.style.left = '0';
-  tlLabel.textContent = 'Beat';
   timeline.appendChild(tlLabel);
   var tlInner = document.createElement('div');
   tlInner.className = 'pr-timeline-inner';
@@ -3342,23 +3384,33 @@ function buildPrTimeline(inner, totalBeats, beatW, tsBeats, gridH) {
   hoverLine.style.height = (gridH + MP.PR_TIMELINE_H) + 'px';
   hoverLine.style.display = 'none';
   inner.appendChild(hoverLine);
+  var hoverMarker = document.createElement('div');
+  hoverMarker.className = 'pr-hover-marker';
+  hoverMarker.style.display = 'none';
+  timeline.appendChild(hoverMarker);
 
   tlInner.addEventListener('mousemove', function(e) {
     var innerRect = inner.getBoundingClientRect();
     var x = e.clientX - innerRect.left;
     hoverLine.style.left = x + 'px';
     hoverLine.style.display = 'block';
+    var tlRect = timeline.getBoundingClientRect();
+    hoverMarker.style.left = (e.clientX - tlRect.left - 8) + 'px';
+    hoverMarker.style.display = 'block';
   });
   tlInner.addEventListener('mouseleave', function() {
     hoverLine.style.display = 'none';
+    hoverMarker.style.display = 'none';
   });
-  tlInner.addEventListener('mousedown', function(e) {
+  function onTimelineClick(e) {
     e.preventDefault(); e.stopPropagation();
     hoverLine.style.display = 'none';
+    hoverMarker.style.display = 'none';
     var innerRect = inner.getBoundingClientRect();
     var x = e.clientX - innerRect.left - MP.PR_LABEL_W;
     MP.playSequence(Math.max(0, x / beatW));
-  });
+  }
+  timeline.addEventListener('mousedown', onTimelineClick);
   inner.appendChild(timeline);
 }
 
@@ -3379,13 +3431,14 @@ function buildPrLabels(inner, minMidi, maxMidi, gridH, totalW) {
     label.textContent = noteName;
     label.style.position = 'absolute';
     label.style.top = (row * MP.PR_ROW_H) + 'px';
-    label.style.left = '0'; label.style.width = MP.PR_LABEL_W + 'px'; label.style.height = MP.PR_ROW_H + 'px';
+    label.style.left = '0'; label.style.width = MP.PR_LABEL_W + 'px';
+    label.style.height = MP.PR_ROW_H + 'px';
     labelsWrap.appendChild(label);
 
     if (noteName.includes('#')) {
       var rowBg = document.createElement('div');
       rowBg.className = 'pr-row-bg black-key-row';
-      rowBg.style.top = (MP.PR_TIMELINE_H + row * MP.PR_ROW_H) + 'px'; rowBg.style.width = totalW + 'px';
+      rowBg.style.top = prY(row) + 'px'; rowBg.style.width = totalW + 'px';
       inner.appendChild(rowBg);
     }
   }
@@ -3428,7 +3481,7 @@ function buildPrGrid(inner, minMidi, maxMidi, gridH, totalBeats, beatW, tsBeats)
     var line = document.createElement('div');
     line.className = 'pr-gridline-h';
     if (MP.nameFromMidi(midi).match(/^C\d$/)) line.classList.add('octave-c');
-    line.style.top = (MP.PR_TIMELINE_H + (row + 1) * MP.PR_ROW_H - 1) + 'px';
+    line.style.top = (prY(row + 1) - 1) + 'px';
     line.style.left = MP.PR_LABEL_W + 'px'; line.style.width = totalW + 'px';
     inner.appendChild(line);
   }
@@ -3442,7 +3495,7 @@ function buildPrGrid(inner, minMidi, maxMidi, gridH, totalBeats, beatW, tsBeats)
     else if (beat % 1 === 0) {}
     else if (beat % 0.5 === 0) vline.classList.add('sub-half');
     else vline.classList.add('sub-quarter');
-    vline.style.left = (MP.PR_LABEL_W + beat * beatW) + 'px';
+    vline.style.left = prX(beat, beatW) + 'px';
     vline.style.top = MP.PR_TIMELINE_H + 'px'; vline.style.height = gridH + 'px';
     inner.appendChild(vline);
   }
@@ -3485,7 +3538,7 @@ function setupPrResize(resizeHandle, n, i, beatW, noteBlocks) {
           var newDur = snap(origDurs[idx] + durDelta);
           var b = noteBlocks[idx];
           if (b) {
-            b.style.left = (MP.PR_LABEL_W + newStart * beatW + 1) + 'px';
+            b.style.left = (prX(newStart, beatW) + 1) + 'px';
             b.style.width = Math.max(8, newDur * beatW - 2) + 'px';
           }
         });
@@ -3494,7 +3547,7 @@ function setupPrResize(resizeHandle, n, i, beatW, noteBlocks) {
           var snapped = snap(origDurs[idx] + delta);
           var b = noteBlocks[idx];
           if (b) {
-            b.style.left = (MP.PR_LABEL_W + origStarts[idx] * beatW + 1) + 'px';
+            b.style.left = (prX(origStarts[idx], beatW) + 1) + 'px';
             b.style.width = Math.max(8, snapped * beatW - 2) + 'px';
           }
         });
@@ -3583,8 +3636,8 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
               ghost.style.pointerEvents = 'none';
               b.parentElement.appendChild(ghost);
               ghostBlocks.push({ ghost: ghost, origBlock: b });
-              b.style.left = (MP.PR_LABEL_W + origPositions[idx].start * beatW + 1) + 'px';
-              b.style.top = (MP.PR_TIMELINE_H + (maxMidi - origPositions[idx].midi) * MP.PR_ROW_H + 1) + 'px';
+              b.style.left = (prX(origPositions[idx].start, beatW) + 1) + 'px';
+              b.style.top = (prY(maxMidi - origPositions[idx].midi) + 1) + 'px';
             });
           }
         }
@@ -3599,11 +3652,11 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
           var orig = origPositions[idx];
           var newStart = Math.max(0, orig.start + dBeat);
           var newMidi = Math.max(minMidi, Math.min(maxMidi, orig.midi + dMidi));
-          b.style.left = (MP.PR_LABEL_W + newStart * beatW + 1) + 'px';
-          b.style.top = (MP.PR_TIMELINE_H + (maxMidi - newMidi) * MP.PR_ROW_H + 1) + 'px';
+          b.style.left = (prX(newStart, beatW) + 1) + 'px';
+          b.style.top = (prY(maxMidi - newMidi) + 1) + 'px';
           var w = MP.appState.seq[idx].dur * beatW;
           var lbl = b ? b.querySelector('.pr-note-label') : null;
-          if (lbl && w > 30) lbl.textContent = MP.nameFromMidi(newMidi);
+          if (lbl && w > PR_NOTE_LABEL_MIN_W) lbl.textContent = MP.nameFromMidi(newMidi);
           b._newStart = newStart;
           b._previewMidi = newMidi;
         });
@@ -3674,19 +3727,19 @@ function setupPrNoteDrag(block, n, i, midi, noteW, beatW, minMidi, maxMidi, note
           ghostBlock.style.opacity = '0.5';
           ghostBlock.style.pointerEvents = 'none';
           block.parentElement.appendChild(ghostBlock);
-          block.style.left = (MP.PR_LABEL_W + origStart * beatW + 1) + 'px';
-          block.style.top = (MP.PR_TIMELINE_H + (maxMidi - origMidi) * MP.PR_ROW_H + 1) + 'px';
+          block.style.left = (prX(origStart, beatW) + 1) + 'px';
+          block.style.top = (prY(maxMidi - origMidi) + 1) + 'px';
         }
       }
       var target = isClone ? ghostBlock : block;
       var newMidi = Math.max(minMidi, Math.min(maxMidi, origMidi - Math.round(dy / MP.PR_ROW_H)));
-      target.style.top = (MP.PR_TIMELINE_H + (maxMidi - newMidi) * MP.PR_ROW_H + 1) + 'px';
+      target.style.top = (prY(maxMidi - newMidi) + 1) + 'px';
       var lbl = target.querySelector('.pr-note-label');
-      if (lbl && noteW > 30) lbl.textContent = MP.nameFromMidi(newMidi);
+      if (lbl && noteW > PR_NOTE_LABEL_MIN_W) lbl.textContent = MP.nameFromMidi(newMidi);
       target._previewMidi = newMidi;
       if (newMidi !== currentDragMidi) { MP.stopNotePreview(notePreview); notePreview = MP.playNotePreview(MP.freqFromMidi(newMidi)); currentDragMidi = newMidi; }
       var newStart = Math.max(0, MP.snapBeats(origStart + dx / beatW));
-      target.style.left = (MP.PR_LABEL_W + newStart * beatW + 1) + 'px';
+      target.style.left = (prX(newStart, beatW) + 1) + 'px';
       target._newStart = newStart;
     };
     var onUp = function() {
@@ -3734,19 +3787,20 @@ function buildPrNoteBlocks(inner, minMidi, maxMidi, beatW, noteBlocks) {
     if (MP.appState.selectedNoteIdxs.has(i)) block.classList.add('selected');
     var xPos = n.start * beatW;
     var noteW = n.dur * beatW;
-    block.style.left = (MP.PR_LABEL_W + xPos + 1) + 'px';
-    block.style.top = (MP.PR_TIMELINE_H + row * MP.PR_ROW_H + 1) + 'px';
+    block.style.left = (prX(n.start, beatW) + 1) + 'px';
+    block.style.top = (prY(row) + 1) + 'px';
     block.style.width = Math.max(8, noteW - 2) + 'px';
     block.style.height = (MP.PR_ROW_H - 2) + 'px';
     block.style.lineHeight = (MP.PR_ROW_H - 2) + 'px';
     var noteLabel = document.createElement('span');
     noteLabel.className = 'pr-note-label';
-    if (noteW > 30) noteLabel.textContent = n.name;
+    if (noteW > PR_NOTE_LABEL_MIN_W) noteLabel.textContent = n.name;
     block.appendChild(noteLabel);
     noteBlocks[i] = block;
 
     var resizeHandle = document.createElement('div');
     resizeHandle.className = 'pr-resize';
+    if (noteW < 20) resizeHandle.style.width = '3px';
     block.appendChild(resizeHandle);
 
     setupPrResize(resizeHandle, n, i, beatW, noteBlocks);
@@ -3849,7 +3903,7 @@ function syncGridToWidth(inner, newTotalBeats, beatW) {
     else if (beat % 1 === 0) {}
     else if (beat % 0.5 === 0) vline.classList.add('sub-half');
     else vline.classList.add('sub-quarter');
-    vline.style.left = (MP.PR_LABEL_W + beat * beatW) + 'px';
+    vline.style.left = prX(beat, beatW) + 'px';
     vline.style.top = MP.PR_TIMELINE_H + 'px'; vline.style.height = gridH;
     inner.appendChild(vline);
   }
@@ -3861,16 +3915,15 @@ function edgeDragHandler(inner, edgeHandle, expandBtn, setEdgeX, beatW, e) {
   var wrapper = inner.parentElement;
   wrapper.style.minWidth = wrapper.offsetWidth + 'px';
   var startX = e.clientX;
-  var origEnd = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
+  var origEnd = MP.totalBeats();
   var minEnd = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
   var lastEnd = origEnd;
   var onMove = function(e2) {
     var dx = e2.clientX - startX;
     lastEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
-    var newW = lastEnd * beatW;
-    inner.style.width = (MP.PR_LABEL_W + newW) + 'px';
-    edgeHandle.style.left = (MP.PR_LABEL_W + newW - 4) + 'px';
-    setEdgeX(MP.PR_LABEL_W + newW);
+    inner.style.width = prX(lastEnd, beatW) + 'px';
+    edgeHandle.style.left = (prX(lastEnd, beatW) - 4) + 'px';
+    setEdgeX(prX(lastEnd, beatW));
     syncGridToWidth(inner, lastEnd, beatW);
   };
   var onUp = function() {
@@ -3890,9 +3943,9 @@ function edgeDragHandler(inner, edgeHandle, expandBtn, setEdgeX, beatW, e) {
       MP.appState.nextNoteStart = newEnd;
       MP.updateSequence();
     } else {
-      inner.style.width = (MP.PR_LABEL_W + origEnd * beatW) + 'px';
-      edgeHandle.style.left = (MP.PR_LABEL_W + origEnd * beatW - 4) + 'px';
-      setEdgeX(MP.PR_LABEL_W + origEnd * beatW);
+      inner.style.width = prX(origEnd, beatW) + 'px';
+      edgeHandle.style.left = (prX(origEnd, beatW) - 4) + 'px';
+      setEdgeX(prX(origEnd, beatW));
     }
   };
   startDrag(onMove, onUp);
@@ -3945,7 +3998,7 @@ function buildPrEdgeHandle(wrapper, inner, gridH, totalW, beatW) {
     var wrapperEl = inner.parentElement;
     wrapperEl.style.minWidth = wrapperEl.offsetWidth + 'px';
     var startX = e.clientX, dragged = false;
-    var origEnd = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
+    var origEnd = MP.totalBeats();
     var minEnd = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
     var lastEnd = origEnd;
     var shiftHeld = e.shiftKey;
@@ -3955,9 +4008,10 @@ function buildPrEdgeHandle(wrapper, inner, gridH, totalW, beatW) {
       var dx = e2.clientX - startX;
       lastEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
       var newW = lastEnd * beatW;
+      var newW = lastEnd * beatW;
       inner.style.width = (MP.PR_LABEL_W + newW) + 'px';
-      edgeHandle.style.left = (MP.PR_LABEL_W + newW - 4) + 'px';
-      setEdgeX(MP.PR_LABEL_W + newW);
+      edgeHandle.style.left = (prX(lastEnd, beatW) - 4) + 'px';
+      setEdgeX(prX(lastEnd, beatW));
       syncGridToWidth(inner, lastEnd, beatW);
     };
     var onUp = function() {
@@ -3967,7 +4021,7 @@ function buildPrEdgeHandle(wrapper, inner, gridH, totalW, beatW) {
         var tsBeats = MP.getTimeSigBeats();
         var step = shiftHeld ? tsBeats * 2 : tsBeats;
         MP.pushUndo();
-        MP.appState.nextNoteStart = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart) + step;
+        MP.appState.nextNoteStart = MP.totalBeats() + step;
         MP.updateSequence();
       } else if (Math.abs(lastEnd - origEnd) > 0.001) {
         MP.pushUndo();
@@ -3979,9 +4033,9 @@ function buildPrEdgeHandle(wrapper, inner, gridH, totalW, beatW) {
         MP.appState.nextNoteStart = lastEnd;
         MP.updateSequence();
       } else {
-        inner.style.width = (MP.PR_LABEL_W + origEnd * beatW) + 'px';
-        edgeHandle.style.left = (MP.PR_LABEL_W + origEnd * beatW - 4) + 'px';
-        setEdgeX(MP.PR_LABEL_W + origEnd * beatW);
+        inner.style.width = prX(origEnd, beatW) + 'px';
+        edgeHandle.style.left = (prX(origEnd, beatW) - 4) + 'px';
+        setEdgeX(prX(origEnd, beatW));
       }
     };
     startDrag(onMove, onUp);
@@ -4033,9 +4087,9 @@ function buildPrEmptySpace(wrapper, inner, minMidi, maxMidi, totalW, beatW, note
       MP.appState.selectedNoteIdxs = new Set(preservedIdxs);
       MP.appState.seq.forEach(function(sn, si) {
         var sMidi = MP.midiFromName(sn.name);
-        var noteLeft = MP.PR_LABEL_W + sn.start * beatW;
+        var noteLeft = prX(sn.start, beatW);
         var noteRight = noteLeft + sn.dur * beatW;
-        var noteTop = MP.PR_TIMELINE_H + (maxMidi - sMidi) * MP.PR_ROW_H;
+        var noteTop = prY(maxMidi - sMidi);
         var noteBottom = noteTop + MP.PR_ROW_H;
         var hit = noteRight > sx && noteLeft < sx + sw && noteBottom > sy && noteTop < sy + sh;
         var b = noteBlocks[si];
@@ -4050,7 +4104,6 @@ function buildPrEmptySpace(wrapper, inner, minMidi, maxMidi, totalW, beatW, note
       if (!emptySpaceDragged && !shiftHeld) {
         if (noMod && hadSelection) {
           MP.clearSelection();
-          return;
         } else if (emptySpaceMidi !== null && !beyondGrid) {
           var placeDur = MP.appState.lastNoteDur || (MP.appState.seq.length > 0 ? MP.appState.seq[MP.appState.seq.length - 1].dur : 1);
           MP.pushUndo();
@@ -4078,14 +4131,14 @@ MP.renderPianoRoll = function() {
   var pitchCount = maxMidi - minMidi + 1;
   var gridH = pitchCount * MP.PR_ROW_H;
   var snapStep = MP.appState.snapEnabled ? MP.SNAP_BEATS : MP.FINE_SNAP_BEATS;
-  var rawBeats = Math.max(snapStep, Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart));
+  var rawBeats = Math.max(snapStep, MP.totalBeats());
   var totalBeats = Math.ceil(rawBeats / snapStep) * snapStep;
   var totalW = totalBeats * beatW;
   var tsBeats = MP.getTimeSigBeats();
 
   var inner = document.createElement('div');
   inner.className = 'piano-roll-inner';
-  inner.style.width = (MP.PR_LABEL_W + totalW) + 'px';
+  inner.style.width = prX(totalBeats, beatW) + 'px';
   inner.style.height = (gridH + MP.PR_TIMELINE_H) + 'px';
   inner.style.position = 'relative';
   inner.dataset.maxMidi = maxMidi;
@@ -4289,6 +4342,10 @@ MP._onMIDIMessage = function(msg) {
 };
 
 MP.importMidiFile = function(file) {
+  if (file.size > MP.IMPORT_MAX_FILE_SIZE) {
+    MP.showToast('MIDI file too large (max ' + Math.round(MP.IMPORT_MAX_FILE_SIZE / 1024 / 1024) + 'MB)', true);
+    return;
+  }
   file.arrayBuffer().then(function(buf) {
     var d = new DataView(buf);
     var pos = 0;
@@ -4297,6 +4354,7 @@ MP.importMidiFile = function(file) {
     function readVLQ() {
       var val = 0;
       for (var i = 0; i < 4; i++) {
+        if (pos >= d.byteLength) return val;
         var b = d.getUint8(pos++);
         val = (val << 7) | (b & 0x7f);
         if (!(b & 0x80)) break;
@@ -4311,12 +4369,13 @@ MP.importMidiFile = function(file) {
     var timeDivision = readU16();
     if (timeDivision & 0x8000) { MP.showToast('SMPTE time division not supported', true); return; }
     var ticksPerBeat = timeDivision;
+    if (ticksPerBeat <= 0) { MP.showToast('Invalid MIDI time division', true); return; }
 
     var events = [];
-    for (var t = 0; t < numTracks; t++) {
+    for (var t = 0; t < Math.min(numTracks, MP.MIDI_MAX_TRACKS); t++) {
       if (readU32() !== 0x4d54726b) { MP.showToast('Invalid track chunk', true); return; }
       var trackLen = readU32();
-      var trackEnd = pos + trackLen;
+      var trackEnd = Math.min(pos + trackLen, d.byteLength);
       var absTick = 0;
       var runningStatus = 0;
       while (pos < trackEnd) {
@@ -4327,7 +4386,7 @@ MP.importMidiFile = function(file) {
         if (cmd === 0x90 || cmd === 0x80) {
           var note = d.getUint8(pos++);
           var vel = d.getUint8(pos++);
-          events.push({ tick: absTick, cmd: cmd, note: note, vel: vel });
+          if (events.length < MP.MIDI_MAX_EVENTS) events.push({ tick: absTick, cmd: cmd, note: note, vel: vel });
         } else if (cmd === 0xa0 || cmd === 0xb0 || cmd === 0xe0) {
           pos += 2;
         } else if (cmd === 0xc0 || cmd === 0xd0) {
@@ -4377,7 +4436,7 @@ MP.importMidiFile = function(file) {
       for (var i = 0; i < seq.length; i++) seq[i].start -= minStart;
     }
 
-    var fileName = file.name.replace(/\.midi?$/i, '');
+    var fileName = MP.sanitizeFilename(file.name.replace(/\.midi?$/i, ''));
     MP.pushUndo();
     MP.clearSelection();
     MP.appState.seq = seq;
@@ -4465,7 +4524,9 @@ MP.getSerialSketch = function() {
 
 MP.sendSerialNote = function(freq, durationMs) {
   if (!MP._serialWriter) return;
-  var cmd = 'T,' + freq + ',' + Math.round(durationMs) + '\n';
+  var f = Math.max(0, Math.min(20000, Math.round(freq)));
+  var d = Math.max(0, Math.min(60000, Math.round(durationMs)));
+  var cmd = 'T,' + f + ',' + d + '\n';
   var encoder = new TextEncoder();
   MP._serialWriter.write(encoder.encode(cmd)).catch(() => {});
 };
@@ -4757,7 +4818,7 @@ function setupOutputControls() {
     MP.downloadBlob(new Blob([data], { type: 'audio/midi' }), name + '.mid');
     MP.showToast('Saved ' + name + '.mid');
   });
-  document.getElementById('btn-share').addEventListener('click', function() {
+  function shareLink() {
     var rtttl = document.getElementById('rtttl-output').value.trim();
     if (!rtttl) { MP.showToast('Nothing to share', true); return; }
     var url = location.href.split('#')[0] + '#r=' + btoa(unescape(encodeURIComponent(rtttl)));
@@ -4766,7 +4827,9 @@ function setupOutputControls() {
     } else {
       MP.showToast('Could not copy link', true);
     }
-  });
+  }
+  document.getElementById('btn-share').addEventListener('click', shareLink);
+  document.getElementById('btn-share-seq').addEventListener('click', shareLink);
   function parseRtttlInput() {
     var raw = document.getElementById('rtttl-output').value.trim();
     if (!raw) return;
@@ -4975,6 +5038,9 @@ function setupFileHandling() {
   var RTTTL_RE = /^[^:]+:\s*[dob]=\d+.*:.+$/;
   function loadRtttlFilesFromList(files, verb) {
     if (files.length === 0) { MP.showToast('No .rtttl or .txt files found', true); return; }
+    files = files.slice(0, MP.IMPORT_MAX_RTTTL_FILES);
+    files = files.filter(function(f) { return f.size <= MP.IMPORT_MAX_RTTTL_FILE_SIZE; });
+    if (files.length === 0) { MP.showToast('All files too large (max 100KB each)', true); return; }
     var loaded = 0, skipped = 0, dupes = 0;
     var seen = new Set();
     var customs = [];
@@ -5061,7 +5127,7 @@ function setupFileHandling() {
 
 function setupAutoRestore() {
   var hash = location.hash;
-  if (hash.startsWith('#r=')) {
+  if (hash.startsWith('#r=') && hash.length <= MP.IMPORT_MAX_HASH_LEN) {
     try {
       var rtttl = decodeURIComponent(escape(atob(hash.slice(3))));
       var result = MP.loadRTTTL(rtttl);

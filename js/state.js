@@ -1,5 +1,5 @@
 window.MP = window.MP || {};
-MP.VERSION = 'v0.0.8';
+MP.VERSION = 'v0.0.9';
 
 MP.appState = {
   seq: [],
@@ -29,7 +29,6 @@ MP.appState = {
   _lastMetroIndicatorBeat: -1,
 
   playState: null,
-  playTimeout: null,
   playheadRAF: null,
 
   undoStack: [],

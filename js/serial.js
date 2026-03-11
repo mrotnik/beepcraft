@@ -72,7 +72,9 @@ MP.getSerialSketch = function() {
 
 MP.sendSerialNote = function(freq, durationMs) {
   if (!MP._serialWriter) return;
-  var cmd = 'T,' + freq + ',' + Math.round(durationMs) + '\n';
+  var f = Math.max(0, Math.min(20000, Math.round(freq)));
+  var d = Math.max(0, Math.min(60000, Math.round(durationMs)));
+  var cmd = 'T,' + f + ',' + d + '\n';
   var encoder = new TextEncoder();
   MP._serialWriter.write(encoder.encode(cmd)).catch(() => {});
 };

@@ -2,7 +2,7 @@ MP.beatsFromDur = function(d) { return 4 / d; };
 
 MP.durFromBeats = function(b) {
   if (b <= 0) return { dur: 64, dotted: false };
-  const options = [1, 2, 4, 8, 16, 32, 64, 128];
+  var options = MP.DUR_VALUES;
   let best = 4, bestDist = Infinity, bestDotted = false;
   options.forEach(d => {
     const plain = 4 / d;
@@ -24,6 +24,10 @@ MP.seqEndBeat = function() {
   const seq = MP.appState.seq;
   if (seq.length === 0) return 0;
   return Math.max(...seq.map(n => n.start + n.dur));
+};
+
+MP.totalBeats = function() {
+  return Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
 };
 
 MP.seqToFlat = function() {
@@ -92,12 +96,7 @@ MP.msToClosestDuration = function(ms) {
   const bpm = MP.getBpm();
   const quarterMs = 60000 / bpm;
   if (ms <= 0) return 128;
-  const durations = [
-    { val: 1, ms: quarterMs * 4 }, { val: 2, ms: quarterMs * 2 },
-    { val: 4, ms: quarterMs }, { val: 8, ms: quarterMs / 2 },
-    { val: 16, ms: quarterMs / 4 }, { val: 32, ms: quarterMs / 8 },
-    { val: 64, ms: quarterMs / 16 }, { val: 128, ms: quarterMs / 32 },
-  ];
+  var durations = MP.DUR_VALUES.map(function(d) { return { val: d, ms: quarterMs * 4 / d }; });
   let best = durations[2], bestDist = Infinity;
   durations.forEach(d => {
     const dist = Math.abs(Math.log(ms) - Math.log(d.ms));

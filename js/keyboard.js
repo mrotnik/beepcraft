@@ -178,36 +178,30 @@ function setupComputerKeyboard() {
     if (MP.modKey(e) && e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); MP.redo(); return; }
     if (MP.modKey(e) && e.key.toLowerCase() === 'z') { e.preventDefault(); MP.undo(); return; }
     if (MP.modKey(e) && e.key.toLowerCase() === 'y') { e.preventDefault(); MP.redo(); return; }
-    if (MP.modKey(e) && e.key.toLowerCase() === 'c') {
+    if (MP.modKey(e) && (e.key.toLowerCase() === 'c' || e.key.toLowerCase() === 'x')) {
       e.preventDefault();
-      if (MP.appState.selectedNoteIdxs.size === 0) return;
-      var selected = [...MP.appState.selectedNoteIdxs].map(i => MP.appState.seq[i]).filter(Boolean);
-      if (selected.length === 0) return;
-      var minStart = Math.min(...selected.map(n => n.start));
-      MP.appState.clipboard = selected.map(n => ({ name: n.name, freq: n.freq, dur: n.dur, startOffset: n.start - minStart }));
-      MP.showToast('Copied ' + selected.length + ' note' + (selected.length !== 1 ? 's' : ''));
-      return;
-    }
-    if (MP.modKey(e) && e.key.toLowerCase() === 'x') {
-      e.preventDefault();
+      var isCut = e.key.toLowerCase() === 'x';
       if (MP.appState.selectedNoteIdxs.size === 0) return;
       var selected = [...MP.appState.selectedNoteIdxs].sort((a, b) => a - b).map(i => MP.appState.seq[i]).filter(Boolean);
       if (selected.length === 0) return;
       var minStart = Math.min(...selected.map(n => n.start));
       MP.appState.clipboard = selected.map(n => ({ name: n.name, freq: n.freq, dur: n.dur, startOffset: n.start - minStart }));
-      MP.pushUndo();
-      [...MP.appState.selectedNoteIdxs].sort((a, b) => b - a).forEach(idx => MP.appState.seq.splice(idx, 1));
-      MP.clearSelection();
-      MP.resetNextNoteStart();
-      MP.updateSequence();
-      MP.showToast('Cut ' + selected.length + ' note' + (selected.length !== 1 ? 's' : ''));
+      if (isCut) {
+        MP.pushUndo();
+        [...MP.appState.selectedNoteIdxs].sort((a, b) => b - a).forEach(idx => MP.appState.seq.splice(idx, 1));
+        MP.clearSelection();
+        MP.resetNextNoteStart();
+        MP.updateSequence();
+      }
+      var action = isCut ? 'Cut' : 'Copied';
+      MP.showToast(action + ' ' + selected.length + ' note' + (selected.length !== 1 ? 's' : ''));
       return;
     }
     if (MP.modKey(e) && e.key.toLowerCase() === 'v') {
       e.preventDefault();
       if (!MP.appState.clipboard || MP.appState.clipboard.length === 0) return;
       MP.pushUndo();
-      var pasteStart = Math.max(MP.appState.nextNoteStart, MP.seqEndBeat());
+      var pasteStart = MP.totalBeats();
       var newIdxs = new Set();
       MP.appState.clipboard.forEach(n => {
         var idx = MP.appState.seq.length;

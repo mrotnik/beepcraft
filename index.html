@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'">
 <title>BeepCraft</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#127925;</text></svg>">
 <link rel="stylesheet" href="css/base.css">
@@ -115,8 +116,9 @@
       <span class="info" id="note-count">0 notes</span>
       <span class="info" id="melody-stats"></span>
     </div>
-    <span class="melody-name" id="melody-name" data-tip="Click to rename"></span>
+    <span class="melody-name-wrap"><span class="melody-name" id="melody-name" data-tip="Click to rename"></span></span>
     <div class="seq-header-right">
+      <button class="btn btn-clear btn-sm" id="btn-share-seq" data-tip="Copy shareable link">&#128279;</button>
       <button class="btn btn-danger btn-sm" id="btn-clear" data-tip="Clear all notes (C)">&#10005;<span class="btn-text">Clear</span></button>
     </div>
   </div>
