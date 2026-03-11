@@ -205,6 +205,30 @@ function setupPianoRollControls() {
     if (MP.appState.currentView === 'roll') MP.refreshPianoRoll();
   });
   document.getElementById('btn-pr-fullscreen').addEventListener('click', MP.togglePrFullscreen);
+  var prContainer = document.getElementById('piano-roll');
+  prContainer.addEventListener('wheel', function(e) {
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    MP.updateZoom(e.deltaY < 0 ? MP.ZOOM_WHEEL_STEP : -MP.ZOOM_WHEEL_STEP);
+  }, { passive: false });
+  prContainer.addEventListener('mousedown', function(e) {
+    if (e.button !== 1) return;
+    e.preventDefault();
+    var startX = e.clientX, startY = e.clientY;
+    var scrollX = prContainer.scrollLeft, scrollY = prContainer.scrollTop;
+    prContainer.style.cursor = 'grabbing';
+    function onMove(e2) {
+      prContainer.scrollLeft = scrollX - (e2.clientX - startX);
+      prContainer.scrollTop = scrollY - (e2.clientY - startY);
+    }
+    function onUp() {
+      prContainer.style.cursor = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
 }
 
 function setupBpmControls() {

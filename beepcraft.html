@@ -949,6 +949,8 @@ kbd {
       <tr><td><kbd>C</kbd></td><td>Clear all notes</td></tr>
       <tr><td><kbd>&#9650;</kbd> / <kbd>&#9660;</kbd></td><td>Pitch up / down (semitone)</td></tr>
       <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td>Zoom piano roll in / out</td></tr>
+      <tr><td><kbd>Mod+Scroll</kbd></td><td>Zoom piano roll in / out</td></tr>
+      <tr><td><kbd>Middle mouse</kbd> + drag</td><td>Pan piano roll</td></tr>
       <tr><td><kbd>A S D F G H J K L ; '</kbd></td><td>White piano keys</td></tr>
       <tr><td><kbd>W E T Y U I O [</kbd></td><td>Black piano keys</td></tr>
       <tr><td><kbd>Right-click</kbd></td><td>Remove note (piano roll)</td></tr>
@@ -956,6 +958,7 @@ kbd {
       <tr><td><kbd>M</kbd></td><td>Toggle metronome</td></tr>
       <tr><td><kbd>Mod+Enter</kbd></td><td>Fullscreen piano roll</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Exit fullscreen / close modal</td></tr>
+      <tr><td>Drop files</td><td>Import MIDI, audio, or RTTTL files</td></tr>
       <tr><td><kbd>?</kbd></td><td>Toggle this help</td></tr>
     </table>
   </div>
@@ -997,7 +1000,7 @@ window.__BUNDLED_MELODIES__ = ["007:d=4,o=5,b=320:c,8d,8d,d,2d,c,c,c,c,8d#,8d#,d
 </script>
 <script>
 window.MP = window.MP || {};
-MP.VERSION = 'v0.0.9';
+MP.VERSION = 'v0.0.10';
 
 MP.appState = {
   seq: [],
@@ -4739,6 +4742,30 @@ function setupPianoRollControls() {
     if (MP.appState.currentView === 'roll') MP.refreshPianoRoll();
   });
   document.getElementById('btn-pr-fullscreen').addEventListener('click', MP.togglePrFullscreen);
+  var prContainer = document.getElementById('piano-roll');
+  prContainer.addEventListener('wheel', function(e) {
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
+    MP.updateZoom(e.deltaY < 0 ? MP.ZOOM_WHEEL_STEP : -MP.ZOOM_WHEEL_STEP);
+  }, { passive: false });
+  prContainer.addEventListener('mousedown', function(e) {
+    if (e.button !== 1) return;
+    e.preventDefault();
+    var startX = e.clientX, startY = e.clientY;
+    var scrollX = prContainer.scrollLeft, scrollY = prContainer.scrollTop;
+    prContainer.style.cursor = 'grabbing';
+    function onMove(e2) {
+      prContainer.scrollLeft = scrollX - (e2.clientX - startX);
+      prContainer.scrollTop = scrollY - (e2.clientY - startY);
+    }
+    function onUp() {
+      prContainer.style.cursor = '';
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    }
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
 }
 
 function setupBpmControls() {

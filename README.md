@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🐝 BeepCraft
+# 🎵 BeepCraft
 
 **Browser-based melody composer for Arduino buzzers**
 
@@ -37,7 +37,6 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 - 📱 **RTTTL** — standard ringtone format, paste/drop to import
 - 🎵 **MIDI export** — download as Standard MIDI file
 - 🔌 **Serial upload** — send directly to Arduino (Chromium)
-- ~~🔗 **Share links** — temporarily disabled~~
 
 </td>
 </tr>
@@ -46,7 +45,7 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 
 ### 🎛️ Input
 - 🎛️ **MIDI keyboard** — plug and play
-- 🎹 **MIDI file import** — drop monophonic .mid files to load melodies
+- 🎹 **MIDI file import** — drop .mid files to load melodies
 - 📂 **Audio import** — extract melody from WAV/MP3/OGG
 - 🎙️ **Mic recording** — real-time pitch detection
 
@@ -69,15 +68,11 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 
 **Run offline** — [download beepcraft.html](https://raw.githubusercontent.com/mrotnik/beepcraft/public/beepcraft.html) (right-click → Save As) and open in your browser. It's a single self-contained file — easy to share with friends.
 
-**Development** — `git clone https://github.com/mrotnik/beepcraft.git`
-
-1. Play notes on the keyboard or piano roll
-2. Copy the generated Arduino code
-3. Upload to your board
+**How it works:** Play notes on the keyboard or piano roll → copy the generated Arduino code → upload to your board
 
 ### 🔌 Arduino Wiring
 
-Connect a passive buzzer between any GPIO pin (default: pin 5) and GND, with VCC to 3.3V or 5V. The generated code uses the standard `tone()` API.
+Connect a **passive** buzzer to your board. For 3-pin modules: VCC to 3.3V/5V, GND to GND, signal to any GPIO pin (default: pin 5). For bare 2-pin buzzers: one pin to GPIO, the other to GND. Active buzzers have a fixed pitch and won't play melodies. The generated code uses the standard `tone()` API.
 
 ## 📸 Screenshots
 
