@@ -128,7 +128,7 @@
 [data-theme="dark"] .copy-btn:hover { background: #4b5263; }
 [data-theme="dark"] .info { color: #4b5263; }
 
-[data-theme="dark"] .theme-toggle { background: #61afef; color: #fbbf24; border-color: #4a9ae0; }
+[data-theme="dark"] .theme-toggle { background: #61afef; color: #fbbf24; border-color: #528fbf; }
 [data-theme="dark"] .theme-toggle:hover { background: #4a9ae0; }
 
 [data-theme="dark"] .btn-help { background: #3e4451; color: #abb2bf; border-color: #4b5263; }

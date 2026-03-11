@@ -580,6 +580,7 @@ function setupFileHandling() {
     var files = filterRtttlFiles(e.dataTransfer.files);
     if (files.length === 0) return;
     if (files.length === 1) {
+      if (files[0].size > MP.IMPORT_MAX_RTTTL_FILE_SIZE) { MP.showToast('File too large (max 100KB)', true); return; }
       files[0].text().then(function(text) {
         var line = text.split('\n')[0].trim();
         if (!RTTTL_RE.test(line)) { MP.showToast('Invalid RTTTL file', true); return; }
@@ -594,18 +595,7 @@ function setupFileHandling() {
 }
 
 function setupAutoRestore() {
-  var hash = location.hash;
-  if (hash.startsWith('#r=') && hash.length <= MP.IMPORT_MAX_HASH_LEN) {
-    try {
-      var rtttl = decodeURIComponent(escape(atob(hash.slice(3))));
-      var result = MP.loadRTTTL(rtttl);
-      if (result) {
-        history.replaceState(null, '', location.pathname + location.search);
-        MP.showToast('Loaded "' + result.name + '" from shared link');
-        MP.updateSequence();
-      }
-    } catch (e) {}
-  } else if (MP.autoLoad()) {
+  if (MP.autoLoad()) {
     MP.setBpm(document.getElementById('bpm').value);
     document.getElementById('pr-zoom-input').value = Math.round(MP.appState.prZoom * 100) + '%';
     MP.updateKeyBindingLabels(true);

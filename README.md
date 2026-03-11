@@ -8,7 +8,7 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-Try_It_Now-blue?style=for-the-badge)](https://mrotnik.github.io/beepcraft/)
 
-*Single file · No install · Works offline · Share melodies via link with friends*
+*Single file · No install · Works offline*
 
 </div>
 
@@ -37,7 +37,7 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 - 📱 **RTTTL** — standard ringtone format, paste/drop to import
 - 🎵 **MIDI export** — download as Standard MIDI file
 - 🔌 **Serial upload** — send directly to Arduino (Chromium)
-- 🔗 **Share links** — shareable URL with encoded melody
+- ~~🔗 **Share links** — temporarily disabled~~
 
 </td>
 </tr>

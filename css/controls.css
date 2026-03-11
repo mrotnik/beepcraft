@@ -116,13 +116,13 @@
 }
 .theme-toggle:hover { background: var(--section-border); }
 .btn-help:hover { background: var(--section-border); }
-.btn:active:not(:disabled) { transform: scale(0.95); opacity: 0.7; }
+.btn:active:not(:disabled) { opacity: 0.7; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
 .btn:disabled { opacity: 0.35; cursor: default; }
-.dur-btn:active { transform: scale(0.95); opacity: 0.7; }
-.pause-btn:active { transform: scale(0.95); opacity: 0.7; }
-.copy-btn:active { transform: scale(0.95); opacity: 0.7; }
-.theme-toggle:active { transform: scale(0.9); }
-.btn-help:active { transform: scale(0.9); }
+.dur-btn:active { opacity: 0.7; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+.pause-btn:active { opacity: 0.7; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+.copy-btn:active { opacity: 0.7; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+.theme-toggle:active { opacity: 0.7; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+.btn-help:active { opacity: 0.7; box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
 
 @keyframes pulse-rec {
   0%, 100% { opacity: 1; }
@@ -130,7 +130,7 @@
 }
 
 .theme-toggle {
-  width: 28px; height: 24px; border: 2px solid var(--accent); border-radius: 5px;
+  width: 28px; height: 24px; border: 1px solid color-mix(in srgb, var(--accent) 70%, #000); border-radius: 5px;
   background: var(--accent); color: #fff; cursor: pointer; font-size: 1em; line-height: 1;
   display: inline-flex; align-items: center; justify-content: center; padding: 1px;
 }

@@ -58,6 +58,7 @@ MP.renderSequence = function() {
 MP.autoSave = function() {
   try {
     localStorage.setItem(MP.LS_AUTOSAVE, JSON.stringify({
+      v: 1,
       seq: MP.appState.seq,
       nextNoteStart: MP.appState.nextNoteStart,
       melodyName: MP.appState.melodyName,
@@ -76,6 +77,7 @@ MP.autoLoad = function() {
     const raw = localStorage.getItem(MP.LS_AUTOSAVE);
     if (!raw) return false;
     const data = JSON.parse(raw);
+    if (data.v !== undefined && data.v !== 1) return false;
     if (!Array.isArray(data.seq) || data.seq.length === 0) return false;
     if (!data.seq.every(function(n) { return typeof n.name === 'string' && Number.isFinite(n.freq) && Number.isFinite(n.start) && Number.isFinite(n.dur); })) return false;
     MP.appState.seq = data.seq.filter(function(n) { return n.freq > 0 && n.start >= 0 && n.dur > 0; });
@@ -257,14 +259,13 @@ MP.setBpm = function(val) {
 
 MP.copyToClipboard = function(elementId, btn, originalHtml) {
   var el = document.getElementById(elementId);
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(el.value).then(function() {
-      btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, MP.COPY_FEEDBACK_MS);
-    });
-  } else {
-    el.select(); document.execCommand('copy');
-    btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, MP.COPY_FEEDBACK_MS);
+  if (!navigator.clipboard || !navigator.clipboard.writeText) {
+    MP.showToast('Clipboard not available', true);
+    return;
   }
+  navigator.clipboard.writeText(el.value).then(function() {
+    btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, MP.COPY_FEEDBACK_MS);
+  });
 };
 
 MP.toggleRecording = function() {
