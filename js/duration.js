@@ -109,3 +109,13 @@ MP.msToClosestDuration = function(ms) {
   });
   return best.val;
 };
+
+MP.hasOverlappingNotes = function() {
+  var seq = MP.appState.seq;
+  if (seq.length <= 1) return false;
+  var sorted = [...seq].sort(function(a, b) { return a.start - b.start; });
+  for (var i = 1; i < sorted.length; i++) {
+    if (sorted[i].start < sorted[i - 1].start + sorted[i - 1].dur - 0.001) return true;
+  }
+  return false;
+};

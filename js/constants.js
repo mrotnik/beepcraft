@@ -1,20 +1,22 @@
 MP.A4_MIDI = 69;
 MP.A4_FREQ = 440;
 MP.MIDI_MIN = 12;
-MP.MIDI_MAX = 108;
+MP.MIDI_MAX = 119;
 MP.BPM_MIN = 40;
 MP.BPM_MAX = 300;
+MP.BPM_DEFAULT = 100;
 MP.TONE_DUTY = 0.9;
 MP.ZOOM_STEP = 0.25;
 MP.ZOOM_WHEEL_STEP = 0.125;
 MP.ZOOM_MIN = 0.25;
 MP.ZOOM_MAX = 5;
+MP.ZOOM_DEFAULT = 1.25;
 MP.DRAG_THRESHOLD = 4;
 
 MP.NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
 MP.NOTES = [];
-for (let octave = 0; octave <= 9; octave++) {
+for (let octave = 0; octave <= 8; octave++) {
   for (let i = 0; i < 12; i++) {
     const name = MP.NOTE_NAMES[i] + octave;
     const midi = (octave + 1) * 12 + i;
@@ -64,8 +66,16 @@ MP.freqFromMidi = function(midi) {
   return Math.round(MP.A4_FREQ * Math.pow(2, (midi - MP.A4_MIDI) / 12));
 };
 
+MP.midiFromFreq = function(freq) {
+  return Math.round(12 * Math.log2(freq / MP.A4_FREQ) + MP.A4_MIDI);
+};
+
+MP.clamp = function(val, min, max) {
+  return Math.max(min, Math.min(max, val));
+};
+
 MP.getBpm = function() {
-  return parseInt(document.getElementById('bpm').value) || 120;
+  return parseInt(document.getElementById('bpm').value) || MP.BPM_DEFAULT;
 };
 
 MP.getTimeSigBeats = function() {
@@ -90,7 +100,7 @@ MP.METRO_GAIN_UP = 0.4;
 MP.METRO_FLASH_MS = 80;
 MP.METRO_RELEASE = 0.05;
 
-MP.escHtml = function(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+MP.escHtml = function(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
 
 MP.updateNoteFromMidi = function(note, midi) {
   note.name = MP.nameFromMidi(midi);
@@ -107,10 +117,11 @@ MP.REST_GAP_THRESHOLD = 0.03;
 MP.IMPORT_MAX_FILE_SIZE = 50 * 1024 * 1024;
 MP.IMPORT_MAX_RTTTL_FILES = 500;
 MP.IMPORT_MAX_RTTTL_FILE_SIZE = 100 * 1024;
-MP.IMPORT_MAX_HASH_LEN = 200000;
 MP.MIDI_MAX_TRACKS = 100;
 MP.MIDI_MAX_EVENTS = 100000;
 MP.MIC_MAX_DURATION_SEC = 300;
+
+MP._keepScroll = function(fn) { var s = window.scrollY; fn(); window.scrollTo(0, s); };
 
 MP.IS_MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
 MP.MOD_KEY = MP.IS_MAC ? 'Cmd' : 'Ctrl';

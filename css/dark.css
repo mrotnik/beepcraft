@@ -1,4 +1,20 @@
-[data-theme="dark"] { color-scheme: dark; --led-color: #ffaa00; --selection: #e5c07b; }
+[data-theme="dark"] {
+  color-scheme: dark; --led-color: #ffaa00; --selection: #e5c07b;
+  --text: #abb2bf; --accent: #61afef; --accent-bg: rgba(97,175,239,0.15);
+  --section-bg: #21252b; --section-border: #3e4451; --section-shadow: rgba(0,0,0,0.4);
+  --muted: #636d83; --input-bg: #2c313a; --input-border: #3e4451;
+  --subtle-bg: #2c313a; --error: #e06c75; --success: #98c379; --warning: #e5c07b;
+  --warning-bg: #3e3a2c; --info-color: #4b5263;
+  --top-bar-bg: #21252b; --top-bar-border: #181a1f; --dropdown-bg: #2c313a; --bg: #282c34;
+  --key-white: #cdd0d6; --key-white-border: #555; --key-white-hover: #61afef;
+  --key-white-pressed: #528bcc; --key-black: #23272e; --key-black-text: #636d83;
+  --key-black-pressed: #528bcc; --key-binding: #e5c07b;
+  --pr-label-bg: #3a3f4a; --pr-label-text: #bbb; --pr-label-black: #2a2e36;
+  --chip-remove-hover: #e06c75; --chip-highlight: rgba(97,175,239,0.15);
+  --chip-playing: #c4a830; --chip-playing-border: #a08a20;
+  --textarea-bg: #1e2127; --textarea-text: #98c379; --textarea-border: #3e4451;
+  --sfx-group-bg: #2d6e36; --sfx-group-text: #d4ecd8;
+}
 [data-theme="dark"] body {
   background: #282c34; color: #abb2bf;
   background-image:
@@ -27,21 +43,18 @@
 [data-theme="dark"] .bpm-arrow:hover { background: #2a2a2a; }
 [data-theme="dark"] .bpm-arrow:active { background: var(--led-color); color: #111; }
 
-[data-theme="dark"] .collapsible-toggle { color: #636d83; }
-[data-theme="dark"] .collapsible-toggle:hover { color: #61afef; }
 
 [data-theme="dark"] .dur-btn, [data-theme="dark"] .pause-btn { background: #2c313a; color: #abb2bf; border-color: #3e4451; }
 [data-theme="dark"] .dur-btn.active { background: #3e4451; color: #61afef; border-color: #61afef; }
 [data-theme="dark"] .dur-btn:hover, [data-theme="dark"] .pause-btn:hover { background: #3e4451; color: #e5c07b; border-color: #636d83; }
 
-[data-theme="dark"] .white-key { background: #cdd0d6; border-color: #555; color: #3e4451; }
-[data-theme="dark"] .white-key:hover { background: #61afef; color: #282c34; }
-[data-theme="dark"] .white-key.pressed { background: #528bcc; color: #fff; box-shadow: inset 0 3px 8px rgba(0,0,0,0.35), inset 0 -1px 2px rgba(97,175,239,0.2); border-color: #4178a4; }
-[data-theme="dark"] .black-key { background: #23272e; color: #636d83; border: 1px solid #555b68; }
-[data-theme="dark"] .black-key:hover { background: #61afef; color: #282c34; }
-[data-theme="dark"] .black-key.pressed { background: #528bcc; color: #fff; box-shadow: inset 0 3px 8px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(97,175,239,0.2); }
+[data-theme="dark"] .white-key { color: #3e4451; }
+[data-theme="dark"] .white-key:hover { color: #282c34; }
+[data-theme="dark"] .white-key.pressed { color: #fff; box-shadow: inset 0 3px 8px rgba(0,0,0,0.35), inset 0 -1px 2px rgba(97,175,239,0.2); border-color: #4178a4; }
+[data-theme="dark"] .black-key { border: 1px solid #555b68; }
+[data-theme="dark"] .black-key:hover { color: #282c34; }
+[data-theme="dark"] .black-key.pressed { color: #fff; box-shadow: inset 0 3px 8px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(97,175,239,0.2); }
 [data-theme="dark"] .key-binding { color: #986032; }
-[data-theme="dark"] .black-key .key-binding { color: #e5c07b; }
 [data-theme="dark"] .octave-label { color: #c678dd; }
 
 [data-theme="dark"] .sequence { background: #2c313a; border-color: #3e4451; }
@@ -66,12 +79,11 @@
 [data-theme="dark"] .pr-timeline-label { background: #2c313a; border-color: #4b5263; color: #636d83; }
 [data-theme="dark"] .pr-timeline-beat { color: #636d83; border-left-color: #4b5263; }
 [data-theme="dark"] .pr-timeline-beat.measure { color: #abb2bf; border-left-color: #636d83; }
-[data-theme="dark"] .pr-label { background: #3a3f4a; color: #bbb; border-color: #2a2e36; border-right-color: #4b5263; }
-[data-theme="dark"] .pr-label.octave-c { background: #424856; color: #61afef; }
+[data-theme="dark"] .pr-label { border-color: #2a2e36; border-right-color: #4b5263; }
+[data-theme="dark"] .pr-label.octave-c { background: #424856; }
 [data-theme="dark"] .pr-label:hover { background: #4a5060; }
 [data-theme="dark"] .pr-label.black-key-row:hover { background: #252830; }
 [data-theme="dark"] .pr-label.octave-c:hover { background: #4e5a6a; }
-[data-theme="dark"] .pr-label.black-key-row { background: #2a2e36; color: #636d83; }
 [data-theme="dark"] .pr-row-bg.black-key-row { background: rgba(0,0,0,0.15); }
 [data-theme="dark"] .pr-gridline-h { background: #3e4451; }
 [data-theme="dark"] .pr-gridline-h.octave-c { background: #4b5263; }
@@ -86,11 +98,13 @@
 [data-theme="dark"] .pr-hover-line { background: #61afef; }
 
 [data-theme="dark"] .btn-play { background: #98c379; color: #282c34; }
+[data-theme="dark"] .btn-sfx { background: #d19a66; color: #282c34; border-color: #d19a66; }
 [data-theme="dark"] .btn-stop { background: #e06c75; color: #282c34; }
 [data-theme="dark"] .btn-clear,
 [data-theme="dark"] .btn-record,
 [data-theme="dark"] .btn-metronome,
 [data-theme="dark"] .btn-loop { background: #3e4451; color: #abb2bf; border-color: #4b5263; }
+[data-theme="dark"] .btn-clear.active { background: #61afef; color: #282c34; border-color: #61afef; }
 [data-theme="dark"] .btn-clear:hover,
 [data-theme="dark"] .btn-record:not(.recording):hover,
 [data-theme="dark"] .btn-metronome:not(.active):hover,
@@ -122,7 +136,6 @@
 [data-theme="dark"] .rec-indicator { color: #e06c75; }
 
 
-[data-theme="dark"] textarea { background: #1e2127; color: #98c379; border-color: #3e4451; }
 [data-theme="dark"] .rtttl-textarea { background: #2c313a; color: #abb2bf; border-color: #3e4451; }
 [data-theme="dark"] .copy-btn { background: #3e4451; color: #abb2bf; border-color: #4b5263; }
 [data-theme="dark"] .copy-btn:hover { background: #4b5263; }
@@ -139,5 +152,19 @@
 [data-theme="dark"] .modal-close:hover { color: #abb2bf; }
 [data-theme="dark"] .hotkey-table td { border-bottom-color: #3e4451; }
 [data-theme="dark"] kbd { background: #2c313a; border-color: #4b5263; color: #abb2bf; box-shadow: 0 1px 0 #181a1f; }
+[data-theme="dark"] .sfx-preset-btn { background: #3e4451; border-color: #4b5263; color: #abb2bf; }
+[data-theme="dark"] .sfx-preset-btn:hover { background: #4b5263; }
+[data-theme="dark"] .sfx-preset-btn.active { background: #61afef; color: #282c34; border-color: #61afef; }
+[data-theme="dark"] .sfx-preset-del { color: #e06c75; }
+[data-theme="dark"] .sfx-opt-btn { background: #3e4451; border-color: #4b5263; color: #abb2bf; }
+[data-theme="dark"] .sfx-opt-btn:hover { background: #4b5263; }
+[data-theme="dark"] .sfx-opt-btn.active { background: #61afef; color: #282c34; border-color: #61afef; }
+[data-theme="dark"] .sfx-quantize-label.active { background: rgba(97,175,239,0.15); color: #61afef; border-color: #61afef; }
+[data-theme="dark"] .sfx-graph { background: #1e2127; border-color: #3e4451; }
+[data-theme="dark"] .sfx-waveform { background: #1e2127; border-color: #3e4451; }
+[data-theme="dark"] .sfx-params label { color: #636d83; }
+[data-theme="dark"] .sfx-value { color: #abb2bf; }
+[data-theme="dark"] .sfx-hint { color: #4b5263; }
+[data-theme="dark"] .sfx-params input[type="range"] { accent-color: #61afef; }
 [data-theme="dark"] [data-tip]::after { background: #2c313a; color: #abb2bf; border-color: #3e4451; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 [data-theme="dark"] .piano-roll-wrapper.fullscreen { background: #282c34; }

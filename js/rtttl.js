@@ -53,9 +53,9 @@ MP.parseRTTTL = function(rtttl) {
     else if (k === 'o') defOct = parseInt(v);
     else if (k === 'b') bpm = parseInt(v);
   });
-  defDur = Math.max(1, Math.min(128, defDur || 4));
-  defOct = Math.max(0, Math.min(8, defOct || 5));
-  bpm = Math.max(10, Math.min(900, bpm || 120));
+  defDur = MP.clamp(defDur || 4, 1, 128);
+  defOct = MP.clamp(defOct || 5, 0, 8);
+  bpm = MP.clamp(bpm || 120, MP.BPM_MIN, MP.BPM_MAX);
 
   const noteNames = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
   const notes = [];

@@ -57,7 +57,7 @@ MP._onMIDIMessage = function(msg) {
     el.classList.add('pressed');
     var noteOctave = parseInt(noteName.match(/\d+$/)[0]);
     if (noteOctave !== MP.appState.kbOctave && noteOctave !== MP.appState.kbOctave + 1) {
-      MP.appState.kbOctave = Math.max(0, Math.min(8, noteOctave));
+      MP.appState.kbOctave = MP.clamp(noteOctave, 0, 8);
       MP.updateKeyBindingLabels();
     }
     var wrap = document.getElementById('keyboard-wrap');

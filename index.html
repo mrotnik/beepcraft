@@ -44,6 +44,7 @@
   <button class="btn btn-clear btn-sm tip-down" id="btn-import-audio" data-tip="Import audio file (WAV/MP3) — detects monophonic melody pitches">&#128266;<span class="btn-text">Import</span></button>
   <button class="btn btn-clear btn-sm tip-down" id="btn-mic-record" data-tip="Record from microphone — detects melody pitches">&#127908;<span class="btn-text">Mic</span></button>
   <button class="btn btn-clear btn-sm tip-down" id="btn-midi" data-tip="Connect MIDI keyboard">&#127929;<span class="btn-text">MIDI</span></button>
+  <button class="btn btn-sfx btn-sm tip-down" id="btn-sfx" data-tip="Generate sound effects (laser, explosion, jump, etc.)">&#127925; SFX</button>
   <span class="top-bar-group" id="serial-group">
     <span class="top-bar-group-label"><span style="font-size:1.3em">&#12336;</span> Serial</span>
     <span class="tip-down" data-tip="Buzzer GPIO pin number on your board"><input type="text" class="pin-input" id="buzzer-pin" value="5" maxlength="3"></span>
@@ -131,7 +132,7 @@
     <div class="piano-roll-wrapper">
       <div class="pr-zoom-controls tip-down tip-right" data-tip="Zoom — use +/- keys or scroll here">
         <button class="btn btn-clear btn-sm" id="btn-zoom-out">-</button>
-        <input type="text" class="pr-zoom-input" id="pr-zoom-input" value="100%">
+        <input type="text" class="pr-zoom-input" id="pr-zoom-input" value="125%">
         <button class="btn btn-clear btn-sm" id="btn-zoom-in">+</button>
         <button class="btn btn-clear btn-sm active tip-down tip-right" id="btn-snap" data-tip="Snap notes to grid when dragging">Snap</button>
         <button class="btn btn-clear btn-sm tip-down tip-right" id="btn-pr-fullscreen" data-tip="Toggle fullscreen piano roll (Mod+Enter)">&#x26F6;</button>
@@ -146,20 +147,41 @@
   <div class="view-tabs output-tabs" style="margin-bottom:0;">
     <button class="view-tab active" data-output="rtttl">RTTTL</button>
     <button class="view-tab" data-output="arduino">C++ (Arduino)</button>
+    <button class="view-tab" data-output="micropython">MicroPython</button>
   </div>
   <div id="output-rtttl" style="margin-top:8px">
     <textarea id="rtttl-output" class="rtttl-textarea" placeholder="Add notes, drop .rtttl files, or paste RTTTL here..."></textarea>
+    <div id="rtttl-warn" class="rtttl-warn" style="display:none">Overlapping notes — RTTTL is monophonic, positions will shift</div>
     <div class="rtttl-actions">
       <button class="copy-btn" id="rtttl-copy-btn">&#128203; Copy</button>
-      <button class="copy-btn" id="rtttl-save-btn" data-tip="Download as .rtttl file">&#128190; Save .rtttl</button>
-      <button class="copy-btn" id="midi-save-btn" data-tip="Download as Standard MIDI file">&#128190; Save .midi</button>
-      <button class="copy-btn" id="btn-share" data-tip="Copy shareable link to clipboard" style="display:none">&#128279; Share</button>
     </div>
   </div>
   <div id="output-arduino" style="display:none; margin-top:8px">
-    <p class="info" style="margin:0 0 4px">Works on any Arduino-compatible board: ESP32, STM32, nRF52, ATmega, RP2040, etc.</p>
+    <div class="codegen-options-row">
+      <p class="info" style="margin:0">Works on any Arduino-compatible board: ESP32, STM32, nRF52, ATmega, RP2040, etc.</p>
+      <label class="loop-toggle tip-down" data-tip="Loop: melody restarts after last note. Uncheck for play-once."><input type="checkbox" id="codegen-loop" checked> Loop</label>
+      <label class="loop-toggle tip-down" data-tip="Strip comments and whitespace for smaller code size"><input type="checkbox" id="codegen-compact"> Compact</label>
+    </div>
     <textarea id="output" readonly placeholder="Add some notes to generate code..."></textarea>
-    <button class="copy-btn" id="copy-btn">&#128203; Copy to clipboard</button>
+    <div class="rtttl-actions">
+      <button class="copy-btn" id="copy-btn">&#128203; Copy</button>
+    </div>
+  </div>
+  <div id="output-micropython" style="display:none; margin-top:8px">
+    <div class="codegen-options-row">
+      <p class="info" style="margin:0">ESP32 / RP2040 with MicroPython — uses PWM for tone generation</p>
+      <label class="loop-toggle tip-down" data-tip="Loop: melody repeats with while True. Uncheck for play-once."><input type="checkbox" id="codegen-mp-loop" checked> Loop</label>
+    </div>
+    <textarea id="output-mp" readonly placeholder="Add some notes to generate code..."></textarea>
+    <div class="rtttl-actions">
+      <button class="copy-btn" id="copy-btn-mp">&#128203; Copy</button>
+    </div>
+  </div>
+  <div class="codegen-export-row">
+    <button class="copy-btn" id="rtttl-save-btn" data-tip="Download as .rtttl file">&#128190; Save .rtttl</button>
+    <button class="copy-btn" id="midi-save-btn" data-tip="Download as Standard MIDI file">&#128190; Save .midi</button>
+    <button class="copy-btn" id="wav-save-btn" data-tip="Download melody as WAV audio file">&#128190; Save .wav</button>
+    <button class="copy-btn" id="btn-share" data-tip="Copy shareable link to clipboard" style="display:none">&#128279; Share</button>
   </div>
 </div>
 
@@ -179,6 +201,9 @@
       <tr><td><kbd>Mod+C</kbd></td><td>Copy selected notes</td></tr>
       <tr><td><kbd>Mod+X</kbd></td><td>Cut selected notes</td></tr>
       <tr><td><kbd>Mod+V</kbd></td><td>Paste notes</td></tr>
+      <tr><td><kbd>Mod+D</kbd></td><td>Duplicate selected notes</td></tr>
+      <tr><td><kbd>Mod+G</kbd></td><td>Group/ungroup selected notes</td></tr>
+      <tr><td><kbd>Mod+M</kbd></td><td>Merge adjacent same-pitch notes</td></tr>
       <tr><td><kbd>Z</kbd></td><td>Octave down (transpose)</td></tr>
       <tr><td><kbd>X</kbd></td><td>Octave up (transpose)</td></tr>
       <tr><td><kbd>C</kbd></td><td>Clear all notes</td></tr>
@@ -216,6 +241,88 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="sfx-modal" style="display:none">
+  <div class="modal-content" style="max-width:1300px">
+    <div class="modal-header">
+      <h3>SFX Generator</h3>
+      <div class="sfx-header-actions">
+        <button class="btn btn-clear btn-sm tip-down" id="sfx-graph-play" data-tip="Preview (Space)">&#9654;</button>
+        <button class="btn btn-clear btn-sm tip-down" id="sfx-graph-snap" data-tip="Snap to nearby dot frequency">Snap</button>
+        <span class="sfx-header-sep"></span>
+        <button class="btn btn-clear btn-sm tip-down" id="sfx-undo" data-tip="Undo" disabled>&#8630;</button>
+        <button class="btn btn-clear btn-sm tip-down" id="sfx-redo" data-tip="Redo" disabled>&#8631;</button>
+        <span class="sfx-header-sep"></span>
+        <button class="btn btn-clear btn-xs tip-down" id="sfx-oct-down" data-tip="Octave down (-12)">-12</button>
+        <button class="btn btn-clear btn-xs tip-down" id="sfx-semi-down" data-tip="Semitone down (-1)">-1</button>
+        <button class="btn btn-clear btn-xs tip-down" id="sfx-semi-up" data-tip="Semitone up (+1)">+1</button>
+        <button class="btn btn-clear btn-xs tip-down" id="sfx-oct-up" data-tip="Octave up (+12)">+12</button>
+      </div>
+      <button class="modal-close" id="sfx-modal-close">&times;</button>
+    </div>
+    <div class="sfx-presets">
+      <button class="sfx-preset-btn sfx-dice" id="sfx-dice" data-tip="Randomize all"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle"><rect x="1" y="1" width="14" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="4.5" cy="4.5" r="1.3"/><circle cx="11.5" cy="4.5" r="1.3"/><circle cx="4.5" cy="11.5" r="1.3"/><circle cx="11.5" cy="11.5" r="1.3"/><circle cx="8" cy="8" r="1.3"/></svg></button>
+    </div>
+    <div style="position:relative">
+      <canvas id="sfx-graph" class="sfx-graph" height="180"></canvas>
+      <div id="sfx-graph-tip" class="sfx-graph-tip" style="display:none"></div>
+    </div>
+    <canvas id="sfx-waveform" class="sfx-waveform" height="80"></canvas>
+    <div class="sfx-params">
+      <label>Start freq <span class="sfx-value" id="sfx-start-freq-val">3000 Hz</span></label>
+      <input type="range" id="sfx-start-freq" min="31" max="8000" value="3000">
+      <label>End freq <span class="sfx-value" id="sfx-end-freq-val">300 Hz</span></label>
+      <input type="range" id="sfx-end-freq" min="31" max="8000" value="300">
+      <label>Duration <span class="sfx-value" id="sfx-duration-val">200 ms</span></label>
+      <input type="range" id="sfx-duration" min="20" max="2000" value="200">
+      <label>Curve</label>
+      <div class="sfx-btn-row">
+        <button class="sfx-opt-btn active" data-sfx-curve="linear">Linear</button>
+        <button class="sfx-opt-btn" data-sfx-curve="exponential">Exp</button>
+        <button class="sfx-opt-btn" data-sfx-curve="logarithmic">Log</button>
+        <button class="sfx-opt-btn" data-sfx-curve="scurve">S-curve</button>
+        <button class="sfx-opt-btn" data-sfx-curve="pingpong">Ping-pong</button>
+        <button class="sfx-opt-btn" data-sfx-curve="bounce">Bounce</button>
+        <button class="sfx-opt-btn" data-sfx-curve="stairs">Stairs</button>
+        <button class="sfx-opt-btn" data-sfx-curve="sawtooth">Sawtooth</button>
+        <button class="sfx-opt-btn" data-sfx-curve="wobble">Wobble</button>
+        <button class="sfx-opt-btn" data-sfx-curve="noise">Noise</button>
+        <button class="sfx-opt-btn" data-sfx-curve="random">Random</button>
+      </div>
+      <label>Wave <span class="sfx-hint">(browser preview only — piezo buzzer is always square)</span></label>
+      <div class="sfx-btn-row">
+        <button class="sfx-opt-btn sfx-wave-btn active" data-sfx-wave="square" data-tip="Square"><svg viewBox="0 0 24 12" width="24" height="12"><polyline points="0,10 0,2 6,2 6,10 12,10 12,2 18,2 18,10 24,10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+        <button class="sfx-opt-btn sfx-wave-btn" data-sfx-wave="sawtooth" data-tip="Sawtooth"><svg viewBox="0 0 24 12" width="24" height="12"><polyline points="0,10 8,2 8,10 16,2 16,10 24,2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+        <button class="sfx-opt-btn sfx-wave-btn" data-sfx-wave="triangle" data-tip="Triangle"><svg viewBox="0 0 24 12" width="24" height="12"><polyline points="0,10 6,2 12,10 18,2 24,10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+        <button class="sfx-opt-btn sfx-wave-btn" data-sfx-wave="sine" data-tip="Sine"><svg viewBox="0 0 24 12" width="24" height="12"><path d="M0,6 C3,0 6,0 9,6 C12,12 15,12 18,6 C21,0 24,0 24,6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+      </div>
+      <label>Grains <span class="sfx-value" id="sfx-grains-val">20</span></label>
+      <span class="sfx-grain-presets">
+        <button class="btn btn-clear btn-xs" data-grains="2">Min</button>
+        <button class="btn btn-clear btn-xs" data-grains="4">Few</button>
+        <button class="btn btn-clear btn-xs" data-grains="20">Med</button>
+        <button class="btn btn-clear btn-xs" data-grains="50">Many</button>
+        <button class="btn btn-clear btn-xs" data-grains="64">Max</button>
+      </span>
+      <input type="range" id="sfx-grains" min="2" max="64" value="20">
+      <label class="sfx-quantize-label"><input type="checkbox" id="sfx-quantize"> Pitch quantize (snap to notes)</label>
+    </div>
+    <div class="sfx-actions">
+      <button class="btn btn-clear btn-sm" id="sfx-swap" data-tip="Swap start/end frequency">&#8646; Swap</button>
+      <button class="btn btn-clear btn-sm" id="sfx-reverse" data-tip="Reverse grain order">&#8634; Reverse</button>
+      <button class="btn btn-clear btn-sm" id="sfx-reset-timing" data-tip="Reset timing to even spacing">Reset timing</button>
+      <button class="btn btn-clear btn-sm" id="sfx-mic" data-tip="Record sound from microphone">&#127908; Record</button>
+      <button class="btn btn-clear btn-sm" id="sfx-import-audio" data-tip="Import WAV/MP3 as SFX"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h3.879a1.5 1.5 0 0 1 1.06.44l1.122 1.12A1.5 1.5 0 0 0 9.62 4H13.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z"/></svg> Import</button>
+      <input type="file" id="sfx-import-file" accept="audio/*" style="display:none">
+      <button class="btn btn-clear btn-sm" id="sfx-copy-json" data-tip="Copy SFX params as JSON">Copy JSON</button>
+      <button class="btn btn-clear btn-sm" id="sfx-copy-fn" data-tip="Copy as standalone Arduino/MicroPython function">Copy Function</button>
+      <button class="btn btn-clear btn-sm" id="sfx-export-wav" data-tip="Download SFX as WAV file">Export WAV</button>
+      <button class="btn btn-clear btn-sm" id="sfx-preview">Preview</button>
+      <button class="btn btn-clear btn-sm" id="sfx-save" data-tip="Save as custom preset">Save</button>
+      <button class="btn btn-play btn-sm" id="sfx-insert" data-tip="Insert SFX into melody (Enter)">Insert</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="import-modal" style="display:none">
   <div class="modal-content" style="max-width:350px;text-align:center;padding:30px">
     <div id="import-status" style="font-size:1.1em">Analyzing audio...</div>
@@ -238,6 +345,7 @@
 <script src="js/rtttl.js"></script>
 <script src="js/codegen.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/sfx.js"></script>
 <script src="js/dancing-cat.js"></script>
 <script src="js/playback.js"></script>
 <script src="js/keyboard.js"></script>

@@ -2,6 +2,7 @@
 !.gitignore
 *.md
 !README.md
+*___/
 rtttl*/
 __pycache__/
 *.pyc

@@ -84,9 +84,9 @@ MP.autoLoad = function() {
     if (MP.appState.seq.length === 0) return false;
     MP.appState.nextNoteStart = Number.isFinite(data.nextNoteStart) && data.nextNoteStart >= 0 ? data.nextNoteStart : MP.seqEndBeat();
     MP.appState.melodyName = typeof data.melodyName === 'string' ? data.melodyName : null;
-    if (Number.isFinite(data.bpm)) document.getElementById('bpm').value = Math.max(MP.BPM_MIN, Math.min(MP.BPM_MAX, Math.round(data.bpm)));
-    if (Number.isFinite(data.kbOctave)) MP.appState.kbOctave = Math.max(0, Math.min(8, Math.floor(data.kbOctave)));
-    if (Number.isFinite(data.prZoom)) MP.appState.prZoom = Math.max(MP.ZOOM_MIN, Math.min(MP.ZOOM_MAX, data.prZoom));
+    if (Number.isFinite(data.bpm)) document.getElementById('bpm').value = MP.clamp(Math.round(data.bpm), MP.BPM_MIN, MP.BPM_MAX);
+    if (Number.isFinite(data.kbOctave)) MP.appState.kbOctave = MP.clamp(Math.floor(data.kbOctave), 0, 8);
+    if (Number.isFinite(data.prZoom)) MP.appState.prZoom = MP.clamp(data.prZoom, MP.ZOOM_MIN, MP.ZOOM_MAX);
     if (Number.isFinite(data.selectedDur)) MP.appState.selectedDur = MP.DUR_NAMES[data.selectedDur] ? data.selectedDur : 4;
     if (data.timeSig && Number.isFinite(data.timeSig.beats) && Number.isFinite(data.timeSig.value) && data.timeSig.beats > 0 && data.timeSig.value > 0) MP.appState.timeSig = data.timeSig;
     if (typeof data.snapEnabled === 'boolean') MP.appState.snapEnabled = data.snapEnabled;
@@ -114,10 +114,13 @@ MP.stopMetronome = function() {
   MP.appState.metronomeOn = false;
   clearTimeout(MP.appState.metronomeTimer);
   MP.appState.metronomeTimer = null;
+  MP._stopMetroOscs();
   var btn = document.getElementById('btn-metronome');
   btn.classList.remove('active');
   btn.innerHTML = '&#9201;<span class="btn-text">Metronome</span>';
 };
+
+MP._metroOscs = [];
 
 function playMetroTick(ctx, absTime, isDownbeat) {
   var og = MP.createOscGain(ctx);
@@ -126,7 +129,17 @@ function playMetroTick(ctx, absTime, isDownbeat) {
   og.gain.gain.setValueAtTime(isDownbeat ? MP.METRO_GAIN_DOWN : MP.METRO_GAIN_UP, absTime);
   og.gain.gain.exponentialRampToValueAtTime(MP.AUDIO_RELEASE_MIN, absTime + MP.METRO_RELEASE);
   og.osc.start(absTime); og.osc.stop(absTime + MP.METRO_RELEASE);
+  MP._metroOscs.push(og.osc);
+  og.osc.onended = function() {
+    var idx = MP._metroOscs.indexOf(og.osc);
+    if (idx >= 0) MP._metroOscs.splice(idx, 1);
+  };
 }
+
+MP._stopMetroOscs = function() {
+  MP._metroOscs.forEach(function(osc) { try { osc.stop(0); } catch(e) {} });
+  MP._metroOscs = [];
+};
 
 function flashMetroIndicator(isDownbeat) {
   var indicator = document.getElementById('metro-indicator');
@@ -203,10 +216,10 @@ MP.updateSequence = function(immediate) {
 MP.clearAll = function() {
   MP.pushUndo(); MP.appState.seq = [];
   var tsBeats = MP.getTimeSigBeats();
-  MP.appState.nextNoteStart = tsBeats * 4;
+  MP.appState.nextNoteStart = tsBeats * 6;
   MP.appState.melodyName = null;
-  MP.appState.prZoom = 1.0;
-  document.getElementById('pr-zoom-input').value = '100%';
+  MP.appState.prZoom = MP.ZOOM_DEFAULT;
+  document.getElementById('pr-zoom-input').value = Math.round(MP.ZOOM_DEFAULT * 100) + '%';
   MP.appState.kbOctave = 4;
   MP.updateKeyBindingLabels();
   MP.scrollKbToOctave();
@@ -249,10 +262,11 @@ MP.sanitizeFilename = function(name) {
 MP.clearSelection = function() {
   MP.appState.selectedNoteIdxs.clear();
   document.querySelectorAll('.pr-note.selected').forEach(function(b) { b.classList.remove('selected'); });
+  document.querySelectorAll('.pr-sfx-group.selected').forEach(function(b) { b.classList.remove('selected'); });
 };
 
 MP.setBpm = function(val) {
-  var v = Math.max(10, Math.min(900, parseInt(val) || 120));
+  var v = MP.clamp(parseInt(val) || 120, 10, 900);
   document.getElementById('bpm').value = v;
   document.getElementById('led-display').textContent = v;
 };
@@ -269,14 +283,25 @@ MP.copyToClipboard = function(elementId, btn, originalHtml) {
 };
 
 MP.toggleRecording = function() {
-  MP.appState.isRecording = !MP.appState.isRecording;
-  const btn = document.getElementById('btn-record');
-  if (MP.appState.isRecording) {
-    btn.classList.add('recording'); btn.innerHTML = '&#9679;<span class="btn-text">Stop Rec</span>';
-    MP.appState.lastNoteEndTime = 0;
+  if (MP.appState._countingIn) return;
+  if (!MP.appState.isRecording) {
+    var btn = document.getElementById('btn-record');
+    btn.classList.add('recording'); btn.innerHTML = '&#9679;<span class="btn-text">Count-in...</span>';
     document.getElementById('btn-mic-record').disabled = true;
     if (!MP.appState.metronomeOn) MP.startMetronome();
+    MP.appState._countingIn = true;
+    var bpm = MP.getBpm();
+    var tsBeats = MP.getTimeSigBeats();
+    var countInMs = (60000 / bpm) * tsBeats;
+    setTimeout(function() {
+      MP.appState._countingIn = false;
+      MP.appState.isRecording = true;
+      MP.appState.lastNoteEndTime = 0;
+      btn.innerHTML = '&#9679;<span class="btn-text">Stop Rec</span>';
+    }, countInMs);
   } else {
+    MP.appState.isRecording = false;
+    var btn = document.getElementById('btn-record');
     btn.classList.remove('recording'); btn.innerHTML = '&#9679;<span class="btn-text">Record</span>';
     document.getElementById('btn-mic-record').disabled = false;
     if (MP.appState.metronomeOn) MP.stopMetronome();
@@ -338,33 +363,11 @@ MP.addNoteFromInput = function(note, pressStart) {
   MP.scrollPrToNote(note);
 };
 
+MP._pendingScrollNote = null;
+
 MP.scrollPrToNote = function(note) {
   if (MP.appState.currentView !== 'roll') return;
-  var container = document.getElementById('piano-roll');
-  if (!container) return;
-  var midi = MP.midiFromName(note.name);
-  if (midi < 0) return;
-  var lastNote = MP.appState.seq[MP.appState.seq.length - 1];
-  if (!lastNote) return;
-  var beatW = MP.PR_BEAT_W * MP.appState.prZoom;
-  var noteEndPx = (lastNote.start + lastNote.dur) * beatW + MP.PR_LABEL_W;
-  var visRight = container.scrollLeft + container.clientWidth;
-  if (noteEndPx > visRight - 40 || noteEndPx < container.scrollLeft + MP.PR_LABEL_W) {
-    container.scrollLeft = Math.max(0, noteEndPx - container.clientWidth * 0.7);
-  }
-  var inner = container.querySelector('.piano-roll-inner');
-  if (!inner) return;
-  var gridH = parseInt(inner.style.height) - MP.PR_TIMELINE_H;
-  var rows = Math.round(gridH / MP.PR_ROW_H);
-  var maxMidi = parseInt(inner.dataset.maxMidi);
-  if (isNaN(maxMidi)) return;
-  var row = maxMidi - midi;
-  var noteY = MP.PR_TIMELINE_H + row * MP.PR_ROW_H;
-  var visTop = container.scrollTop;
-  var visBottom = visTop + container.clientHeight;
-  if (noteY < visTop + MP.PR_TIMELINE_H + 10 || noteY + MP.PR_ROW_H > visBottom - 10) {
-    container.scrollTop = Math.max(0, noteY - container.clientHeight / 2);
-  }
+  MP._pendingScrollNote = note;
 };
 
 MP._toastTimer = null;

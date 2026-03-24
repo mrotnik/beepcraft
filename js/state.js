@@ -1,5 +1,5 @@
 window.MP = window.MP || {};
-MP.VERSION = 'v0.0.10';
+MP.VERSION = 'v0.0.12';
 
 MP.appState = {
   seq: [],
@@ -29,6 +29,7 @@ MP.appState = {
   _lastMetroIndicatorBeat: -1,
 
   playState: null,
+  pausedBeat: null,
   playheadRAF: null,
 
   undoStack: [],
@@ -40,7 +41,7 @@ MP.appState = {
   micChunks: [],
   micRecording: false,
   chipHighlightRAF: null,
-  prZoom: 1.0,
+  prZoom: 1.25,
   snapEnabled: true,
   timeSig: { beats: 4, value: 4 },
 };

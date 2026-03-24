@@ -96,7 +96,7 @@ function setupDurationControls() {
 
 function setupPlaybackControls() {
   document.getElementById('btn-play').addEventListener('click', function() {
-    if (MP.appState.playState) MP.stopPlayback(); else MP.playSequence();
+    if (MP.appState.playState) { MP.pausePlayback(); } else { MP.playSequence(MP.appState.pausedBeat || 0); MP.appState.pausedBeat = null; }
   });
   document.getElementById('btn-clear').addEventListener('click', MP.clearAll);
   document.getElementById('btn-loop').addEventListener('click', function() {
@@ -136,6 +136,11 @@ function setupPlaybackControls() {
       MP.generateCode();
     }
   }
+  melodyNameEl.addEventListener('paste', function(e) {
+    e.preventDefault();
+    var text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, text);
+  });
   melodyNameEl.addEventListener('blur', finishMelodyRename);
   melodyNameEl.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') { e.preventDefault(); melodyNameEl.blur(); }
@@ -302,6 +307,9 @@ function setupOutputControls() {
     MP.downloadBlob(new Blob([rtttl], { type: 'text/plain' }), name + '.rtttl');
     MP.showToast('Saved ' + name + '.rtttl');
   });
+  document.getElementById('wav-save-btn').addEventListener('click', function() {
+    MP.exportMelodyWav();
+  });
   document.getElementById('midi-save-btn').addEventListener('click', function() {
     var data = MP.generateMIDI();
     if (!data) { MP.showToast('Nothing to save', true); return; }
@@ -341,10 +349,22 @@ function setupOutputControls() {
 
   document.querySelectorAll('.view-tab[data-output]').forEach(function(tab) {
     tab.addEventListener('click', function() {
-      document.querySelectorAll('.view-tab[data-output]').forEach(function(t) { t.classList.toggle('active', t === tab); });
-      document.getElementById('output-rtttl').style.display = tab.dataset.output === 'rtttl' ? '' : 'none';
-      document.getElementById('output-arduino').style.display = tab.dataset.output === 'arduino' ? '' : 'none';
+      MP._keepScroll(function() {
+        document.querySelectorAll('.view-tab[data-output]').forEach(function(t) { t.classList.toggle('active', t === tab); });
+        document.getElementById('output-rtttl').style.display = tab.dataset.output === 'rtttl' ? '' : 'none';
+        document.getElementById('output-arduino').style.display = tab.dataset.output === 'arduino' ? '' : 'none';
+        document.getElementById('output-micropython').style.display = tab.dataset.output === 'micropython' ? '' : 'none';
+        var textareaMap = { rtttl: 'rtttl-output', arduino: 'output', micropython: 'output-mp' };
+        var ta = document.getElementById(textareaMap[tab.dataset.output]);
+        if (ta) MP._autoSizeTextarea(ta);
+      });
     });
+  });
+  document.getElementById('codegen-loop').addEventListener('change', function() { MP._keepScroll(function() { MP.generateCode(); }); });
+  document.getElementById('codegen-compact').addEventListener('change', function() { MP._keepScroll(function() { MP.generateCode(); }); });
+  document.getElementById('codegen-mp-loop').addEventListener('change', function() { MP._keepScroll(function() { MP.generateCode(); }); });
+  document.getElementById('copy-btn-mp').addEventListener('click', function() {
+    MP.copyToClipboard('output-mp', this, '&#128203; Copy to clipboard');
   });
 }
 
@@ -390,7 +410,11 @@ function setupMelodyPresets() {
     countEl.className = 'preset-count';
     countEl.textContent = q ? (matches.length + ' match' + (matches.length !== 1 ? 'es' : '')) : (matches.length + ' presets — type to filter');
     dropdown.appendChild(countEl);
-    matches.forEach(function(p, i) {
+    var customMatches = matches.filter(function(p) { return p.custom; });
+    var builtInMatches = matches.filter(function(p) { return !p.custom; });
+    var flatIdx = 0;
+    function appendItem(p) {
+      var idx = flatIdx++;
       var item = document.createElement('div');
       item.className = 'preset-item';
       if (p.name === loadedPresetName) item.classList.add('loaded');
@@ -400,11 +424,25 @@ function setupMelodyPresets() {
         loadPreset(p);
       });
       item.addEventListener('mouseenter', function() {
-        activeIdx = i;
-        dropdown.querySelectorAll('.preset-item').forEach(function(el, j) { el.classList.toggle('active', j === i); });
+        activeIdx = idx;
+        dropdown.querySelectorAll('.preset-item').forEach(function(el, j) { el.classList.toggle('active', j === idx); });
       });
       dropdown.appendChild(item);
-    });
+    }
+    if (customMatches.length > 0) {
+      var header = document.createElement('div');
+      header.className = 'preset-section-header';
+      header.textContent = 'Custom (' + customMatches.length + ')';
+      dropdown.appendChild(header);
+      customMatches.forEach(appendItem);
+    }
+    if (builtInMatches.length > 0 && customMatches.length > 0) {
+      var header2 = document.createElement('div');
+      header2.className = 'preset-section-header';
+      header2.textContent = 'Built-in';
+      dropdown.appendChild(header2);
+    }
+    builtInMatches.forEach(appendItem);
     dropdown.classList.add('open');
   }
 
@@ -640,7 +678,7 @@ function setupAutoRestore() {
     }
     MP.updateSequence();
   } else {
-    MP.appState.nextNoteStart = MP.getTimeSigBeats() * 4;
+    MP.appState.nextNoteStart = MP.getTimeSigBeats() * 6;
     MP.updateSequence();
   }
 
@@ -705,8 +743,21 @@ document.addEventListener('DOMContentLoaded', function() {
   setupMelodyPresets();
   setupTheme();
   setupAudioImport();
+  MP.initSfxDialog();
+  document.getElementById('btn-sfx').addEventListener('click', function() {
+    MP._sfxEditingGroup = null;
+    document.getElementById('sfx-insert').textContent = 'Insert';
+    document.getElementById('sfx-modal').style.display = '';
+    var p = MP.getSfxParams();
+    if (!MP._sfxGrainFreqs.length) MP.rebuildSfxFreqs(p);
+    MP.drawSfxGraph(p);
+    MP.drawSfxWaveform(p);
+  });
   setupSerialAndMidi();
   setupFileHandling();
   setupAutoRestore();
   setupToolbarCompaction();
+  window.addEventListener('beforeunload', function(e) {
+    if (MP.appState.seq.length > 0) e.preventDefault();
+  });
 });

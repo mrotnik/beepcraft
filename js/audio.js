@@ -64,3 +64,46 @@ MP.stopNoteInput = function() {
   MP.appState.currentOsc = null;
   MP.appState.currentGain = null;
 };
+
+MP.exportMelodyWav = function() {
+  var seq = MP.appState.seq;
+  if (seq.length === 0) { MP.showToast('No notes to export', true); return; }
+  var bpm = MP.getBpm();
+  var beatSec = 60 / bpm;
+  var totalBeats = MP.totalBeats();
+  var duration = totalBeats * beatSec + 0.1;
+  var sampleRate = 44100;
+  var numSamples = Math.ceil(sampleRate * duration);
+  var offCtx = new OfflineAudioContext(1, numSamples, sampleRate);
+
+  seq.forEach(function(n) {
+    if (n.freq <= 0) return;
+    var osc = offCtx.createOscillator();
+    var gain = offCtx.createGain();
+    osc.connect(gain);
+    gain.connect(offCtx.destination);
+    osc.type = 'square';
+    osc.frequency.value = n.freq;
+    var startTime = n.start * beatSec;
+    var noteDur = n.dur * beatSec * 0.9;
+    gain.gain.setValueAtTime(0.3, startTime);
+    gain.gain.setValueAtTime(0, startTime + noteDur);
+    osc.start(startTime);
+    osc.stop(startTime + noteDur + 0.01);
+  });
+
+  offCtx.startRendering().then(function(buffer) {
+    var samples = buffer.getChannelData(0);
+    var wav = MP._encodeWav(samples, sampleRate);
+    var blob = new Blob([wav], { type: 'audio/wav' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = (MP.appState.melodyName || 'melody') + '.wav';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    MP.showToast('Exported WAV (' + seq.length + ' notes)');
+  });
+};

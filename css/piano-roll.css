@@ -7,11 +7,11 @@
 .piano-roll-wrapper.fullscreen .piano-roll {
   height: 100% !important; max-height: none; border-radius: 0; resize: none;
 }
-.piano-roll { position: relative; overflow: auto; border: 1px solid var(--section-border); border-radius: 6px; background: var(--subtle-bg); height: 400px; resize: vertical; min-height: 150px; max-height: 90vh; }
+.piano-roll { position: relative; overflow: auto; border: 1px solid var(--section-border); border-radius: 6px; background: var(--subtle-bg); height: 500px; resize: vertical; min-height: 150px; max-height: 90vh; }
 .piano-roll-inner { position: relative; overflow: clip; }
 .pr-label {
   width: var(--pr-label-w); height: var(--pr-row-h); display: flex; align-items: center; justify-content: flex-end;
-  padding-right: 6px; font-size: 0.65em; color: #555; background: #dddfe3;
+  padding-right: 6px; font-size: 0.65em; color: var(--pr-label-text); background: var(--pr-label-bg);
   border-bottom: 1px solid var(--section-border); border-right: 1px solid var(--input-border); box-sizing: border-box;
   flex-shrink: 0; user-select: none; cursor: pointer;
 }
@@ -23,7 +23,7 @@
   flex-shrink: 0; pointer-events: auto;
 }
 .pr-label.octave-c { background: var(--accent-bg); color: var(--accent); font-weight: 700; font-size: 0.75em; }
-.pr-label.black-key-row { background: #b0b4bc; color: #666; }
+.pr-label.black-key-row { background: var(--pr-label-black); color: var(--pr-label-text); }
 .pr-row-bg { position: absolute; left: var(--pr-label-w); height: var(--pr-row-h); pointer-events: none; }
 .pr-row-bg.black-key-row { background: rgba(0,0,0,0.04); }
 .pr-gridline-h {
@@ -34,8 +34,8 @@
   position: absolute; top: 0; width: 1px; background: var(--section-border); pointer-events: none;
 }
 .pr-gridline-v.measure { background: var(--input-border); width: 2px; }
-.pr-gridline-v.sub-half { background: var(--section-border); opacity: 0.6; }
-.pr-gridline-v.sub-quarter { background: var(--section-border); opacity: 0.3; }
+.pr-gridline-v.sub-half { opacity: 0.6; }
+.pr-gridline-v.sub-quarter { opacity: 0.3; }
 .pr-note {
   position: absolute; height: 18px; border-radius: 3px; cursor: grab;
   background: var(--accent); color: #fff; font-size: 0.6em; line-height: 18px;
@@ -43,6 +43,22 @@
   box-shadow: 0 1px 2px rgba(0,0,0,0.15); min-width: 8px; z-index: 2;
 }
 .pr-note:hover { filter: brightness(1.15); }
+.pr-sfx-group {
+  position: absolute; border-radius: 3px; cursor: grab; z-index: 2;
+  background: var(--sfx-group-bg); color: var(--sfx-group-text);
+  padding-left: 4px; overflow: hidden; white-space: nowrap; user-select: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15); min-width: 8px;
+}
+.pr-sfx-group:hover { filter: brightness(1.15); }
+.pr-sfx-group.selected { outline: 2px solid var(--selection); outline-offset: -1px; box-shadow: 0 0 0 2px var(--text), 0 1px 6px color-mix(in srgb, var(--selection) 45%, transparent); z-index: 3; }
+.pr-sfx-group-label { font-size: 0.6em; pointer-events: none; }
+.pr-note[data-tip]::after { display: none; }
+.pr-note-tip {
+  position: fixed; padding: 6px 12px; border-radius: 6px; font-size: 12px;
+  white-space: nowrap; pointer-events: none; z-index: 60;
+  background: var(--section-bg); color: var(--text); border: 1px solid var(--section-border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1); font-family: monospace;
+}
 .pr-note.selected { outline: 2px solid var(--selection); outline-offset: -1px; box-shadow: 0 0 0 2px var(--text), 0 1px 6px color-mix(in srgb, var(--selection) 45%, transparent); z-index: 3; }
 .pr-note-label { pointer-events: none; }
 .pr-note .pr-resize {
@@ -82,6 +98,16 @@
 .pr-playhead {
   position: absolute; top: 0; width: 2px; background: var(--error); z-index: 10;
   pointer-events: none; box-shadow: 0 0 4px rgba(181,64,58,0.5);
+}
+.pr-pause-cursor {
+  position: absolute; width: 1px; background: var(--accent); z-index: 9;
+  pointer-events: none; opacity: 0.5;
+}
+.pr-pause-marker {
+  position: absolute; top: 2px; width: 0; height: 0; z-index: 9; pointer-events: none;
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+  border-top: 7px solid var(--accent); opacity: 0.7;
+  transform: translateX(-5px);
 }
 .pr-hover-line {
   position: absolute; top: 0; width: 1px; background: var(--accent); z-index: 9;

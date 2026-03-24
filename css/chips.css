@@ -12,13 +12,13 @@
 .note-chip.drag-over-left { box-shadow: -3px 0 0 0 var(--accent); }
 .note-chip.drag-over-right { box-shadow: 3px 0 0 0 var(--accent); }
 .note-chip .remove { color: var(--error); font-weight: bold; font-size: 1em; line-height: 1; cursor: pointer; }
-.note-chip .remove:hover { color: #d04a44; }
+.note-chip .remove:hover { color: var(--chip-remove-hover); }
 .note-chip .dur-label { color: var(--muted); font-size: 0.75em; }
 .note-chip.rest { color: var(--muted); border-color: var(--section-border); background: var(--bg); }
-.note-chip.highlight { background: #d8d2f0; }
-.note-chip.playing { background: #e0c860; border-color: #c4a830; color: #3a3520; }
+.note-chip.highlight { background: var(--chip-highlight); }
+.note-chip.playing { background: var(--chip-playing); border-color: var(--chip-playing-border); color: #3a3520; }
 .note-chip.playing .dur-label { color: #6a6040; }
-.note-chip.rest.playing { background: #f0e8c8; border-color: #c4a830; color: #6a6040; }
+.note-chip.rest.playing { background: #f0e8c8; border-color: var(--chip-playing-border); color: #6a6040; }
 .note-chip.rest.flash { animation: chip-flash 0.4s ease-out; }
 @keyframes chip-flash {
   0% { background: var(--accent); color: #fff; border-color: var(--accent); }

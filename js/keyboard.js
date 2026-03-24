@@ -98,7 +98,7 @@ MP.transposeSemitones = function(shift) {
     MP.updateNoteFromMidi(n, newMidi);
   });
   var avgMidi = Math.round(midiNotes.reduce(function(a, b) { return a + b; }, 0) / midiNotes.length) + shift;
-  var newOct = Math.max(0, Math.min(8, Math.floor(avgMidi / 12) - 1));
+  var newOct = MP.clamp(Math.floor(avgMidi / 12) - 1, 0, 8);
   if (newOct !== MP.appState.kbOctave) {
     MP.appState.kbOctave = newOct;
     MP.updateKeyBindingLabels();
@@ -109,7 +109,7 @@ MP.transposeSemitones = function(shift) {
 };
 
 MP.transposeAndShiftOctave = function(direction) {
-  MP.transposeSequence(direction);
+  if (!MP.transposeSequence(direction)) return;
   var newOct = MP.appState.kbOctave + direction;
   if (newOct >= 0 && newOct <= 8) {
     MP.appState.kbOctave = newOct;
@@ -121,19 +121,22 @@ MP.transposeAndShiftOctave = function(direction) {
 MP.transposeSequence = function(octaveShift) {
   if (MP.appState.seq.length === 0) {
     MP.showTransposeOverlay(octaveShift > 0 ? 'up' : 'down', true);
-    return;
+    return false;
   }
+  var shift = octaveShift * 12;
+  var midiNotes = MP.appState.seq.map(function(n) { return MP.midiFromName(n.name); }).filter(function(m) { return m >= 0; });
+  if (midiNotes.length === 0) return false;
+  var minM = Math.min.apply(null, midiNotes), maxM = Math.max.apply(null, midiNotes);
+  if (minM + shift < MP.MIDI_MIN || maxM + shift > MP.MIDI_MAX) return false;
   MP.pushUndo();
-  MP.appState.seq.forEach(n => {
-    const match = n.name.match(/^([A-G]#?)(\d)$/);
-    if (!match) return;
-    const newOct = parseInt(match[2]) + octaveShift;
-    if (newOct < 0 || newOct > 8) return;
-    n.name = match[1] + newOct;
-    n.freq = MP.freqFromMidi(MP.midiFromName(n.name));
+  MP.appState.seq.forEach(function(n) {
+    var midi = MP.midiFromName(n.name);
+    if (midi < 0) return;
+    MP.updateNoteFromMidi(n, midi + shift);
   });
   MP.updateSequence();
   MP.showTransposeOverlay(octaveShift > 0 ? 'up' : 'down', true);
+  return true;
 };
 
 MP.updateKeyBindingLabels = function(silent) {
@@ -174,7 +177,13 @@ function setupComputerKeyboard() {
   document.addEventListener('keydown', (e) => {
     if (e.repeat) return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-    if (e.key === ' ') { e.preventDefault(); if (!MP.appState.micRecording) { if (MP.appState.playState) MP.stopPlayback(); else MP.playSequence(); } return; }
+    if (e.key === ' ') {
+      e.preventDefault();
+      var sfxModal = document.getElementById('sfx-modal');
+      if (sfxModal && sfxModal.style.display !== 'none') { MP.previewSfx(MP.getSfxParams()); return; }
+      if (!MP.appState.micRecording) { if (MP.appState.playState) { MP.pausePlayback(); } else { MP.playSequence(MP.appState.pausedBeat || 0); MP.appState.pausedBeat = null; } }
+      return;
+    }
     if (MP.modKey(e) && e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); MP.redo(); return; }
     if (MP.modKey(e) && e.key.toLowerCase() === 'z') { e.preventDefault(); MP.undo(); return; }
     if (MP.modKey(e) && e.key.toLowerCase() === 'y') { e.preventDefault(); MP.redo(); return; }
@@ -185,7 +194,7 @@ function setupComputerKeyboard() {
       var selected = [...MP.appState.selectedNoteIdxs].sort((a, b) => a - b).map(i => MP.appState.seq[i]).filter(Boolean);
       if (selected.length === 0) return;
       var minStart = Math.min(...selected.map(n => n.start));
-      MP.appState.clipboard = selected.map(n => ({ name: n.name, freq: n.freq, dur: n.dur, startOffset: n.start - minStart }));
+      MP.appState.clipboard = selected.map(n => ({ name: n.name, freq: n.freq, dur: n.dur, startOffset: n.start - minStart, sfxGroup: n.sfxGroup || null, sfxName: n.sfxName || null }));
       if (isCut) {
         MP.pushUndo();
         [...MP.appState.selectedNoteIdxs].sort((a, b) => b - a).forEach(idx => MP.appState.seq.splice(idx, 1));
@@ -203,15 +212,94 @@ function setupComputerKeyboard() {
       MP.pushUndo();
       var pasteStart = MP.totalBeats();
       var newIdxs = new Set();
+      var groupMap = {};
       MP.appState.clipboard.forEach(n => {
         var idx = MP.appState.seq.length;
-        MP.appState.seq.push({ name: n.name, freq: n.freq, start: pasteStart + n.startOffset, dur: n.dur });
+        var note = { name: n.name, freq: n.freq, start: pasteStart + n.startOffset, dur: n.dur };
+        if (n.sfxGroup) {
+          if (!groupMap[n.sfxGroup]) groupMap[n.sfxGroup] = 'sfx_' + MP._sfxNextGroupId++;
+          note.sfxGroup = groupMap[n.sfxGroup];
+        }
+        if (n.sfxName) note.sfxName = n.sfxName;
+        MP.appState.seq.push(note);
         newIdxs.add(idx);
       });
       MP.appState.selectedNoteIdxs = newIdxs;
       MP.ensureNextNoteStart();
       MP.updateSequence();
       MP.showToast('Pasted ' + MP.appState.clipboard.length + ' note' + (MP.appState.clipboard.length !== 1 ? 's' : ''));
+      return;
+    }
+    if (MP.modKey(e) && e.key.toLowerCase() === 'm') {
+      e.preventDefault();
+      var seq = MP.appState.seq;
+      if (seq.length < 2) return;
+      var sorted = [...seq].sort(function(a, b) { return a.start - b.start; });
+      var merged = [sorted[0]];
+      for (var mi = 1; mi < sorted.length; mi++) {
+        var prev = merged[merged.length - 1];
+        var curr = sorted[mi];
+        if (curr.name === prev.name && Math.abs(curr.start - (prev.start + prev.dur)) < 0.01) {
+          prev.dur += curr.dur;
+        } else {
+          merged.push(curr);
+        }
+      }
+      if (merged.length < seq.length) {
+        MP.pushUndo();
+        MP.appState.seq = merged;
+        MP.appState.selectedNoteIdxs.clear();
+        MP.ensureNextNoteStart();
+        MP.updateSequence();
+        MP.showToast('Merged ' + (seq.length - merged.length) + ' note' + (seq.length - merged.length !== 1 ? 's' : ''));
+      }
+      return;
+    }
+    if (MP.modKey(e) && e.key.toLowerCase() === 'd') {
+      e.preventDefault();
+      if (MP.appState.selectedNoteIdxs.size === 0) return;
+      var selected = [...MP.appState.selectedNoteIdxs].sort((a, b) => a - b).map(i => MP.appState.seq[i]).filter(Boolean);
+      if (selected.length === 0) return;
+      MP.pushUndo();
+      var maxEnd = Math.max(...selected.map(n => n.start + n.dur));
+      var minStart = Math.min(...selected.map(n => n.start));
+      var offset = maxEnd - minStart;
+      var newIdxs = new Set();
+      var dupGroupMap = {};
+      selected.forEach(n => {
+        var idx = MP.appState.seq.length;
+        var note = { name: n.name, freq: n.freq, start: n.start + offset, dur: n.dur };
+        if (n.sfxGroup) {
+          if (!dupGroupMap[n.sfxGroup]) dupGroupMap[n.sfxGroup] = 'sfx_' + MP._sfxNextGroupId++;
+          note.sfxGroup = dupGroupMap[n.sfxGroup];
+        }
+        if (n.sfxName) note.sfxName = n.sfxName;
+        MP.appState.seq.push(note);
+        newIdxs.add(idx);
+      });
+      MP.appState.selectedNoteIdxs = newIdxs;
+      MP.ensureNextNoteStart();
+      MP.updateSequence();
+      MP.showToast('Duplicated ' + selected.length + ' note' + (selected.length !== 1 ? 's' : ''));
+      return;
+    }
+    if (MP.modKey(e) && e.key.toLowerCase() === 'g') {
+      e.preventDefault();
+      if (MP.appState.selectedNoteIdxs.size < 2) return;
+      var selIdxs = [...MP.appState.selectedNoteIdxs];
+      var selNotes = selIdxs.map(i => MP.appState.seq[i]).filter(Boolean);
+      var hasGroup = selNotes.some(n => n.sfxGroup);
+      MP.pushUndo();
+      if (hasGroup) {
+        selNotes.forEach(n => { delete n.sfxGroup; });
+        MP.updateSequence();
+        MP.showToast('Ungrouped ' + selNotes.length + ' notes');
+      } else {
+        var gid = 'sfx_' + MP._sfxNextGroupId++;
+        selNotes.forEach(n => { n.sfxGroup = gid; });
+        MP.updateSequence();
+        MP.showToast('Grouped ' + selNotes.length + ' notes');
+      }
       return;
     }
     if (MP.modKey(e) && e.key.toLowerCase() === 'a') {

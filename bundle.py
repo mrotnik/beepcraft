@@ -11,7 +11,7 @@ def read(path):
         return f.read()
 
 css_files = ['css/base.css', 'css/controls.css', 'css/keyboard.css', 'css/piano-roll.css', 'css/chips.css', 'css/dark.css']
-js_files = ['js/state.js', 'js/constants.js', 'js/duration.js', 'js/audio.js', 'js/audio-import.js', 'js/rtttl.js', 'js/codegen.js', 'js/ui.js', 'js/dancing-cat.js', 'js/playback.js', 'js/keyboard.js', 'js/piano-roll.js', 'js/chips.js', 'js/midi.js', 'js/serial.js', 'js/main.js']
+js_files = ['js/state.js', 'js/constants.js', 'js/duration.js', 'js/audio.js', 'js/audio-import.js', 'js/rtttl.js', 'js/codegen.js', 'js/ui.js', 'js/sfx.js', 'js/dancing-cat.js', 'js/playback.js', 'js/keyboard.js', 'js/piano-roll.js', 'js/chips.js', 'js/midi.js', 'js/serial.js', 'js/main.js']
 
 css = '\n'.join(read(f) for f in css_files)
 js = '\n'.join(read(f) for f in js_files)
@@ -36,10 +36,14 @@ html = read('index.html')
 html = re.sub(r'<link\s+rel="stylesheet"\s+href="css/[^"]+"\s*/?>\s*\n?', '', html)
 html = re.sub(r'<script\s+src="js/[^"]+"\s*>\s*</script>\s*\n?', '', html)
 
-html = html.replace('</head>', '<style>\n' + css + '\n</style>\n</head>')
+safe_css = css.replace('</style', '<\\/style').replace('</script', '<\\/script')
+safe_js = js.replace('</script', '<\\/script').replace('</style', '<\\/style')
+safe_melodies = json.dumps(melodies).replace('</script', '<\\/script').replace('</style', '<\\/style')
+
+html = html.replace('</head>', '<style>\n' + safe_css + '\n</style>\n</head>')
 html = html.replace('</body>',
-    '<script>\nwindow.__BUNDLED_MELODIES__ = ' + json.dumps(melodies) + ';\n</script>\n' +
-    '<script>\n' + js + '\n</script>\n</body>')
+    '<script>\nwindow.__BUNDLED_MELODIES__ = ' + safe_melodies + ';\n</script>\n' +
+    '<script>\n' + safe_js + '\n</script>\n</body>')
 
 out = os.path.join(ROOT, 'beepcraft.html')
 with open(out, 'w', encoding='utf-8') as f:

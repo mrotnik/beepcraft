@@ -1,5 +1,6 @@
 MP.playSequence = function(fromBeat) {
   if (MP.appState.seq.length === 0) return;
+  MP.removePauseCursor();
   MP._internalStop();
   var playBtn = document.getElementById('btn-play');
   playBtn.innerHTML = '&#9632;<span class="btn-text">Stop</span>';
@@ -115,8 +116,13 @@ MP._internalStop = function() {
   MP.dancingCat.stop();
   clearTimeout(MP.appState.metronomeTimer);
   MP.appState.metronomeTimer = null;
+  if (MP._stopMetroOscs) MP._stopMetroOscs();
+};
+
+MP._restoreStandaloneMetronome = function() {
   if (MP.appState.metronomeOn) {
     MP.appState.metronomeBeat = 0;
+    MP.appState._metroExpectedTime = null;
     MP.tickMetronome();
   }
 };
@@ -128,10 +134,48 @@ MP.refreshPlayback = function() {
   MP.playSequence(currentBeat);
 };
 
+MP.pausePlayback = function() {
+  var ps = MP.appState.playState;
+  if (!ps) return;
+  var elapsed = ps.ctx.currentTime - ps.startTime - ps.loopOffset;
+  MP.appState.pausedBeat = elapsed / ps.beatSec;
+  MP.stopPlayback();
+  MP.showPauseCursor();
+};
+
+MP.showPauseCursor = function() {
+  MP.removePauseCursor();
+  if (MP.appState.pausedBeat == null || MP.appState.currentView !== 'roll') return;
+  var container = document.getElementById('piano-roll');
+  var inner = container ? container.querySelector('.piano-roll-inner') : null;
+  if (!inner) return;
+  var beatW = MP.PR_BEAT_W * MP.appState.prZoom;
+  var px = MP.appState.pausedBeat * beatW;
+  var gridH = parseInt(inner.style.height) - MP.PR_TIMELINE_H;
+  var line = document.createElement('div');
+  line.className = 'pr-pause-cursor';
+  line.style.left = (MP.PR_LABEL_W + px) + 'px';
+  line.style.top = MP.PR_TIMELINE_H + 'px';
+  line.style.height = gridH + 'px';
+  var marker = document.createElement('div');
+  marker.className = 'pr-pause-marker';
+  marker.style.left = (MP.PR_LABEL_W + px) + 'px';
+  inner.appendChild(line);
+  inner.appendChild(marker);
+};
+
+MP.removePauseCursor = function() {
+  var inner = document.querySelector('.piano-roll-inner');
+  if (!inner) return;
+  var el = inner.querySelector('.pr-pause-cursor'); if (el) el.remove();
+  var mk = inner.querySelector('.pr-pause-marker'); if (mk) mk.remove();
+};
+
 MP.stopPlayback = function() {
   var wasRecording = MP.appState.isRecording;
   MP._internalStop();
   if (wasRecording) MP.toggleRecording();
+  else MP._restoreStandaloneMetronome();
 };
 
 MP.startPlayhead = function() {
@@ -256,3 +300,9 @@ MP.stopPlayhead = function() {
     var mh = inner.querySelector('.pr-measure-highlight'); if (mh) mh.remove();
   }
 };
+
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden && MP.appState.playState) {
+    MP.pausePlayback();
+  }
+});

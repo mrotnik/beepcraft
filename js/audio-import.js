@@ -54,7 +54,7 @@ MP._yinCandidates = function(diff, sampleRate, thresholds) {
         }
         var freq = sampleRate / period;
         if (freq < 50 || freq > 2000) break;
-        var midi = Math.round(MP.A4_MIDI + 12 * Math.log2(freq / MP.A4_FREQ));
+        var midi = MP.midiFromFreq(freq);
         if (midi < 24 || midi > 96) break;
         if (!seen[midi]) {
           seen[midi] = true;

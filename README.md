@@ -34,6 +34,7 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 
 ### 📤 Export
 - 📟 **Arduino C++** — `tone()`/`noTone()` for any board (ESP32, STM32, RP2040, ATmega, etc.)
+- 🐍 **MicroPython** — PWM-based codegen for ESP32/RP2040
 - 📱 **RTTTL** — standard ringtone format, paste/drop to import
 - 🎵 **MIDI export** — download as Standard MIDI file
 - 🔌 **Serial upload** — send directly to Arduino (Chromium)
@@ -53,8 +54,8 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 <td>
 
 ### ⚡ Playback & UX
-- ▶️ **Playback** — loop, metronome, tap tempo, time signatures
-- ↩️ **Undo/redo** — copy/paste, octave transpose
+- ▶️ **Playback** — loop, pause/resume, metronome, tap tempo, time signatures
+- ↩️ **Undo/redo** — copy/paste, octave transpose, duplicate (Ctrl+D), merge (Ctrl+M)
 - 🌗 **Dark/light theme**
 - 📁 **Zero dependencies** — no server needed
 
@@ -89,16 +90,16 @@ Connect a **passive** buzzer to your board. For 3-pin modules: VCC to 3.3V/5V, G
 
 </details>
 
-## 🔊 Coming Soon — SFX Generator
+## 🔊 SFX Generator
 
-Sound effects from a passive buzzer. Lasers, explosions, animal calls, sci-fi noises — shape them visually, preview instantly, insert into your melody.
+Built-in sound effects engine for passive buzzers. 56 presets across game, animal, machine, nature, sci-fi, and musical categories. 11 frequency curves (linear, exponential, pingpong, stairs, wobble, bounce, logarithmic, s-curve, sawtooth, noise, random). Drag graph dots to fine-tune frequency and timing, double-click to add/remove grains. Export as WAV, copy as standalone Arduino/MicroPython function, or insert directly into your melody.
 
 ## 🛠️ Development
 
 Plain HTML/JS/CSS with zero dependencies. Source files are modular:
 
 ```
-js/          16 modules (state, constants, audio, audio-import, rtttl, codegen, ui, ...)
+js/          17 modules (state, constants, audio, audio-import, rtttl, codegen, sfx, ui, ...)
 css/         6 stylesheets (base, controls, keyboard, piano-roll, chips, dark)
 melodies/    57 RTTTL preset files
 index.html   main HTML
