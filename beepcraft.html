@@ -2161,6 +2161,7 @@ MP.parseRTTTL = function(rtttl) {
 MP._autoSizeTextarea = function(el) {
   if (!el) return;
   if (!el.offsetParent) return;
+  if (!el.value) { el.style.height = ''; return; }
   MP._keepScroll(function() {
     el.style.height = '0';
     el.style.height = Math.min(el.scrollHeight, 600) + 'px';
@@ -2710,7 +2711,7 @@ MP.clearAll = function() {
   MP.pushUndo(); MP.appState.seq = [];
   var tsBeats = MP.getTimeSigBeats();
   MP.appState.nextNoteStart = tsBeats * 6;
-  MP.appState.melodyName = null;
+  MP.appState.melodyName = 'Melody';
   MP.appState.prZoom = MP.ZOOM_DEFAULT;
   document.getElementById('pr-zoom-input').value = Math.round(MP.ZOOM_DEFAULT * 100) + '%';
   MP.appState.kbOctave = 4;
@@ -4258,6 +4259,7 @@ MP.initSfxDialog = function() {
     endFreqInput.value = MP._sfxGrainFreqs[MP._sfxGrainFreqs.length - 1];
     MP._sfxClearPresetActive();
     updateDisplayValues();
+    MP.previewSfx(MP.getSfxParams());
   }
 
   document.getElementById('sfx-oct-down').addEventListener('click', function() { transposeSfx(-12); });

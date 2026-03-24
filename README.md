@@ -84,6 +84,8 @@ Connect a **passive** buzzer to your board. For 3-pin modules: VCC to 3.3V/5V, G
 
 ![RTTTL output](screenshots/03.png)
 
+![SFX Generator](screenshots/06.png)
+
 ![Serial Setup](screenshots/05.png)
 
 ![Keyboard shortcuts](screenshots/04.png)

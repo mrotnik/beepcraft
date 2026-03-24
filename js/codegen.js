@@ -1,6 +1,7 @@
 MP._autoSizeTextarea = function(el) {
   if (!el) return;
   if (!el.offsetParent) return;
+  if (!el.value) { el.style.height = ''; return; }
   MP._keepScroll(function() {
     el.style.height = '0';
     el.style.height = Math.min(el.scrollHeight, 600) + 'px';

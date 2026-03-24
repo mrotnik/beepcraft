@@ -1383,6 +1383,7 @@ MP.initSfxDialog = function() {
     endFreqInput.value = MP._sfxGrainFreqs[MP._sfxGrainFreqs.length - 1];
     MP._sfxClearPresetActive();
     updateDisplayValues();
+    MP.previewSfx(MP.getSfxParams());
   }
 
   document.getElementById('sfx-oct-down').addEventListener('click', function() { transposeSfx(-12); });
