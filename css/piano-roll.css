@@ -52,6 +52,11 @@
 .pr-sfx-group:hover { filter: brightness(1.15); }
 .pr-sfx-group.selected { outline: 2px solid var(--selection); outline-offset: -1px; box-shadow: 0 0 0 2px var(--text), 0 1px 6px color-mix(in srgb, var(--selection) 45%, transparent); z-index: 3; }
 .pr-sfx-group-label { font-size: 0.6em; pointer-events: none; }
+.pr-note-group {
+  position: absolute; border: 2px dashed var(--accent); border-radius: 4px;
+  background: rgba(218, 190, 60, 0.12); pointer-events: auto; cursor: grab;
+  z-index: 1;
+}
 .pr-note[data-tip]::after { display: none; }
 .pr-note-tip {
   position: fixed; padding: 6px 12px; border-radius: 6px; font-size: 12px;

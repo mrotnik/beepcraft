@@ -194,7 +194,7 @@ function setupComputerKeyboard() {
       var selected = [...MP.appState.selectedNoteIdxs].sort((a, b) => a - b).map(i => MP.appState.seq[i]).filter(Boolean);
       if (selected.length === 0) return;
       var minStart = Math.min(...selected.map(n => n.start));
-      MP.appState.clipboard = selected.map(n => ({ name: n.name, freq: n.freq, dur: n.dur, startOffset: n.start - minStart, sfxGroup: n.sfxGroup || null, sfxName: n.sfxName || null }));
+      MP.appState.clipboard = selected.map(n => ({ name: n.name, freq: n.freq, dur: n.dur, startOffset: n.start - minStart, sfxGroup: n.sfxGroup || null, sfxName: n.sfxName || null, group: n.group || null }));
       if (isCut) {
         MP.pushUndo();
         [...MP.appState.selectedNoteIdxs].sort((a, b) => b - a).forEach(idx => MP.appState.seq.splice(idx, 1));
@@ -221,6 +221,10 @@ function setupComputerKeyboard() {
           note.sfxGroup = groupMap[n.sfxGroup];
         }
         if (n.sfxName) note.sfxName = n.sfxName;
+        if (n.group) {
+          if (!groupMap[n.group]) groupMap[n.group] = 'grp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+          note.group = groupMap[n.group];
+        }
         MP.appState.seq.push(note);
         newIdxs.add(idx);
       });
@@ -274,6 +278,10 @@ function setupComputerKeyboard() {
           note.sfxGroup = dupGroupMap[n.sfxGroup];
         }
         if (n.sfxName) note.sfxName = n.sfxName;
+        if (n.group) {
+          if (!dupGroupMap[n.group]) dupGroupMap[n.group] = 'grp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+          note.group = dupGroupMap[n.group];
+        }
         MP.appState.seq.push(note);
         newIdxs.add(idx);
       });
@@ -287,16 +295,17 @@ function setupComputerKeyboard() {
       e.preventDefault();
       if (MP.appState.selectedNoteIdxs.size < 2) return;
       var selIdxs = [...MP.appState.selectedNoteIdxs];
-      var selNotes = selIdxs.map(i => MP.appState.seq[i]).filter(Boolean);
-      var hasGroup = selNotes.some(n => n.sfxGroup);
+      var selNotes = selIdxs.map(i => MP.appState.seq[i]).filter(n => n && !n.sfxGroup);
+      if (selNotes.length < 2) return;
+      var hasGroup = selNotes.some(n => n.group);
       MP.pushUndo();
       if (hasGroup) {
-        selNotes.forEach(n => { delete n.sfxGroup; });
+        selNotes.forEach(n => { delete n.group; });
         MP.updateSequence();
         MP.showToast('Ungrouped ' + selNotes.length + ' notes');
       } else {
-        var gid = 'sfx_' + MP._sfxNextGroupId++;
-        selNotes.forEach(n => { n.sfxGroup = gid; });
+        var gid = 'grp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+        selNotes.forEach(n => { n.group = gid; });
         MP.updateSequence();
         MP.showToast('Grouped ' + selNotes.length + ' notes');
       }
