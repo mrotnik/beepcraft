@@ -129,6 +129,80 @@ MP._sfxGrainFreqs = [];
 MP._sfxGrainTimes = [];
 MP._sfxDragState = null;
 
+MP._sfxAnalyzeAudio = function(samples, sr) {
+  var hpOut = new Float32Array(samples.length);
+  hpOut[0] = samples[0];
+  for (var hi = 1; hi < samples.length; hi++) {
+    hpOut[hi] = samples[hi] - samples[hi - 1] + 0.995 * hpOut[hi - 1];
+  }
+  var filtered = MP._lowPassFilter(hpOut, sr, 5000);
+  var winSize = 1024, hopSize = 256;
+  var sfxThresholds = [];
+  for (var ti = 0; ti < 10; ti++) sfxThresholds.push(0.03 + ti * 0.04);
+  var maxRms = 0, windows = [];
+  for (var pos = 0; pos + winSize <= filtered.length; pos += hopSize) {
+    var win = filtered.subarray(pos, pos + winSize);
+    var rms = 0;
+    for (var k = 0; k < win.length; k++) rms += win[k] * win[k];
+    rms = Math.sqrt(rms / win.length);
+    if (rms > maxRms) maxRms = rms;
+    windows.push({ win: win, rms: rms });
+  }
+  var silenceThresh = Math.max(0.005, maxRms * 0.08);
+  var rawFreqs = [], prevFreq = 0;
+  for (var i = 0; i < windows.length; i++) {
+    if (windows[i].rms < silenceThresh) { rawFreqs.push(0); continue; }
+    var diff = MP._yinDifference(windows[i].win);
+    var candidates = MP._sfxYinCandidates(diff, sr, sfxThresholds);
+    var bestCandidate = null;
+    if (candidates.length > 0 && candidates[0].confidence > 0.85) {
+      if (prevFreq > 0 && candidates.length > 1) {
+        var closestDist = Infinity;
+        for (var ci = 0; ci < candidates.length; ci++) {
+          var dist = Math.abs(candidates[ci].freq - prevFreq);
+          if (dist < closestDist) { closestDist = dist; bestCandidate = candidates[ci]; }
+        }
+      } else { bestCandidate = candidates[0]; }
+    }
+    if (bestCandidate) { rawFreqs.push(Math.round(bestCandidate.freq)); prevFreq = bestCandidate.freq; }
+    else { rawFreqs.push(0); }
+  }
+  for (var mi = 1; mi < rawFreqs.length - 1; mi++) {
+    if (rawFreqs[mi] > 0 && rawFreqs[mi - 1] > 0 && rawFreqs[mi + 1] > 0) {
+      var vals = [rawFreqs[mi - 1], rawFreqs[mi], rawFreqs[mi + 1]].sort(function(a, b) { return a - b; });
+      rawFreqs[mi] = vals[1];
+    }
+  }
+  var voiced = rawFreqs.filter(function(f) { return f > 0; });
+  if (voiced.length < 2) return null;
+  var startIdx = 0, endIdx = rawFreqs.length - 1;
+  while (startIdx < rawFreqs.length && rawFreqs[startIdx] === 0) startIdx++;
+  while (endIdx > startIdx && rawFreqs[endIdx] === 0) endIdx--;
+  var trimmed = rawFreqs.slice(startIdx, endIdx + 1);
+  for (var j = 0; j < trimmed.length; j++) {
+    if (trimmed[j] === 0) {
+      var prev = j > 0 ? trimmed[j - 1] : voiced[0];
+      var next = voiced[0];
+      for (var nk = j + 1; nk < trimmed.length; nk++) { if (trimmed[nk] > 0) { next = trimmed[nk]; break; } }
+      trimmed[j] = Math.round((prev + next) / 2);
+    }
+  }
+  var grains = MP.clamp(trimmed.length, MP.SFX_MIN_GRAINS, MP.SFX_MAX_GRAINS);
+  var resampled = [];
+  for (var g = 0; g < grains; g++) {
+    var t = grains > 1 ? g / (grains - 1) : 0;
+    var srcIdx = t * (trimmed.length - 1);
+    var lo = Math.floor(srcIdx);
+    var hi2 = Math.min(lo + 1, trimmed.length - 1);
+    var frac = srcIdx - lo;
+    var freq = Math.round(trimmed[lo] * (1 - frac) + trimmed[hi2] * frac);
+    resampled.push(MP.clamp(freq, MP.SFX_MIN_FREQ, MP.SFX_MAX_FREQ));
+  }
+  var voicedSamples = (endIdx - startIdx + 1) * hopSize + winSize;
+  var voicedMs = Math.round((voicedSamples / sr) * 1000);
+  return { resampled: resampled, grains: grains, voiced: voiced.length, durationMs: voicedMs };
+};
+
 MP._sfxDefaultTimes = function(n) {
   var times = [];
   for (var i = 0; i < n; i++) times.push(n > 1 ? i / (n - 1) : 0);
@@ -410,116 +484,24 @@ MP.sfxMicStop = function(onDone) {
   var offset = 0;
   chunks.forEach(function(c) { merged.set(c, offset); offset += c.length; });
 
-  var ctx = MP.getAudioCtx();
-  var sr = ctx.sampleRate;
-  var hpOut = new Float32Array(merged.length);
-  hpOut[0] = merged[0];
-  for (var hi = 1; hi < merged.length; hi++) {
-    hpOut[hi] = merged[hi] - merged[hi - 1] + 0.995 * hpOut[hi - 1];
-  }
-  var filtered = MP._lowPassFilter(hpOut, sr, 5000);
-
-  var winSize = 1024;
-  var hopSize = 256;
-  var sfxThresholds = [];
-  for (var ti = 0; ti < 10; ti++) sfxThresholds.push(0.03 + ti * 0.04);
-
-  var maxRms = 0;
-  var windows = [];
-  for (var pos = 0; pos + winSize <= filtered.length; pos += hopSize) {
-    var win = filtered.subarray(pos, pos + winSize);
-    var rms = 0;
-    for (var k = 0; k < win.length; k++) rms += win[k] * win[k];
-    rms = Math.sqrt(rms / win.length);
-    if (rms > maxRms) maxRms = rms;
-    windows.push({ win: win, rms: rms });
-  }
-
-  var silenceThresh = Math.max(0.005, maxRms * 0.08);
-  var rawFreqs = [];
-  var prevFreq = 0;
-  for (var i = 0; i < windows.length; i++) {
-    if (windows[i].rms < silenceThresh) {
-      rawFreqs.push(0);
-      continue;
-    }
-    var diff = MP._yinDifference(windows[i].win);
-    var candidates = MP._sfxYinCandidates(diff, sr, sfxThresholds);
-    var bestCandidate = null;
-    if (candidates.length > 0 && candidates[0].confidence > 0.85) {
-      if (prevFreq > 0 && candidates.length > 1) {
-        var closestDist = Infinity;
-        for (var ci = 0; ci < candidates.length; ci++) {
-          var dist = Math.abs(candidates[ci].freq - prevFreq);
-          if (dist < closestDist) { closestDist = dist; bestCandidate = candidates[ci]; }
-        }
-      } else {
-        bestCandidate = candidates[0];
-      }
-    }
-    if (bestCandidate) {
-      rawFreqs.push(Math.round(bestCandidate.freq));
-      prevFreq = bestCandidate.freq;
-    } else {
-      rawFreqs.push(0);
-    }
-  }
-
-  for (var mi = 1; mi < rawFreqs.length - 1; mi++) {
-    if (rawFreqs[mi] > 0 && rawFreqs[mi - 1] > 0 && rawFreqs[mi + 1] > 0) {
-      var vals = [rawFreqs[mi - 1], rawFreqs[mi], rawFreqs[mi + 1]].sort(function(a, b) { return a - b; });
-      rawFreqs[mi] = vals[1];
-    }
-  }
-
-  var voiced = rawFreqs.filter(function(f) { return f > 0; });
-  if (voiced.length < 2) { MP.showToast('No pitch detected - try a clearer sound', true); return; }
-
-  var startIdx = 0, endIdx = rawFreqs.length - 1;
-  while (startIdx < rawFreqs.length && rawFreqs[startIdx] === 0) startIdx++;
-  while (endIdx > startIdx && rawFreqs[endIdx] === 0) endIdx--;
-  var trimmed = rawFreqs.slice(startIdx, endIdx + 1);
-
-  for (var j = 0; j < trimmed.length; j++) {
-    if (trimmed[j] === 0) {
-      var prev = j > 0 ? trimmed[j - 1] : voiced[0];
-      var next = voiced[0];
-      for (var k = j + 1; k < trimmed.length; k++) {
-        if (trimmed[k] > 0) { next = trimmed[k]; break; }
-      }
-      trimmed[j] = Math.round((prev + next) / 2);
-    }
-  }
-
-  var grains = MP.clamp(trimmed.length, MP.SFX_MIN_GRAINS, MP.SFX_MAX_GRAINS);
-  var resampled = [];
-  for (var g = 0; g < grains; g++) {
-    var t = grains > 1 ? g / (grains - 1) : 0;
-    var srcIdx = t * (trimmed.length - 1);
-    var lo = Math.floor(srcIdx);
-    var hi = Math.min(lo + 1, trimmed.length - 1);
-    var frac = srcIdx - lo;
-    var freq = Math.round(trimmed[lo] * (1 - frac) + trimmed[hi] * frac);
-    resampled.push(MP.clamp(freq, MP.SFX_MIN_FREQ, MP.SFX_MAX_FREQ));
-  }
+  var result = MP._sfxAnalyzeAudio(merged, MP.getAudioCtx().sampleRate);
+  if (!result) { MP.showToast('No pitch detected - try a clearer sound', true); return; }
 
   MP._sfxUndoStack.push(MP._sfxSnapshot());
   if (MP._sfxUndoStack.length > MP._sfxMaxUndo) MP._sfxUndoStack.shift();
   MP._sfxRedoStack = [];
   MP._sfxUpdateUndoButtons();
-  MP._sfxGrainFreqs = resampled;
-  MP._sfxGrainTimes = MP._sfxDefaultTimes(resampled.length);
+  MP._sfxGrainFreqs = result.resampled;
+  MP._sfxGrainTimes = MP._sfxDefaultTimes(result.resampled.length);
 
-  var voicedSamples = (endIdx - startIdx + 1) * hopSize + winSize;
-  var voicedMs = Math.round((voicedSamples / sr) * 1000);
-  document.getElementById('sfx-duration').value = MP.clamp(voicedMs, 20, 2000);
-  document.getElementById('sfx-grains').value = grains;
-  document.getElementById('sfx-start-freq').value = resampled[0];
-  document.getElementById('sfx-end-freq').value = resampled[resampled.length - 1];
+  document.getElementById('sfx-duration').value = MP.clamp(result.durationMs, MP.SFX_MIN_DURATION, MP.SFX_MAX_DURATION);
+  document.getElementById('sfx-grains').value = result.grains;
+  document.getElementById('sfx-start-freq').value = result.resampled[0];
+  document.getElementById('sfx-end-freq').value = result.resampled[result.resampled.length - 1];
 
   MP._sfxClearPresetActive();
   if (onDone) onDone();
-  MP.showToast('Sound captured (' + voiced.length + ' frames, ' + grains + ' grains)');
+  MP.showToast('Sound captured (' + result.voiced + ' frames, ' + result.grains + ' grains)');
 };
 
 MP.drawSfxWaveform = function(params) {
@@ -1438,91 +1420,18 @@ MP.initSfxDialog = function() {
     reader.onload = function() {
       var ctx = MP.getAudioCtx();
       ctx.decodeAudioData(reader.result, function(audioBuffer) {
-        var raw = audioBuffer.getChannelData(0);
-        var sr = audioBuffer.sampleRate;
-        var hpOut = new Float32Array(raw.length);
-        hpOut[0] = raw[0];
-        for (var hi = 1; hi < raw.length; hi++) {
-          hpOut[hi] = raw[hi] - raw[hi - 1] + 0.995 * hpOut[hi - 1];
-        }
-        var filtered = MP._lowPassFilter(hpOut, sr, 5000);
-        var winSize = 1024;
-        var hopSize = 256;
-        var sfxThresholds = [];
-        for (var ti = 0; ti < 10; ti++) sfxThresholds.push(0.03 + ti * 0.04);
-        var maxRms = 0;
-        var windows = [];
-        for (var pos = 0; pos + winSize <= filtered.length; pos += hopSize) {
-          var win = filtered.subarray(pos, pos + winSize);
-          var rms = 0;
-          for (var k = 0; k < win.length; k++) rms += win[k] * win[k];
-          rms = Math.sqrt(rms / win.length);
-          if (rms > maxRms) maxRms = rms;
-          windows.push({ win: win, rms: rms });
-        }
-        var silenceThresh = Math.max(0.005, maxRms * 0.08);
-        var rawFreqs = [];
-        var prevFreq = 0;
-        for (var i = 0; i < windows.length; i++) {
-          if (windows[i].rms < silenceThresh) { rawFreqs.push(0); continue; }
-          var diff = MP._yinDifference(windows[i].win);
-          var candidates = MP._sfxYinCandidates(diff, sr, sfxThresholds);
-          var bestCandidate = null;
-          if (candidates.length > 0 && candidates[0].confidence > 0.85) {
-            if (prevFreq > 0 && candidates.length > 1) {
-              var closestDist = Infinity;
-              for (var ci = 0; ci < candidates.length; ci++) {
-                var dist = Math.abs(candidates[ci].freq - prevFreq);
-                if (dist < closestDist) { closestDist = dist; bestCandidate = candidates[ci]; }
-              }
-            } else { bestCandidate = candidates[0]; }
-          }
-          if (bestCandidate) { rawFreqs.push(Math.round(bestCandidate.freq)); prevFreq = bestCandidate.freq; }
-          else { rawFreqs.push(0); }
-        }
-        for (var mi = 1; mi < rawFreqs.length - 1; mi++) {
-          if (rawFreqs[mi] > 0 && rawFreqs[mi - 1] > 0 && rawFreqs[mi + 1] > 0) {
-            var vals = [rawFreqs[mi - 1], rawFreqs[mi], rawFreqs[mi + 1]].sort(function(a, b) { return a - b; });
-            rawFreqs[mi] = vals[1];
-          }
-        }
-        var voiced = rawFreqs.filter(function(f) { return f > 0; });
-        if (voiced.length < 2) { MP.showToast('No pitch detected in audio', true); return; }
-        var startIdx = 0, endIdx = rawFreqs.length - 1;
-        while (startIdx < rawFreqs.length && rawFreqs[startIdx] === 0) startIdx++;
-        while (endIdx > startIdx && rawFreqs[endIdx] === 0) endIdx--;
-        var trimmed = rawFreqs.slice(startIdx, endIdx + 1);
-        for (var j = 0; j < trimmed.length; j++) {
-          if (trimmed[j] === 0) {
-            var prev2 = j > 0 ? trimmed[j - 1] : voiced[0];
-            var next = voiced[0];
-            for (var nk = j + 1; nk < trimmed.length; nk++) { if (trimmed[nk] > 0) { next = trimmed[nk]; break; } }
-            trimmed[j] = Math.round((prev2 + next) / 2);
-          }
-        }
-        var grains = MP.clamp(trimmed.length, MP.SFX_MIN_GRAINS, MP.SFX_MAX_GRAINS);
-        var resampled = [];
-        for (var g = 0; g < grains; g++) {
-          var t = grains > 1 ? g / (grains - 1) : 0;
-          var srcIdx = t * (trimmed.length - 1);
-          var lo = Math.floor(srcIdx);
-          var hi2 = Math.min(lo + 1, trimmed.length - 1);
-          var frac = srcIdx - lo;
-          var freq = Math.round(trimmed[lo] * (1 - frac) + trimmed[hi2] * frac);
-          resampled.push(MP.clamp(freq, MP.SFX_MIN_FREQ, MP.SFX_MAX_FREQ));
-        }
+        var result = MP._sfxAnalyzeAudio(audioBuffer.getChannelData(0), audioBuffer.sampleRate);
+        if (!result) { MP.showToast('No pitch detected in audio', true); return; }
         pushSfxUndo();
-        MP._sfxGrainFreqs = resampled;
-        MP._sfxGrainTimes = MP._sfxDefaultTimes(resampled.length);
-        var voicedSamples = (endIdx - startIdx + 1) * hopSize + winSize;
-        var voicedMs = Math.round((voicedSamples / sr) * 1000);
-        document.getElementById('sfx-duration').value = MP.clamp(voicedMs, MP.SFX_MIN_DURATION, MP.SFX_MAX_DURATION);
-        grainsInput.value = grains;
-        startFreqInput.value = resampled[0];
-        endFreqInput.value = resampled[resampled.length - 1];
+        MP._sfxGrainFreqs = result.resampled;
+        MP._sfxGrainTimes = MP._sfxDefaultTimes(result.resampled.length);
+        document.getElementById('sfx-duration').value = MP.clamp(result.durationMs, MP.SFX_MIN_DURATION, MP.SFX_MAX_DURATION);
+        grainsInput.value = result.grains;
+        startFreqInput.value = result.resampled[0];
+        endFreqInput.value = result.resampled[result.resampled.length - 1];
         MP._sfxClearPresetActive();
         updateDisplayValues();
-        MP.showToast('Imported audio (' + voiced.length + ' frames, ' + grains + ' grains)');
+        MP.showToast('Imported audio (' + result.voiced + ' frames, ' + result.grains + ' grains)');
       }, function() { MP.showToast('Failed to decode audio file', true); });
     };
     reader.readAsArrayBuffer(file);

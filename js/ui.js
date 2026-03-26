@@ -68,6 +68,9 @@ MP.autoSave = function() {
       selectedDur: MP.appState.selectedDur,
       timeSig: MP.appState.timeSig,
       snapEnabled: MP.appState.snapEnabled,
+      codegenRepeat: parseInt(document.getElementById('codegen-repeat').value) || 0,
+      codegenCompact: document.getElementById('codegen-compact').checked,
+      codegenMpRepeat: parseInt(document.getElementById('codegen-mp-repeat').value) || 0,
     }));
   } catch (e) {}
 };
@@ -90,6 +93,9 @@ MP.autoLoad = function() {
     if (Number.isFinite(data.selectedDur)) MP.appState.selectedDur = MP.DUR_NAMES[data.selectedDur] ? data.selectedDur : 4;
     if (data.timeSig && Number.isFinite(data.timeSig.beats) && Number.isFinite(data.timeSig.value) && data.timeSig.beats > 0 && data.timeSig.value > 0) MP.appState.timeSig = data.timeSig;
     if (typeof data.snapEnabled === 'boolean') MP.appState.snapEnabled = data.snapEnabled;
+    if (Number.isFinite(data.codegenRepeat)) document.getElementById('codegen-repeat').value = MP.clamp(Math.floor(data.codegenRepeat), 0, 999);
+    if (typeof data.codegenCompact === 'boolean') document.getElementById('codegen-compact').checked = data.codegenCompact;
+    if (Number.isFinite(data.codegenMpRepeat)) document.getElementById('codegen-mp-repeat').value = MP.clamp(Math.floor(data.codegenMpRepeat), 0, 999);
     return true;
   } catch (e) { return false; }
 };
@@ -223,7 +229,7 @@ MP.clearAll = function() {
   MP.appState.kbOctave = 4;
   MP.updateKeyBindingLabels();
   MP.scrollKbToOctave();
-  MP.stopPlayback(); MP.updateSequence();
+  MP.stopPlayback(); MP.appState.pausedBeat = null; MP.removePauseCursor(); MP.updateSequence();
 };
 
 MP.refreshPianoRoll = function() {
@@ -266,7 +272,7 @@ MP.clearSelection = function() {
 };
 
 MP.setBpm = function(val) {
-  var v = MP.clamp(parseInt(val) || 120, 10, 900);
+  var v = MP.clamp(parseInt(val) || MP.BPM_DEFAULT, MP.BPM_MIN, MP.BPM_MAX);
   document.getElementById('bpm').value = v;
   document.getElementById('led-display').textContent = v;
 };
@@ -277,7 +283,8 @@ MP.copyToClipboard = function(elementId, btn, originalHtml) {
     MP.showToast('Clipboard not available', true);
     return;
   }
-  navigator.clipboard.writeText(el.value).then(function() {
+  var text = el.dataset.rawCode !== undefined ? el.dataset.rawCode : (el.value !== undefined ? el.value : el.textContent);
+  navigator.clipboard.writeText(text).then(function() {
     btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, MP.COPY_FEEDBACK_MS);
   });
 };

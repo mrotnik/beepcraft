@@ -21,10 +21,7 @@
     <input type="text" class="melody-search" id="melody-search" placeholder="Search presets..." autocomplete="off">
     <div class="preset-dropdown" id="preset-dropdown"></div>
   </span>
-  <select class="melody-select" id="melody-select" style="display:none">
-    <option value="">-- Load Preset --</option>
-  </select>
-  <input type="file" id="rtttl-dir-input" webkitdirectory multiple style="display:none">
+<input type="file" id="rtttl-dir-input" webkitdirectory multiple style="display:none">
   <input type="file" id="rtttl-file-input" multiple accept=".rtttl,.txt" style="display:none">
   <button class="btn btn-clear btn-sm tip-down" id="btn-load-rtttls" data-tip="Load .rtttl or .txt files (click for files, Shift+click for folder)"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h3.879a1.5 1.5 0 0 1 1.06.44l1.122 1.12A1.5 1.5 0 0 0 9.62 4H13.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z"/></svg><span class="btn-text">Load</span></button>
   <span class="tip-down" data-tip="Time signature (beats per measure) — affects grid lines and metronome accent"><select class="time-sig-select" id="time-sig">
@@ -148,40 +145,32 @@
     <button class="view-tab active" data-output="rtttl">RTTTL</button>
     <button class="view-tab" data-output="arduino">C++ (Arduino)</button>
     <button class="view-tab" data-output="micropython">MicroPython</button>
+    <button class="copy-btn-tab" id="codegen-copy-btn" data-tip="Copy to clipboard">&#128203; Copy</button>
   </div>
   <div id="output-rtttl" style="margin-top:8px">
     <textarea id="rtttl-output" class="rtttl-textarea" placeholder="Add notes, drop .rtttl files, or paste RTTTL here..."></textarea>
     <div id="rtttl-warn" class="rtttl-warn" style="display:none">Overlapping notes — RTTTL is monophonic, positions will shift</div>
-    <div class="rtttl-actions">
-      <button class="copy-btn" id="rtttl-copy-btn">&#128203; Copy</button>
-    </div>
   </div>
   <div id="output-arduino" style="display:none; margin-top:8px">
     <div class="codegen-options-row">
       <p class="info" style="margin:0">Works on any Arduino-compatible board: ESP32, STM32, nRF52, ATmega, RP2040, etc.</p>
-      <label class="loop-toggle tip-down" data-tip="Loop: melody restarts after last note. Uncheck for play-once."><input type="checkbox" id="codegen-loop" checked> Loop</label>
+      <span class="repeat-wrap tip-down" data-tip="Repeat count (0 = loop forever)"><span class="repeat-label">Repeat</span><button class="repeat-btn" data-target="codegen-repeat" data-dir="-1">-</button><input type="number" class="repeat-input" id="codegen-repeat" value="0" min="0" max="999"><button class="repeat-btn" data-target="codegen-repeat" data-dir="1">+</button></span>
       <label class="loop-toggle tip-down" data-tip="Strip comments and whitespace for smaller code size"><input type="checkbox" id="codegen-compact"> Compact</label>
     </div>
-    <textarea id="output" readonly placeholder="Add some notes to generate code..."></textarea>
-    <div class="rtttl-actions">
-      <button class="copy-btn" id="copy-btn">&#128203; Copy</button>
-    </div>
+    <pre class="code-display" id="output"><code data-placeholder="Add notes to generate code..."></code></pre>
   </div>
   <div id="output-micropython" style="display:none; margin-top:8px">
     <div class="codegen-options-row">
       <p class="info" style="margin:0">ESP32 / RP2040 with MicroPython — uses PWM for tone generation</p>
-      <label class="loop-toggle tip-down" data-tip="Loop: melody repeats with while True. Uncheck for play-once."><input type="checkbox" id="codegen-mp-loop" checked> Loop</label>
+      <span class="repeat-wrap tip-down" data-tip="Repeat count (0 = loop forever)"><span class="repeat-label">Repeat</span><button class="repeat-btn" data-target="codegen-mp-repeat" data-dir="-1">-</button><input type="number" class="repeat-input" id="codegen-mp-repeat" value="0" min="0" max="999"><button class="repeat-btn" data-target="codegen-mp-repeat" data-dir="1">+</button></span>
     </div>
-    <textarea id="output-mp" readonly placeholder="Add some notes to generate code..."></textarea>
-    <div class="rtttl-actions">
-      <button class="copy-btn" id="copy-btn-mp">&#128203; Copy</button>
-    </div>
+    <pre class="code-display" id="output-mp"><code data-placeholder="Add notes to generate code..."></code></pre>
   </div>
-  <div class="codegen-export-row">
-    <button class="copy-btn" id="rtttl-save-btn" data-tip="Download as .rtttl file">&#128190; Save .rtttl</button>
-    <button class="copy-btn" id="midi-save-btn" data-tip="Download as Standard MIDI file">&#128190; Save .midi</button>
-    <button class="copy-btn" id="wav-save-btn" data-tip="Download melody as WAV audio file">&#128190; Save .wav</button>
-    <button class="copy-btn" id="btn-share" data-tip="Copy shareable link to clipboard" style="display:none">&#128279; Share</button>
+  <div class="codegen-actions">
+    <button class="copy-btn-sm" id="rtttl-save-btn" data-tip="Download as .rtttl file">.rtttl</button>
+    <button class="copy-btn-sm" id="midi-save-btn" data-tip="Download as Standard MIDI file">.midi</button>
+    <button class="copy-btn-sm" id="wav-save-btn" data-tip="Download melody as WAV audio file">.wav</button>
+    <button class="copy-btn-sm" id="btn-share" data-tip="Copy shareable link to clipboard" style="display:none">Share</button>
   </div>
 </div>
 
@@ -333,7 +322,7 @@
   <span id="app-version">BeepCraft</span>
   <span>by Mike Rotnik</span>
   <span>GPLv3 License</span>
-  <a href="https://github.com/mrotnik/beepcraft" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> GitHub</a>
+  <a href="https://github.com/mrotnik/beepcraft" target="_blank" rel="noopener" class="star-cta" data-tip="Give us a &#11088; on GitHub"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> GitHub <span class="star-icon">&#11088;</span></a>
 </footer>
 
 <div class="toast" id="toast"></div>

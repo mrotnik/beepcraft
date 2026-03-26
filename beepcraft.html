@@ -101,6 +101,19 @@ textarea {
   height: 60px; background: var(--subtle-bg); color: var(--text);
   border-color: var(--section-border);
 }
+.code-display {
+  width: 100%; overflow: auto; background: var(--textarea-bg); color: var(--textarea-text);
+  border: 1px solid var(--textarea-border); border-radius: 6px; padding: 12px;
+  font-family: monospace; font-size: 0.85em; margin: 0; white-space: pre-wrap; word-break: break-all; line-height: 1.4;
+}
+.code-display code { font-family: inherit; font-size: inherit; }
+.code-display code:empty::before { content: attr(data-placeholder); color: var(--muted); }
+.hl-keyword { color: #7b5bb5; font-weight: 600; }
+.hl-preproc { color: #986032; }
+.hl-comment { color: #8a8a8a; font-style: italic; }
+.hl-func { color: #2a7e4f; }
+.hl-const { color: #b5543e; }
+.hl-num { color: #1a6da0; }
 .codegen-options-row { display: flex; align-items: center; gap: 12px; margin: 0 0 4px; }
 .copy-btn {
   margin-top: 8px; padding: 7px 16px; background: var(--subtle-bg); color: var(--text);
@@ -124,6 +137,9 @@ textarea {
 }
 .app-footer span { white-space: nowrap; }
 .app-footer a { display: inline-flex; align-items: center; gap: 4px; }
+.star-cta { padding: 3px 10px; border-radius: 12px; border: 1px solid #8b6914; color: #6b5210; text-decoration: none; font-weight: 600; background: rgba(180, 130, 20, 0.1); transition: all 0.2s; }
+.star-cta:hover { background: #c8960c; color: #fff; border-color: #c8960c; box-shadow: 0 0 10px rgba(200, 150, 12, 0.5); }
+.star-icon { font-size: 1.1em; filter: drop-shadow(0 0 1px #8b6914); }
 
 body.drag-overlay::after {
   content: 'Drop audio, MIDI, or .rtttl file(s) here';
@@ -232,7 +248,9 @@ body.drag-overlay::after {
   text-transform: uppercase; letter-spacing: 1px; transition: all 0.1s;
 }
 .view-tab:first-child { border-radius: 6px 0 0 6px; }
-.view-tab:last-child { border-radius: 0 6px 6px 0; border-left: none; }
+.view-tab + .view-tab { border-left: none; }
+.view-tab + :not(.view-tab) { border-left: none; }
+.view-tab:has(+ :not(.view-tab)), .view-tab:last-child { border-radius: 0 6px 6px 0; }
 .view-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 .view-tab:hover:not(.active) { background: var(--accent-bg); }
 
@@ -320,18 +338,17 @@ body.drag-overlay::after {
   font-weight: bold; margin-right: 2px;
 }
 
-.baud-select, .time-sig-select, .melody-search, .melody-select, .pin-input {
+.baud-select, .time-sig-select, .melody-search, .pin-input {
   padding: 5px 8px; border: 1px solid var(--section-border); border-radius: 4px;
   font-family: monospace; font-size: 0.85em;
   background: var(--subtle-bg); color: var(--text); color-scheme: light;
 }
-.baud-select, .time-sig-select, .melody-select { cursor: pointer; }
+.baud-select, .time-sig-select { cursor: pointer; }
 .baud-select { width: 76px; }
 .time-sig-select { width: 56px; }
 .preset-search-wrap { position: relative; flex: 1 1 120px; min-width: 80px; max-width: 280px; }
 .melody-search { width: 100%; text-overflow: ellipsis; box-sizing: border-box; }
 .melody-search::placeholder { color: var(--text); opacity: 1; }
-.melody-select { min-width: 140px; }
 .preset-dropdown {
   display: none; position: absolute; top: 100%; left: 0; right: 0; min-width: 240px;
   max-height: 320px; overflow-y: auto; overscroll-behavior: contain; z-index: 55;
@@ -375,6 +392,12 @@ body.drag-overlay::after {
 }
 
 .loop-toggle { font-size: 0.8em; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.repeat-wrap { display: inline-flex; align-items: center; gap: 2px; font-size: 0.8em; white-space: nowrap; }
+.repeat-label { margin-right: 4px; }
+.repeat-input { width: 32px; padding: 3px 2px; border: 1px solid var(--input-border); border-radius: 3px; font-family: monospace; font-size: 1em; text-align: center; background: var(--input-bg); color: var(--text); -moz-appearance: textfield; }
+.repeat-input::-webkit-outer-spin-button, .repeat-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.repeat-btn { width: 20px; height: 20px; padding: 0; border: 1px solid var(--input-border); border-radius: 3px; background: var(--subtle-bg); color: var(--text); cursor: pointer; font-size: 0.9em; line-height: 18px; text-align: center; }
+.repeat-btn:hover { background: var(--section-border); }
 .sfx-quantize-label { font-size: 0.8em; cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 4px; padding: 3px 8px; border-radius: 4px; border: 1px solid transparent; }
 .sfx-quantize-label.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
 .sfx-grain-presets { margin-left: auto; display: flex; gap: 2px; }
@@ -388,7 +411,16 @@ body.drag-overlay::after {
 }
 .rtttl-warn { color: #e06c75; font-size: 0.8em; margin: 4px 0 0; }
 .rtttl-actions { display: flex; gap: 6px; margin-top: 4px; }
-.codegen-export-row { display: flex; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--section-border); }
+.copy-btn-tab {
+  margin-left: auto; padding: 4px 10px;
+  background: var(--subtle-bg); color: var(--text); border: 1px solid var(--section-border);
+  border-radius: 6px; cursor: pointer; font-family: monospace; font-size: 0.8em;
+}
+.copy-btn-tab:hover { background: var(--section-border); }
+.codegen-actions { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+.copy-btn-sm { padding: 4px 12px; background: var(--subtle-bg); color: var(--text); border: 1px solid var(--section-border); border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 0.8em; }
+.copy-btn-sm:hover { background: var(--section-border); }
+.codegen-sep { width: 1px; height: 16px; background: var(--section-border); flex-shrink: 0; margin: 0 4px; }
 
 .serial-setup-steps p { font-size: 0.85em; margin: 6px 0; line-height: 1.5; }
 .serial-sketch-textarea {
@@ -841,12 +873,14 @@ kbd {
 [data-theme="dark"] .btn-danger:hover { background: #e06c75; color: #282c34; }
 [data-theme="dark"] .btn-metronome.active { background: #e65100; color: #fff; border-color: #e65100; }
 [data-theme="dark"] .btn-loop.active { background: #61afef; color: #282c34; border-color: #61afef; }
-[data-theme="dark"] .melody-select,
 [data-theme="dark"] .melody-search,
 [data-theme="dark"] .time-sig-select,
 [data-theme="dark"] .baud-select,
 [data-theme="dark"] .pin-input { background: #2c313a; color: #abb2bf; border-color: #3e4451; color-scheme: dark; }
 [data-theme="dark"] .melody-search::placeholder { color: #abb2bf; }
+[data-theme="dark"] .repeat-input { background: #2c313a; color: #abb2bf; border-color: #3e4451; }
+[data-theme="dark"] .repeat-btn { background: #3e4451; color: #abb2bf; border-color: #4b5263; }
+[data-theme="dark"] .repeat-btn:hover { background: #4b5263; }
 [data-theme="dark"] .preset-dropdown { background: #2c313a; border-color: #3e4451; box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
 [data-theme="dark"] .preset-item { color: #abb2bf; border-bottom-color: #3e4451; }
 [data-theme="dark"] .preset-item:hover, [data-theme="dark"] .preset-item.active { background: #3e4451; }
@@ -864,8 +898,19 @@ kbd {
 
 
 [data-theme="dark"] .rtttl-textarea { background: #2c313a; color: #abb2bf; border-color: #3e4451; }
+[data-theme="dark"] .code-display { background: #1e2127; color: #abb2bf; border-color: #3e4451; }
+[data-theme="dark"] .hl-keyword { color: #c678dd; }
+[data-theme="dark"] .hl-preproc { color: #e5c07b; }
+[data-theme="dark"] .hl-comment { color: #5c6370; }
+[data-theme="dark"] .hl-func { color: #61afef; }
+[data-theme="dark"] .hl-const { color: #e06c75; }
+[data-theme="dark"] .hl-num { color: #d19a66; }
 [data-theme="dark"] .copy-btn { background: #3e4451; color: #abb2bf; border-color: #4b5263; }
 [data-theme="dark"] .copy-btn:hover { background: #4b5263; }
+[data-theme="dark"] .copy-btn-sm { background: #3e4451; color: #abb2bf; border-color: #4b5263; }
+[data-theme="dark"] .copy-btn-sm:hover { background: #4b5263; }
+[data-theme="dark"] .copy-btn-tab { background: #3e4451; color: #abb2bf; border-color: #4b5263; }
+[data-theme="dark"] .copy-btn-tab:hover { background: #4b5263; }
 [data-theme="dark"] .info { color: #4b5263; }
 
 [data-theme="dark"] .theme-toggle { background: #61afef; color: #fbbf24; border-color: #528fbf; }
@@ -895,6 +940,8 @@ kbd {
 [data-theme="dark"] .sfx-params input[type="range"] { accent-color: #61afef; }
 [data-theme="dark"] [data-tip]::after { background: #2c313a; color: #abb2bf; border-color: #3e4451; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 [data-theme="dark"] .piano-roll-wrapper.fullscreen { background: #282c34; }
+[data-theme="dark"] .star-cta { border-color: #d4a520; color: #e5c07b; background: rgba(229, 192, 123, 0.1); }
+[data-theme="dark"] .star-cta:hover { background: #d4a520; color: #1a1400; border-color: #d4a520; box-shadow: 0 0 12px rgba(212, 165, 32, 0.5); }
 
 </style>
 </head>
@@ -907,10 +954,7 @@ kbd {
     <input type="text" class="melody-search" id="melody-search" placeholder="Search presets..." autocomplete="off">
     <div class="preset-dropdown" id="preset-dropdown"></div>
   </span>
-  <select class="melody-select" id="melody-select" style="display:none">
-    <option value="">-- Load Preset --</option>
-  </select>
-  <input type="file" id="rtttl-dir-input" webkitdirectory multiple style="display:none">
+<input type="file" id="rtttl-dir-input" webkitdirectory multiple style="display:none">
   <input type="file" id="rtttl-file-input" multiple accept=".rtttl,.txt" style="display:none">
   <button class="btn btn-clear btn-sm tip-down" id="btn-load-rtttls" data-tip="Load .rtttl or .txt files (click for files, Shift+click for folder)"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align:middle"><path d="M1 3.5A1.5 1.5 0 0 1 2.5 2h3.879a1.5 1.5 0 0 1 1.06.44l1.122 1.12A1.5 1.5 0 0 0 9.62 4H13.5A1.5 1.5 0 0 1 15 5.5v7a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z"/></svg><span class="btn-text">Load</span></button>
   <span class="tip-down" data-tip="Time signature (beats per measure) — affects grid lines and metronome accent"><select class="time-sig-select" id="time-sig">
@@ -1034,40 +1078,32 @@ kbd {
     <button class="view-tab active" data-output="rtttl">RTTTL</button>
     <button class="view-tab" data-output="arduino">C++ (Arduino)</button>
     <button class="view-tab" data-output="micropython">MicroPython</button>
+    <button class="copy-btn-tab" id="codegen-copy-btn" data-tip="Copy to clipboard">&#128203; Copy</button>
   </div>
   <div id="output-rtttl" style="margin-top:8px">
     <textarea id="rtttl-output" class="rtttl-textarea" placeholder="Add notes, drop .rtttl files, or paste RTTTL here..."></textarea>
     <div id="rtttl-warn" class="rtttl-warn" style="display:none">Overlapping notes — RTTTL is monophonic, positions will shift</div>
-    <div class="rtttl-actions">
-      <button class="copy-btn" id="rtttl-copy-btn">&#128203; Copy</button>
-    </div>
   </div>
   <div id="output-arduino" style="display:none; margin-top:8px">
     <div class="codegen-options-row">
       <p class="info" style="margin:0">Works on any Arduino-compatible board: ESP32, STM32, nRF52, ATmega, RP2040, etc.</p>
-      <label class="loop-toggle tip-down" data-tip="Loop: melody restarts after last note. Uncheck for play-once."><input type="checkbox" id="codegen-loop" checked> Loop</label>
+      <span class="repeat-wrap tip-down" data-tip="Repeat count (0 = loop forever)"><span class="repeat-label">Repeat</span><button class="repeat-btn" data-target="codegen-repeat" data-dir="-1">-</button><input type="number" class="repeat-input" id="codegen-repeat" value="0" min="0" max="999"><button class="repeat-btn" data-target="codegen-repeat" data-dir="1">+</button></span>
       <label class="loop-toggle tip-down" data-tip="Strip comments and whitespace for smaller code size"><input type="checkbox" id="codegen-compact"> Compact</label>
     </div>
-    <textarea id="output" readonly placeholder="Add some notes to generate code..."></textarea>
-    <div class="rtttl-actions">
-      <button class="copy-btn" id="copy-btn">&#128203; Copy</button>
-    </div>
+    <pre class="code-display" id="output"><code data-placeholder="Add notes to generate code..."></code></pre>
   </div>
   <div id="output-micropython" style="display:none; margin-top:8px">
     <div class="codegen-options-row">
       <p class="info" style="margin:0">ESP32 / RP2040 with MicroPython — uses PWM for tone generation</p>
-      <label class="loop-toggle tip-down" data-tip="Loop: melody repeats with while True. Uncheck for play-once."><input type="checkbox" id="codegen-mp-loop" checked> Loop</label>
+      <span class="repeat-wrap tip-down" data-tip="Repeat count (0 = loop forever)"><span class="repeat-label">Repeat</span><button class="repeat-btn" data-target="codegen-mp-repeat" data-dir="-1">-</button><input type="number" class="repeat-input" id="codegen-mp-repeat" value="0" min="0" max="999"><button class="repeat-btn" data-target="codegen-mp-repeat" data-dir="1">+</button></span>
     </div>
-    <textarea id="output-mp" readonly placeholder="Add some notes to generate code..."></textarea>
-    <div class="rtttl-actions">
-      <button class="copy-btn" id="copy-btn-mp">&#128203; Copy</button>
-    </div>
+    <pre class="code-display" id="output-mp"><code data-placeholder="Add notes to generate code..."></code></pre>
   </div>
-  <div class="codegen-export-row">
-    <button class="copy-btn" id="rtttl-save-btn" data-tip="Download as .rtttl file">&#128190; Save .rtttl</button>
-    <button class="copy-btn" id="midi-save-btn" data-tip="Download as Standard MIDI file">&#128190; Save .midi</button>
-    <button class="copy-btn" id="wav-save-btn" data-tip="Download melody as WAV audio file">&#128190; Save .wav</button>
-    <button class="copy-btn" id="btn-share" data-tip="Copy shareable link to clipboard" style="display:none">&#128279; Share</button>
+  <div class="codegen-actions">
+    <button class="copy-btn-sm" id="rtttl-save-btn" data-tip="Download as .rtttl file">.rtttl</button>
+    <button class="copy-btn-sm" id="midi-save-btn" data-tip="Download as Standard MIDI file">.midi</button>
+    <button class="copy-btn-sm" id="wav-save-btn" data-tip="Download melody as WAV audio file">.wav</button>
+    <button class="copy-btn-sm" id="btn-share" data-tip="Copy shareable link to clipboard" style="display:none">Share</button>
   </div>
 </div>
 
@@ -1219,7 +1255,7 @@ kbd {
   <span id="app-version">BeepCraft</span>
   <span>by Mike Rotnik</span>
   <span>GPLv3 License</span>
-  <a href="https://github.com/mrotnik/beepcraft" target="_blank" rel="noopener"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> GitHub</a>
+  <a href="https://github.com/mrotnik/beepcraft" target="_blank" rel="noopener" class="star-cta" data-tip="Give us a &#11088; on GitHub"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> GitHub <span class="star-icon">&#11088;</span></a>
 </footer>
 
 <div class="toast" id="toast"></div>
@@ -1228,7 +1264,7 @@ window.__BUNDLED_MELODIES__ = ["007:d=4,o=5,b=320:c,8d,8d,d,2d,c,c,c,c,8d#,8d#,d
 </script>
 <script>
 window.MP = window.MP || {};
-MP.VERSION = 'v0.0.12';
+MP.VERSION = 'v0.0.13';
 
 MP.appState = {
   seq: [],
@@ -1434,13 +1470,18 @@ MP.snapBeats = function(b) {
 };
 
 MP.seqEndBeat = function() {
-  const seq = MP.appState.seq;
-  if (seq.length === 0) return 0;
-  return Math.max(...seq.map(n => n.start + n.dur));
+  var seq = MP.appState.seq;
+  var m = 0;
+  for (var i = 0; i < seq.length; i++) {
+    var e = seq[i].start + seq[i].dur;
+    if (e > m) m = e;
+  }
+  return m;
 };
 
 MP.totalBeats = function() {
-  return Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
+  var minBeats = MP.getTimeSigBeats() * 6;
+  return Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart, minBeats);
 };
 
 MP.seqToFlat = function() {
@@ -2166,11 +2207,52 @@ MP.parseRTTTL = function(rtttl) {
 MP._autoSizeTextarea = function(el) {
   if (!el) return;
   if (!el.offsetParent) return;
-  if (!el.value) { el.style.height = ''; return; }
+  var content = el.value !== undefined ? el.value : el.textContent;
+  if (!content) { el.style.height = ''; return; }
   MP._keepScroll(function() {
     el.style.height = '0';
-    el.style.height = Math.min(el.scrollHeight, 600) + 'px';
+    el.style.height = Math.min(el.scrollHeight, 350) + 'px';
   });
+};
+
+MP._highlightLines = function(code, commentPrefix, rules) {
+  return MP.escHtml(code).split('\n').map(function(line) {
+    var commentIdx = line.indexOf(commentPrefix);
+    if (commentIdx >= 0) {
+      var before = line.substring(0, commentIdx);
+      var comment = '<span class="hl-comment">' + line.substring(commentIdx) + '</span>';
+      return rules.reduce(function(s, r) { return s.replace(r[0], r[1]); }, before) + comment;
+    }
+    return rules.reduce(function(s, r) { return s.replace(r[0], r[1]); }, line);
+  }).join('\n');
+};
+
+MP._highlightCpp = function(code) {
+  return MP._highlightLines(code, '//', [
+    [/(#define\b)/g, '<span class="hl-preproc">$1</span>'],
+    [/\b(const|int|void|unsigned|long|if|else|for|while|return|sizeof)\b/g, '<span class="hl-keyword">$1</span>'],
+    [/\b(tone|noTone|millis)\b/g, '<span class="hl-func">$1</span>'],
+    [/\b(NOTE_\w+)\b/g, '<span class="hl-const">$1</span>'],
+    [/\b(\d+)\b/g, '<span class="hl-num">$1</span>']
+  ]);
+};
+
+MP._highlightPython = function(code) {
+  return MP._highlightLines(code, '#', [
+    [/\b(from|import|def|while|for|in|if|else|True|False|None)\b/g, '<span class="hl-keyword">$1</span>'],
+    [/\b(range|len|print|PWM|Pin)\b/g, '<span class="hl-func">$1</span>'],
+    [/\b(BUZZER_PIN|melody|durations|wholenote|pwm)\b/g, '<span class="hl-const">$1</span>'],
+    [/\b(\d+)\b/g, '<span class="hl-num">$1</span>']
+  ]);
+};
+
+MP._setCodeDisplay = function(el, code, lang) {
+  if (!el) return;
+  el.dataset.rawCode = code;
+  var codeEl = el.querySelector('code');
+  if (codeEl) {
+    codeEl.innerHTML = lang === 'cpp' ? MP._highlightCpp(code) : MP._highlightPython(code);
+  }
 };
 
 MP.updateStats = function() {
@@ -2194,7 +2276,7 @@ MP.generateCode = function() {
   const outputMp = document.getElementById('output-mp');
   const rtttlOutput = document.getElementById('rtttl-output');
   MP.updateStats();
-  if (MP.appState.seq.length === 0) { output.value = ''; if (outputMp) outputMp.value = ''; rtttlOutput.value = ''; MP._autoSizeTextarea(output); MP._autoSizeTextarea(outputMp); MP._autoSizeTextarea(rtttlOutput); return; }
+  if (MP.appState.seq.length === 0) { MP._setCodeDisplay(output, '', 'cpp'); if (outputMp) MP._setCodeDisplay(outputMp, '', 'python'); rtttlOutput.value = ''; MP._autoSizeTextarea(output); MP._autoSizeTextarea(outputMp); MP._autoSizeTextarea(rtttlOutput); var w = document.getElementById('rtttl-warn'); if (w) w.style.display = 'none'; return; }
 
   const flat = MP.seqToFlat();
   const uniqueFreqs = {};
@@ -2203,12 +2285,14 @@ MP.generateCode = function() {
 
   const bpmVal = MP.getBpm();
   const wholeMs = Math.round(240000 / bpmVal);
-  var codegenLoop = document.getElementById('codegen-loop');
-  var loopEnabled = !codegenLoop || codegenLoop.checked;
+  var repeatEl = document.getElementById('codegen-repeat');
+  var repeatCount = repeatEl ? parseInt(repeatEl.value) || 0 : 0;
+  var loopEnabled = repeatCount === 0;
   var compactEl = document.getElementById('codegen-compact');
   var compact = compactEl && compactEl.checked;
-  var mpLoopEl = document.getElementById('codegen-mp-loop');
-  var mpLoopEnabled = !mpLoopEl || mpLoopEl.checked;
+  var mpRepeatEl = document.getElementById('codegen-mp-repeat');
+  var mpRepeatCount = mpRepeatEl ? parseInt(mpRepeatEl.value) || 0 : 0;
+  var mpLoopEnabled = mpRepeatCount === 0;
 
   const flatDur = n => n.dotted ? -n.dur : n.dur;
   const noteRef = n => n.freq === 0 ? '0' : toDefine(n.name);
@@ -2216,13 +2300,18 @@ MP.generateCode = function() {
   var code;
   if (compact) {
     var defines = Object.entries(uniqueFreqs).map(([name, freq]) => '#define ' + toDefine(name) + ' ' + freq).join('\n');
-    var loopLine = loopEnabled ? 'if(currentNote>=melodyLength)currentNote=0;' : 'if(currentNote>=melodyLength){noTone(BUZZER_PIN);return;}';
+    var loopLine;
+    if (loopEnabled) loopLine = 'if(currentNote>=melodyLength)currentNote=0;';
+    else if (repeatCount === 1) loopLine = 'if(currentNote>=melodyLength){noTone(BUZZER_PIN);return;}';
+    else loopLine = 'if(currentNote>=melodyLength){melodyRepeat++;if(melodyRepeat>=' + repeatCount + '){noTone(BUZZER_PIN);return;}currentNote=0;}';
     code = defines + '\n';
     code += 'const int melody[]={' + flat.map(noteRef).join(',') + '};\n';
     code += 'const int noteDurations[]={' + flat.map(flatDur).join(',') + '};\n';
     code += 'int melodyLength=sizeof(melody)/sizeof(melody[0]);\n';
     code += 'int wholenote=' + wholeMs + ';\n';
-    code += 'int currentNote=0;unsigned long noteStart=0;unsigned long noteDuration=0;\n';
+    code += 'int currentNote=0;unsigned long noteStart=0;unsigned long noteDuration=0;';
+    if (repeatCount > 1) code += 'int melodyRepeat=0;';
+    code += '\n';
     code += 'void melodyTick(){unsigned long now=millis();if(now-noteStart>=noteDuration){' + loopLine;
     code += 'int dur=noteDurations[currentNote];int duration=dur>0?(wholenote/dur):(-wholenote*3/(dur*2));';
     code += 'if(melody[currentNote]>0){tone(BUZZER_PIN,melody[currentNote],duration*9/10);}else{noTone(BUZZER_PIN);}';
@@ -2244,14 +2333,21 @@ MP.generateCode = function() {
     code += 'int currentNote = 0;\n';
     code += 'unsigned long noteStart = 0;\n';
     code += 'unsigned long noteDuration = 0;\n';
+    if (repeatCount > 1) code += 'int melodyRepeat = 0;\n';
     code += '\n// Non-blocking melody step — call every loop() iteration while playing\n';
     code += 'void melodyTick() {\n';
     code += '  unsigned long now = millis();\n';
     code += '  if (now - noteStart >= noteDuration) {\n';
-    if (!loopEnabled) {
+    if (loopEnabled) {
+      code += '    if (currentNote >= melodyLength) currentNote = 0;\n';
+    } else if (repeatCount === 1) {
       code += '    if (currentNote >= melodyLength) { noTone(BUZZER_PIN); return; }\n';
     } else {
-      code += '    if (currentNote >= melodyLength) currentNote = 0;\n';
+      code += '    if (currentNote >= melodyLength) {\n';
+      code += '      melodyRepeat++;\n';
+      code += '      if (melodyRepeat >= ' + repeatCount + ') { noTone(BUZZER_PIN); return; }\n';
+      code += '      currentNote = 0;\n';
+      code += '    }\n';
     }
     code += '    int dur = noteDurations[currentNote];\n';
     code += '    int duration = dur > 0 ? (wholenote / dur) : (-wholenote * 3 / (dur * 2));\n';
@@ -2267,7 +2363,7 @@ MP.generateCode = function() {
     code += '}\n';
     code += '\n// ===== USAGE: call melodyTick() in loop() while playing =====\n';
   }
-  output.value = code;
+  MP._setCodeDisplay(output, code, 'cpp');
   MP._autoSizeTextarea(output);
 
   if (outputMp) {
@@ -2281,10 +2377,13 @@ MP.generateCode = function() {
     if (mpLoopEnabled) {
       mpCode += 'while True:\n';
       mpCode += '    for i in range(len(melody)):\n';
-    } else {
+    } else if (mpRepeatCount === 1) {
       mpCode += 'for i in range(len(melody)):\n';
+    } else {
+      mpCode += 'for _rep in range(' + mpRepeatCount + '):\n';
+      mpCode += '    for i in range(len(melody)):\n';
     }
-    var indent = mpLoopEnabled ? '        ' : '    ';
+    var indent = (mpLoopEnabled || mpRepeatCount > 1) ? '        ' : '    ';
     mpCode += indent + 'dur = durations[i]\n';
     mpCode += indent + 'duration = wholenote // dur if dur > 0 else -wholenote * 3 // (dur * 2)\n';
     mpCode += indent + 'if melody[i] > 0:\n';
@@ -2296,7 +2395,7 @@ MP.generateCode = function() {
     if (!mpLoopEnabled) {
       mpCode += 'pwm.deinit()\n';
     }
-    outputMp.value = mpCode;
+    MP._setCodeDisplay(outputMp, mpCode, 'python');
     MP._autoSizeTextarea(outputMp);
   }
 
@@ -2567,6 +2666,9 @@ MP.autoSave = function() {
       selectedDur: MP.appState.selectedDur,
       timeSig: MP.appState.timeSig,
       snapEnabled: MP.appState.snapEnabled,
+      codegenRepeat: parseInt(document.getElementById('codegen-repeat').value) || 0,
+      codegenCompact: document.getElementById('codegen-compact').checked,
+      codegenMpRepeat: parseInt(document.getElementById('codegen-mp-repeat').value) || 0,
     }));
   } catch (e) {}
 };
@@ -2589,6 +2691,9 @@ MP.autoLoad = function() {
     if (Number.isFinite(data.selectedDur)) MP.appState.selectedDur = MP.DUR_NAMES[data.selectedDur] ? data.selectedDur : 4;
     if (data.timeSig && Number.isFinite(data.timeSig.beats) && Number.isFinite(data.timeSig.value) && data.timeSig.beats > 0 && data.timeSig.value > 0) MP.appState.timeSig = data.timeSig;
     if (typeof data.snapEnabled === 'boolean') MP.appState.snapEnabled = data.snapEnabled;
+    if (Number.isFinite(data.codegenRepeat)) document.getElementById('codegen-repeat').value = MP.clamp(Math.floor(data.codegenRepeat), 0, 999);
+    if (typeof data.codegenCompact === 'boolean') document.getElementById('codegen-compact').checked = data.codegenCompact;
+    if (Number.isFinite(data.codegenMpRepeat)) document.getElementById('codegen-mp-repeat').value = MP.clamp(Math.floor(data.codegenMpRepeat), 0, 999);
     return true;
   } catch (e) { return false; }
 };
@@ -2722,7 +2827,7 @@ MP.clearAll = function() {
   MP.appState.kbOctave = 4;
   MP.updateKeyBindingLabels();
   MP.scrollKbToOctave();
-  MP.stopPlayback(); MP.updateSequence();
+  MP.stopPlayback(); MP.appState.pausedBeat = null; MP.removePauseCursor(); MP.updateSequence();
 };
 
 MP.refreshPianoRoll = function() {
@@ -2765,7 +2870,7 @@ MP.clearSelection = function() {
 };
 
 MP.setBpm = function(val) {
-  var v = MP.clamp(parseInt(val) || 120, 10, 900);
+  var v = MP.clamp(parseInt(val) || MP.BPM_DEFAULT, MP.BPM_MIN, MP.BPM_MAX);
   document.getElementById('bpm').value = v;
   document.getElementById('led-display').textContent = v;
 };
@@ -2776,7 +2881,8 @@ MP.copyToClipboard = function(elementId, btn, originalHtml) {
     MP.showToast('Clipboard not available', true);
     return;
   }
-  navigator.clipboard.writeText(el.value).then(function() {
+  var text = el.dataset.rawCode !== undefined ? el.dataset.rawCode : (el.value !== undefined ? el.value : el.textContent);
+  navigator.clipboard.writeText(text).then(function() {
     btn.innerHTML = 'Copied!'; setTimeout(function() { btn.innerHTML = originalHtml; }, MP.COPY_FEEDBACK_MS);
   });
 };
@@ -3009,6 +3115,80 @@ MP.SFX_MAX_DURATION = 2000;
 MP._sfxGrainFreqs = [];
 MP._sfxGrainTimes = [];
 MP._sfxDragState = null;
+
+MP._sfxAnalyzeAudio = function(samples, sr) {
+  var hpOut = new Float32Array(samples.length);
+  hpOut[0] = samples[0];
+  for (var hi = 1; hi < samples.length; hi++) {
+    hpOut[hi] = samples[hi] - samples[hi - 1] + 0.995 * hpOut[hi - 1];
+  }
+  var filtered = MP._lowPassFilter(hpOut, sr, 5000);
+  var winSize = 1024, hopSize = 256;
+  var sfxThresholds = [];
+  for (var ti = 0; ti < 10; ti++) sfxThresholds.push(0.03 + ti * 0.04);
+  var maxRms = 0, windows = [];
+  for (var pos = 0; pos + winSize <= filtered.length; pos += hopSize) {
+    var win = filtered.subarray(pos, pos + winSize);
+    var rms = 0;
+    for (var k = 0; k < win.length; k++) rms += win[k] * win[k];
+    rms = Math.sqrt(rms / win.length);
+    if (rms > maxRms) maxRms = rms;
+    windows.push({ win: win, rms: rms });
+  }
+  var silenceThresh = Math.max(0.005, maxRms * 0.08);
+  var rawFreqs = [], prevFreq = 0;
+  for (var i = 0; i < windows.length; i++) {
+    if (windows[i].rms < silenceThresh) { rawFreqs.push(0); continue; }
+    var diff = MP._yinDifference(windows[i].win);
+    var candidates = MP._sfxYinCandidates(diff, sr, sfxThresholds);
+    var bestCandidate = null;
+    if (candidates.length > 0 && candidates[0].confidence > 0.85) {
+      if (prevFreq > 0 && candidates.length > 1) {
+        var closestDist = Infinity;
+        for (var ci = 0; ci < candidates.length; ci++) {
+          var dist = Math.abs(candidates[ci].freq - prevFreq);
+          if (dist < closestDist) { closestDist = dist; bestCandidate = candidates[ci]; }
+        }
+      } else { bestCandidate = candidates[0]; }
+    }
+    if (bestCandidate) { rawFreqs.push(Math.round(bestCandidate.freq)); prevFreq = bestCandidate.freq; }
+    else { rawFreqs.push(0); }
+  }
+  for (var mi = 1; mi < rawFreqs.length - 1; mi++) {
+    if (rawFreqs[mi] > 0 && rawFreqs[mi - 1] > 0 && rawFreqs[mi + 1] > 0) {
+      var vals = [rawFreqs[mi - 1], rawFreqs[mi], rawFreqs[mi + 1]].sort(function(a, b) { return a - b; });
+      rawFreqs[mi] = vals[1];
+    }
+  }
+  var voiced = rawFreqs.filter(function(f) { return f > 0; });
+  if (voiced.length < 2) return null;
+  var startIdx = 0, endIdx = rawFreqs.length - 1;
+  while (startIdx < rawFreqs.length && rawFreqs[startIdx] === 0) startIdx++;
+  while (endIdx > startIdx && rawFreqs[endIdx] === 0) endIdx--;
+  var trimmed = rawFreqs.slice(startIdx, endIdx + 1);
+  for (var j = 0; j < trimmed.length; j++) {
+    if (trimmed[j] === 0) {
+      var prev = j > 0 ? trimmed[j - 1] : voiced[0];
+      var next = voiced[0];
+      for (var nk = j + 1; nk < trimmed.length; nk++) { if (trimmed[nk] > 0) { next = trimmed[nk]; break; } }
+      trimmed[j] = Math.round((prev + next) / 2);
+    }
+  }
+  var grains = MP.clamp(trimmed.length, MP.SFX_MIN_GRAINS, MP.SFX_MAX_GRAINS);
+  var resampled = [];
+  for (var g = 0; g < grains; g++) {
+    var t = grains > 1 ? g / (grains - 1) : 0;
+    var srcIdx = t * (trimmed.length - 1);
+    var lo = Math.floor(srcIdx);
+    var hi2 = Math.min(lo + 1, trimmed.length - 1);
+    var frac = srcIdx - lo;
+    var freq = Math.round(trimmed[lo] * (1 - frac) + trimmed[hi2] * frac);
+    resampled.push(MP.clamp(freq, MP.SFX_MIN_FREQ, MP.SFX_MAX_FREQ));
+  }
+  var voicedSamples = (endIdx - startIdx + 1) * hopSize + winSize;
+  var voicedMs = Math.round((voicedSamples / sr) * 1000);
+  return { resampled: resampled, grains: grains, voiced: voiced.length, durationMs: voicedMs };
+};
 
 MP._sfxDefaultTimes = function(n) {
   var times = [];
@@ -3291,116 +3471,24 @@ MP.sfxMicStop = function(onDone) {
   var offset = 0;
   chunks.forEach(function(c) { merged.set(c, offset); offset += c.length; });
 
-  var ctx = MP.getAudioCtx();
-  var sr = ctx.sampleRate;
-  var hpOut = new Float32Array(merged.length);
-  hpOut[0] = merged[0];
-  for (var hi = 1; hi < merged.length; hi++) {
-    hpOut[hi] = merged[hi] - merged[hi - 1] + 0.995 * hpOut[hi - 1];
-  }
-  var filtered = MP._lowPassFilter(hpOut, sr, 5000);
-
-  var winSize = 1024;
-  var hopSize = 256;
-  var sfxThresholds = [];
-  for (var ti = 0; ti < 10; ti++) sfxThresholds.push(0.03 + ti * 0.04);
-
-  var maxRms = 0;
-  var windows = [];
-  for (var pos = 0; pos + winSize <= filtered.length; pos += hopSize) {
-    var win = filtered.subarray(pos, pos + winSize);
-    var rms = 0;
-    for (var k = 0; k < win.length; k++) rms += win[k] * win[k];
-    rms = Math.sqrt(rms / win.length);
-    if (rms > maxRms) maxRms = rms;
-    windows.push({ win: win, rms: rms });
-  }
-
-  var silenceThresh = Math.max(0.005, maxRms * 0.08);
-  var rawFreqs = [];
-  var prevFreq = 0;
-  for (var i = 0; i < windows.length; i++) {
-    if (windows[i].rms < silenceThresh) {
-      rawFreqs.push(0);
-      continue;
-    }
-    var diff = MP._yinDifference(windows[i].win);
-    var candidates = MP._sfxYinCandidates(diff, sr, sfxThresholds);
-    var bestCandidate = null;
-    if (candidates.length > 0 && candidates[0].confidence > 0.85) {
-      if (prevFreq > 0 && candidates.length > 1) {
-        var closestDist = Infinity;
-        for (var ci = 0; ci < candidates.length; ci++) {
-          var dist = Math.abs(candidates[ci].freq - prevFreq);
-          if (dist < closestDist) { closestDist = dist; bestCandidate = candidates[ci]; }
-        }
-      } else {
-        bestCandidate = candidates[0];
-      }
-    }
-    if (bestCandidate) {
-      rawFreqs.push(Math.round(bestCandidate.freq));
-      prevFreq = bestCandidate.freq;
-    } else {
-      rawFreqs.push(0);
-    }
-  }
-
-  for (var mi = 1; mi < rawFreqs.length - 1; mi++) {
-    if (rawFreqs[mi] > 0 && rawFreqs[mi - 1] > 0 && rawFreqs[mi + 1] > 0) {
-      var vals = [rawFreqs[mi - 1], rawFreqs[mi], rawFreqs[mi + 1]].sort(function(a, b) { return a - b; });
-      rawFreqs[mi] = vals[1];
-    }
-  }
-
-  var voiced = rawFreqs.filter(function(f) { return f > 0; });
-  if (voiced.length < 2) { MP.showToast('No pitch detected - try a clearer sound', true); return; }
-
-  var startIdx = 0, endIdx = rawFreqs.length - 1;
-  while (startIdx < rawFreqs.length && rawFreqs[startIdx] === 0) startIdx++;
-  while (endIdx > startIdx && rawFreqs[endIdx] === 0) endIdx--;
-  var trimmed = rawFreqs.slice(startIdx, endIdx + 1);
-
-  for (var j = 0; j < trimmed.length; j++) {
-    if (trimmed[j] === 0) {
-      var prev = j > 0 ? trimmed[j - 1] : voiced[0];
-      var next = voiced[0];
-      for (var k = j + 1; k < trimmed.length; k++) {
-        if (trimmed[k] > 0) { next = trimmed[k]; break; }
-      }
-      trimmed[j] = Math.round((prev + next) / 2);
-    }
-  }
-
-  var grains = MP.clamp(trimmed.length, MP.SFX_MIN_GRAINS, MP.SFX_MAX_GRAINS);
-  var resampled = [];
-  for (var g = 0; g < grains; g++) {
-    var t = grains > 1 ? g / (grains - 1) : 0;
-    var srcIdx = t * (trimmed.length - 1);
-    var lo = Math.floor(srcIdx);
-    var hi = Math.min(lo + 1, trimmed.length - 1);
-    var frac = srcIdx - lo;
-    var freq = Math.round(trimmed[lo] * (1 - frac) + trimmed[hi] * frac);
-    resampled.push(MP.clamp(freq, MP.SFX_MIN_FREQ, MP.SFX_MAX_FREQ));
-  }
+  var result = MP._sfxAnalyzeAudio(merged, MP.getAudioCtx().sampleRate);
+  if (!result) { MP.showToast('No pitch detected - try a clearer sound', true); return; }
 
   MP._sfxUndoStack.push(MP._sfxSnapshot());
   if (MP._sfxUndoStack.length > MP._sfxMaxUndo) MP._sfxUndoStack.shift();
   MP._sfxRedoStack = [];
   MP._sfxUpdateUndoButtons();
-  MP._sfxGrainFreqs = resampled;
-  MP._sfxGrainTimes = MP._sfxDefaultTimes(resampled.length);
+  MP._sfxGrainFreqs = result.resampled;
+  MP._sfxGrainTimes = MP._sfxDefaultTimes(result.resampled.length);
 
-  var voicedSamples = (endIdx - startIdx + 1) * hopSize + winSize;
-  var voicedMs = Math.round((voicedSamples / sr) * 1000);
-  document.getElementById('sfx-duration').value = MP.clamp(voicedMs, 20, 2000);
-  document.getElementById('sfx-grains').value = grains;
-  document.getElementById('sfx-start-freq').value = resampled[0];
-  document.getElementById('sfx-end-freq').value = resampled[resampled.length - 1];
+  document.getElementById('sfx-duration').value = MP.clamp(result.durationMs, MP.SFX_MIN_DURATION, MP.SFX_MAX_DURATION);
+  document.getElementById('sfx-grains').value = result.grains;
+  document.getElementById('sfx-start-freq').value = result.resampled[0];
+  document.getElementById('sfx-end-freq').value = result.resampled[result.resampled.length - 1];
 
   MP._sfxClearPresetActive();
   if (onDone) onDone();
-  MP.showToast('Sound captured (' + voiced.length + ' frames, ' + grains + ' grains)');
+  MP.showToast('Sound captured (' + result.voiced + ' frames, ' + result.grains + ' grains)');
 };
 
 MP.drawSfxWaveform = function(params) {
@@ -4319,91 +4407,18 @@ MP.initSfxDialog = function() {
     reader.onload = function() {
       var ctx = MP.getAudioCtx();
       ctx.decodeAudioData(reader.result, function(audioBuffer) {
-        var raw = audioBuffer.getChannelData(0);
-        var sr = audioBuffer.sampleRate;
-        var hpOut = new Float32Array(raw.length);
-        hpOut[0] = raw[0];
-        for (var hi = 1; hi < raw.length; hi++) {
-          hpOut[hi] = raw[hi] - raw[hi - 1] + 0.995 * hpOut[hi - 1];
-        }
-        var filtered = MP._lowPassFilter(hpOut, sr, 5000);
-        var winSize = 1024;
-        var hopSize = 256;
-        var sfxThresholds = [];
-        for (var ti = 0; ti < 10; ti++) sfxThresholds.push(0.03 + ti * 0.04);
-        var maxRms = 0;
-        var windows = [];
-        for (var pos = 0; pos + winSize <= filtered.length; pos += hopSize) {
-          var win = filtered.subarray(pos, pos + winSize);
-          var rms = 0;
-          for (var k = 0; k < win.length; k++) rms += win[k] * win[k];
-          rms = Math.sqrt(rms / win.length);
-          if (rms > maxRms) maxRms = rms;
-          windows.push({ win: win, rms: rms });
-        }
-        var silenceThresh = Math.max(0.005, maxRms * 0.08);
-        var rawFreqs = [];
-        var prevFreq = 0;
-        for (var i = 0; i < windows.length; i++) {
-          if (windows[i].rms < silenceThresh) { rawFreqs.push(0); continue; }
-          var diff = MP._yinDifference(windows[i].win);
-          var candidates = MP._sfxYinCandidates(diff, sr, sfxThresholds);
-          var bestCandidate = null;
-          if (candidates.length > 0 && candidates[0].confidence > 0.85) {
-            if (prevFreq > 0 && candidates.length > 1) {
-              var closestDist = Infinity;
-              for (var ci = 0; ci < candidates.length; ci++) {
-                var dist = Math.abs(candidates[ci].freq - prevFreq);
-                if (dist < closestDist) { closestDist = dist; bestCandidate = candidates[ci]; }
-              }
-            } else { bestCandidate = candidates[0]; }
-          }
-          if (bestCandidate) { rawFreqs.push(Math.round(bestCandidate.freq)); prevFreq = bestCandidate.freq; }
-          else { rawFreqs.push(0); }
-        }
-        for (var mi = 1; mi < rawFreqs.length - 1; mi++) {
-          if (rawFreqs[mi] > 0 && rawFreqs[mi - 1] > 0 && rawFreqs[mi + 1] > 0) {
-            var vals = [rawFreqs[mi - 1], rawFreqs[mi], rawFreqs[mi + 1]].sort(function(a, b) { return a - b; });
-            rawFreqs[mi] = vals[1];
-          }
-        }
-        var voiced = rawFreqs.filter(function(f) { return f > 0; });
-        if (voiced.length < 2) { MP.showToast('No pitch detected in audio', true); return; }
-        var startIdx = 0, endIdx = rawFreqs.length - 1;
-        while (startIdx < rawFreqs.length && rawFreqs[startIdx] === 0) startIdx++;
-        while (endIdx > startIdx && rawFreqs[endIdx] === 0) endIdx--;
-        var trimmed = rawFreqs.slice(startIdx, endIdx + 1);
-        for (var j = 0; j < trimmed.length; j++) {
-          if (trimmed[j] === 0) {
-            var prev2 = j > 0 ? trimmed[j - 1] : voiced[0];
-            var next = voiced[0];
-            for (var nk = j + 1; nk < trimmed.length; nk++) { if (trimmed[nk] > 0) { next = trimmed[nk]; break; } }
-            trimmed[j] = Math.round((prev2 + next) / 2);
-          }
-        }
-        var grains = MP.clamp(trimmed.length, MP.SFX_MIN_GRAINS, MP.SFX_MAX_GRAINS);
-        var resampled = [];
-        for (var g = 0; g < grains; g++) {
-          var t = grains > 1 ? g / (grains - 1) : 0;
-          var srcIdx = t * (trimmed.length - 1);
-          var lo = Math.floor(srcIdx);
-          var hi2 = Math.min(lo + 1, trimmed.length - 1);
-          var frac = srcIdx - lo;
-          var freq = Math.round(trimmed[lo] * (1 - frac) + trimmed[hi2] * frac);
-          resampled.push(MP.clamp(freq, MP.SFX_MIN_FREQ, MP.SFX_MAX_FREQ));
-        }
+        var result = MP._sfxAnalyzeAudio(audioBuffer.getChannelData(0), audioBuffer.sampleRate);
+        if (!result) { MP.showToast('No pitch detected in audio', true); return; }
         pushSfxUndo();
-        MP._sfxGrainFreqs = resampled;
-        MP._sfxGrainTimes = MP._sfxDefaultTimes(resampled.length);
-        var voicedSamples = (endIdx - startIdx + 1) * hopSize + winSize;
-        var voicedMs = Math.round((voicedSamples / sr) * 1000);
-        document.getElementById('sfx-duration').value = MP.clamp(voicedMs, MP.SFX_MIN_DURATION, MP.SFX_MAX_DURATION);
-        grainsInput.value = grains;
-        startFreqInput.value = resampled[0];
-        endFreqInput.value = resampled[resampled.length - 1];
+        MP._sfxGrainFreqs = result.resampled;
+        MP._sfxGrainTimes = MP._sfxDefaultTimes(result.resampled.length);
+        document.getElementById('sfx-duration').value = MP.clamp(result.durationMs, MP.SFX_MIN_DURATION, MP.SFX_MAX_DURATION);
+        grainsInput.value = result.grains;
+        startFreqInput.value = result.resampled[0];
+        endFreqInput.value = result.resampled[result.resampled.length - 1];
         MP._sfxClearPresetActive();
         updateDisplayValues();
-        MP.showToast('Imported audio (' + voiced.length + ' frames, ' + grains + ' grains)');
+        MP.showToast('Imported audio (' + result.voiced + ' frames, ' + result.grains + ' grains)');
       }, function() { MP.showToast('Failed to decode audio file', true); });
     };
     reader.readAsArrayBuffer(file);
@@ -6731,7 +6746,6 @@ function buildPrEdgeHandle(wrapper, inner, gridH, totalW, beatW) {
       var dx = e2.clientX - startX;
       lastEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
       var newW = lastEnd * beatW;
-      var newW = lastEnd * beatW;
       inner.style.width = (MP.PR_LABEL_W + newW) + 'px';
       edgeHandle.style.left = (prX(lastEnd, beatW) - 4) + 'px';
       setEdgeX(prX(lastEnd, beatW));
@@ -7612,11 +7626,11 @@ function setupOutputControls() {
   document.getElementById('btn-help').addEventListener('click', function() { hotkeyModal.style.display = hotkeyModal.style.display === 'none' ? '' : 'none'; });
   setupModalDismiss('hotkey-modal', 'hotkey-modal-close');
 
-  document.getElementById('copy-btn').addEventListener('click', function() {
-    MP.copyToClipboard('output', this, '&#128203; Copy to clipboard');
-  });
-  document.getElementById('rtttl-copy-btn').addEventListener('click', function() {
-    MP.copyToClipboard('rtttl-output', this, '&#128203; Copy');
+  document.getElementById('codegen-copy-btn').addEventListener('click', function() {
+    var activeTab = document.querySelector('.view-tab[data-output].active');
+    var textareaMap = { rtttl: 'rtttl-output', arduino: 'output', micropython: 'output-mp' };
+    var id = activeTab ? textareaMap[activeTab.dataset.output] : 'output';
+    MP.copyToClipboard(id, this, '&#128203; Copy');
   });
   document.getElementById('rtttl-save-btn').addEventListener('click', function() {
     var rtttl = document.getElementById('rtttl-output').value.trim();
@@ -7678,11 +7692,21 @@ function setupOutputControls() {
       });
     });
   });
-  document.getElementById('codegen-loop').addEventListener('change', function() { MP._keepScroll(function() { MP.generateCode(); }); });
-  document.getElementById('codegen-compact').addEventListener('change', function() { MP._keepScroll(function() { MP.generateCode(); }); });
-  document.getElementById('codegen-mp-loop').addEventListener('change', function() { MP._keepScroll(function() { MP.generateCode(); }); });
-  document.getElementById('copy-btn-mp').addEventListener('click', function() {
-    MP.copyToClipboard('output-mp', this, '&#128203; Copy to clipboard');
+  document.getElementById('codegen-repeat').addEventListener('input', function() { MP._keepScroll(function() { MP.generateCode(); }); MP.autoSave(); });
+  document.getElementById('codegen-compact').addEventListener('change', function() { MP._keepScroll(function() { MP.generateCode(); }); MP.autoSave(); });
+  document.getElementById('codegen-mp-repeat').addEventListener('input', function() { MP._keepScroll(function() { MP.generateCode(); }); MP.autoSave(); });
+  document.querySelectorAll('.repeat-input').forEach(function(input) {
+    input.addEventListener('blur', function() {
+      if (!input.value || isNaN(parseInt(input.value))) input.value = '0';
+    });
+  });
+  document.querySelectorAll('.repeat-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var input = document.getElementById(btn.dataset.target);
+      var val = MP.clamp((parseInt(input.value) || 0) + parseInt(btn.dataset.dir), 0, 999);
+      input.value = val;
+      input.dispatchEvent(new Event('input'));
+    });
   });
 }
 

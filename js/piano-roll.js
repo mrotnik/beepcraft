@@ -1177,7 +1177,6 @@ function buildPrEdgeHandle(wrapper, inner, gridH, totalW, beatW) {
       var dx = e2.clientX - startX;
       lastEnd = Math.max(minEnd, MP.snapBeats(origEnd + dx / beatW));
       var newW = lastEnd * beatW;
-      var newW = lastEnd * beatW;
       inner.style.width = (MP.PR_LABEL_W + newW) + 'px';
       edgeHandle.style.left = (prX(lastEnd, beatW) - 4) + 'px';
       setEdgeX(prX(lastEnd, beatW));

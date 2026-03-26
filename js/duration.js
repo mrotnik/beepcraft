@@ -26,13 +26,18 @@ MP.snapBeats = function(b) {
 };
 
 MP.seqEndBeat = function() {
-  const seq = MP.appState.seq;
-  if (seq.length === 0) return 0;
-  return Math.max(...seq.map(n => n.start + n.dur));
+  var seq = MP.appState.seq;
+  var m = 0;
+  for (var i = 0; i < seq.length; i++) {
+    var e = seq[i].start + seq[i].dur;
+    if (e > m) m = e;
+  }
+  return m;
 };
 
 MP.totalBeats = function() {
-  return Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
+  var minBeats = MP.getTimeSigBeats() * 6;
+  return Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart, minBeats);
 };
 
 MP.seqToFlat = function() {

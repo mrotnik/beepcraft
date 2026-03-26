@@ -124,6 +124,10 @@ Notes are stored as timeline objects `{ name, freq, start, dur }` where `start` 
 
 > **Note:** Edit files in `js/`, `css/`, and `index.html` — never edit `beepcraft.html` directly.
 
+---
+
+If BeepCraft helped you make some noise, consider leaving a ⭐ to support the project!
+
 ## 🙏 Credits
 
 - Preset melodies from [rtttl.js](https://github.com/1j01/rtttl.js) by Isaiah Odhner (MIT License)

@@ -63,7 +63,9 @@
   text-transform: uppercase; letter-spacing: 1px; transition: all 0.1s;
 }
 .view-tab:first-child { border-radius: 6px 0 0 6px; }
-.view-tab:last-child { border-radius: 0 6px 6px 0; border-left: none; }
+.view-tab + .view-tab { border-left: none; }
+.view-tab + :not(.view-tab) { border-left: none; }
+.view-tab:has(+ :not(.view-tab)), .view-tab:last-child { border-radius: 0 6px 6px 0; }
 .view-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 .view-tab:hover:not(.active) { background: var(--accent-bg); }
 
@@ -151,18 +153,17 @@
   font-weight: bold; margin-right: 2px;
 }
 
-.baud-select, .time-sig-select, .melody-search, .melody-select, .pin-input {
+.baud-select, .time-sig-select, .melody-search, .pin-input {
   padding: 5px 8px; border: 1px solid var(--section-border); border-radius: 4px;
   font-family: monospace; font-size: 0.85em;
   background: var(--subtle-bg); color: var(--text); color-scheme: light;
 }
-.baud-select, .time-sig-select, .melody-select { cursor: pointer; }
+.baud-select, .time-sig-select { cursor: pointer; }
 .baud-select { width: 76px; }
 .time-sig-select { width: 56px; }
 .preset-search-wrap { position: relative; flex: 1 1 120px; min-width: 80px; max-width: 280px; }
 .melody-search { width: 100%; text-overflow: ellipsis; box-sizing: border-box; }
 .melody-search::placeholder { color: var(--text); opacity: 1; }
-.melody-select { min-width: 140px; }
 .preset-dropdown {
   display: none; position: absolute; top: 100%; left: 0; right: 0; min-width: 240px;
   max-height: 320px; overflow-y: auto; overscroll-behavior: contain; z-index: 55;
@@ -206,6 +207,12 @@
 }
 
 .loop-toggle { font-size: 0.8em; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+.repeat-wrap { display: inline-flex; align-items: center; gap: 2px; font-size: 0.8em; white-space: nowrap; }
+.repeat-label { margin-right: 4px; }
+.repeat-input { width: 32px; padding: 3px 2px; border: 1px solid var(--input-border); border-radius: 3px; font-family: monospace; font-size: 1em; text-align: center; background: var(--input-bg); color: var(--text); -moz-appearance: textfield; }
+.repeat-input::-webkit-outer-spin-button, .repeat-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.repeat-btn { width: 20px; height: 20px; padding: 0; border: 1px solid var(--input-border); border-radius: 3px; background: var(--subtle-bg); color: var(--text); cursor: pointer; font-size: 0.9em; line-height: 18px; text-align: center; }
+.repeat-btn:hover { background: var(--section-border); }
 .sfx-quantize-label { font-size: 0.8em; cursor: pointer; display: flex; align-items: center; gap: 4px; margin-top: 4px; padding: 3px 8px; border-radius: 4px; border: 1px solid transparent; }
 .sfx-quantize-label.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
 .sfx-grain-presets { margin-left: auto; display: flex; gap: 2px; }
@@ -219,7 +226,16 @@
 }
 .rtttl-warn { color: #e06c75; font-size: 0.8em; margin: 4px 0 0; }
 .rtttl-actions { display: flex; gap: 6px; margin-top: 4px; }
-.codegen-export-row { display: flex; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--section-border); }
+.copy-btn-tab {
+  margin-left: auto; padding: 4px 10px;
+  background: var(--subtle-bg); color: var(--text); border: 1px solid var(--section-border);
+  border-radius: 6px; cursor: pointer; font-family: monospace; font-size: 0.8em;
+}
+.copy-btn-tab:hover { background: var(--section-border); }
+.codegen-actions { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+.copy-btn-sm { padding: 4px 12px; background: var(--subtle-bg); color: var(--text); border: 1px solid var(--section-border); border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 0.8em; }
+.copy-btn-sm:hover { background: var(--section-border); }
+.codegen-sep { width: 1px; height: 16px; background: var(--section-border); flex-shrink: 0; margin: 0 4px; }
 
 .serial-setup-steps p { font-size: 0.85em; margin: 6px 0; line-height: 1.5; }
 .serial-sketch-textarea {

@@ -294,11 +294,11 @@ function setupOutputControls() {
   document.getElementById('btn-help').addEventListener('click', function() { hotkeyModal.style.display = hotkeyModal.style.display === 'none' ? '' : 'none'; });
   setupModalDismiss('hotkey-modal', 'hotkey-modal-close');
 
-  document.getElementById('copy-btn').addEventListener('click', function() {
-    MP.copyToClipboard('output', this, '&#128203; Copy to clipboard');
-  });
-  document.getElementById('rtttl-copy-btn').addEventListener('click', function() {
-    MP.copyToClipboard('rtttl-output', this, '&#128203; Copy');
+  document.getElementById('codegen-copy-btn').addEventListener('click', function() {
+    var activeTab = document.querySelector('.view-tab[data-output].active');
+    var textareaMap = { rtttl: 'rtttl-output', arduino: 'output', micropython: 'output-mp' };
+    var id = activeTab ? textareaMap[activeTab.dataset.output] : 'output';
+    MP.copyToClipboard(id, this, '&#128203; Copy');
   });
   document.getElementById('rtttl-save-btn').addEventListener('click', function() {
     var rtttl = document.getElementById('rtttl-output').value.trim();
@@ -360,11 +360,21 @@ function setupOutputControls() {
       });
     });
   });
-  document.getElementById('codegen-loop').addEventListener('change', function() { MP._keepScroll(function() { MP.generateCode(); }); });
-  document.getElementById('codegen-compact').addEventListener('change', function() { MP._keepScroll(function() { MP.generateCode(); }); });
-  document.getElementById('codegen-mp-loop').addEventListener('change', function() { MP._keepScroll(function() { MP.generateCode(); }); });
-  document.getElementById('copy-btn-mp').addEventListener('click', function() {
-    MP.copyToClipboard('output-mp', this, '&#128203; Copy to clipboard');
+  document.getElementById('codegen-repeat').addEventListener('input', function() { MP._keepScroll(function() { MP.generateCode(); }); MP.autoSave(); });
+  document.getElementById('codegen-compact').addEventListener('change', function() { MP._keepScroll(function() { MP.generateCode(); }); MP.autoSave(); });
+  document.getElementById('codegen-mp-repeat').addEventListener('input', function() { MP._keepScroll(function() { MP.generateCode(); }); MP.autoSave(); });
+  document.querySelectorAll('.repeat-input').forEach(function(input) {
+    input.addEventListener('blur', function() {
+      if (!input.value || isNaN(parseInt(input.value))) input.value = '0';
+    });
+  });
+  document.querySelectorAll('.repeat-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var input = document.getElementById(btn.dataset.target);
+      var val = MP.clamp((parseInt(input.value) || 0) + parseInt(btn.dataset.dir), 0, 999);
+      input.value = val;
+      input.dispatchEvent(new Event('input'));
+    });
   });
 }
 

@@ -1,11 +1,52 @@
 MP._autoSizeTextarea = function(el) {
   if (!el) return;
   if (!el.offsetParent) return;
-  if (!el.value) { el.style.height = ''; return; }
+  var content = el.value !== undefined ? el.value : el.textContent;
+  if (!content) { el.style.height = ''; return; }
   MP._keepScroll(function() {
     el.style.height = '0';
-    el.style.height = Math.min(el.scrollHeight, 600) + 'px';
+    el.style.height = Math.min(el.scrollHeight, 350) + 'px';
   });
+};
+
+MP._highlightLines = function(code, commentPrefix, rules) {
+  return MP.escHtml(code).split('\n').map(function(line) {
+    var commentIdx = line.indexOf(commentPrefix);
+    if (commentIdx >= 0) {
+      var before = line.substring(0, commentIdx);
+      var comment = '<span class="hl-comment">' + line.substring(commentIdx) + '</span>';
+      return rules.reduce(function(s, r) { return s.replace(r[0], r[1]); }, before) + comment;
+    }
+    return rules.reduce(function(s, r) { return s.replace(r[0], r[1]); }, line);
+  }).join('\n');
+};
+
+MP._highlightCpp = function(code) {
+  return MP._highlightLines(code, '//', [
+    [/(#define\b)/g, '<span class="hl-preproc">$1</span>'],
+    [/\b(const|int|void|unsigned|long|if|else|for|while|return|sizeof)\b/g, '<span class="hl-keyword">$1</span>'],
+    [/\b(tone|noTone|millis)\b/g, '<span class="hl-func">$1</span>'],
+    [/\b(NOTE_\w+)\b/g, '<span class="hl-const">$1</span>'],
+    [/\b(\d+)\b/g, '<span class="hl-num">$1</span>']
+  ]);
+};
+
+MP._highlightPython = function(code) {
+  return MP._highlightLines(code, '#', [
+    [/\b(from|import|def|while|for|in|if|else|True|False|None)\b/g, '<span class="hl-keyword">$1</span>'],
+    [/\b(range|len|print|PWM|Pin)\b/g, '<span class="hl-func">$1</span>'],
+    [/\b(BUZZER_PIN|melody|durations|wholenote|pwm)\b/g, '<span class="hl-const">$1</span>'],
+    [/\b(\d+)\b/g, '<span class="hl-num">$1</span>']
+  ]);
+};
+
+MP._setCodeDisplay = function(el, code, lang) {
+  if (!el) return;
+  el.dataset.rawCode = code;
+  var codeEl = el.querySelector('code');
+  if (codeEl) {
+    codeEl.innerHTML = lang === 'cpp' ? MP._highlightCpp(code) : MP._highlightPython(code);
+  }
 };
 
 MP.updateStats = function() {
@@ -29,7 +70,7 @@ MP.generateCode = function() {
   const outputMp = document.getElementById('output-mp');
   const rtttlOutput = document.getElementById('rtttl-output');
   MP.updateStats();
-  if (MP.appState.seq.length === 0) { output.value = ''; if (outputMp) outputMp.value = ''; rtttlOutput.value = ''; MP._autoSizeTextarea(output); MP._autoSizeTextarea(outputMp); MP._autoSizeTextarea(rtttlOutput); return; }
+  if (MP.appState.seq.length === 0) { MP._setCodeDisplay(output, '', 'cpp'); if (outputMp) MP._setCodeDisplay(outputMp, '', 'python'); rtttlOutput.value = ''; MP._autoSizeTextarea(output); MP._autoSizeTextarea(outputMp); MP._autoSizeTextarea(rtttlOutput); var w = document.getElementById('rtttl-warn'); if (w) w.style.display = 'none'; return; }
 
   const flat = MP.seqToFlat();
   const uniqueFreqs = {};
@@ -38,12 +79,14 @@ MP.generateCode = function() {
 
   const bpmVal = MP.getBpm();
   const wholeMs = Math.round(240000 / bpmVal);
-  var codegenLoop = document.getElementById('codegen-loop');
-  var loopEnabled = !codegenLoop || codegenLoop.checked;
+  var repeatEl = document.getElementById('codegen-repeat');
+  var repeatCount = repeatEl ? parseInt(repeatEl.value) || 0 : 0;
+  var loopEnabled = repeatCount === 0;
   var compactEl = document.getElementById('codegen-compact');
   var compact = compactEl && compactEl.checked;
-  var mpLoopEl = document.getElementById('codegen-mp-loop');
-  var mpLoopEnabled = !mpLoopEl || mpLoopEl.checked;
+  var mpRepeatEl = document.getElementById('codegen-mp-repeat');
+  var mpRepeatCount = mpRepeatEl ? parseInt(mpRepeatEl.value) || 0 : 0;
+  var mpLoopEnabled = mpRepeatCount === 0;
 
   const flatDur = n => n.dotted ? -n.dur : n.dur;
   const noteRef = n => n.freq === 0 ? '0' : toDefine(n.name);
@@ -51,13 +94,18 @@ MP.generateCode = function() {
   var code;
   if (compact) {
     var defines = Object.entries(uniqueFreqs).map(([name, freq]) => '#define ' + toDefine(name) + ' ' + freq).join('\n');
-    var loopLine = loopEnabled ? 'if(currentNote>=melodyLength)currentNote=0;' : 'if(currentNote>=melodyLength){noTone(BUZZER_PIN);return;}';
+    var loopLine;
+    if (loopEnabled) loopLine = 'if(currentNote>=melodyLength)currentNote=0;';
+    else if (repeatCount === 1) loopLine = 'if(currentNote>=melodyLength){noTone(BUZZER_PIN);return;}';
+    else loopLine = 'if(currentNote>=melodyLength){melodyRepeat++;if(melodyRepeat>=' + repeatCount + '){noTone(BUZZER_PIN);return;}currentNote=0;}';
     code = defines + '\n';
     code += 'const int melody[]={' + flat.map(noteRef).join(',') + '};\n';
     code += 'const int noteDurations[]={' + flat.map(flatDur).join(',') + '};\n';
     code += 'int melodyLength=sizeof(melody)/sizeof(melody[0]);\n';
     code += 'int wholenote=' + wholeMs + ';\n';
-    code += 'int currentNote=0;unsigned long noteStart=0;unsigned long noteDuration=0;\n';
+    code += 'int currentNote=0;unsigned long noteStart=0;unsigned long noteDuration=0;';
+    if (repeatCount > 1) code += 'int melodyRepeat=0;';
+    code += '\n';
     code += 'void melodyTick(){unsigned long now=millis();if(now-noteStart>=noteDuration){' + loopLine;
     code += 'int dur=noteDurations[currentNote];int duration=dur>0?(wholenote/dur):(-wholenote*3/(dur*2));';
     code += 'if(melody[currentNote]>0){tone(BUZZER_PIN,melody[currentNote],duration*9/10);}else{noTone(BUZZER_PIN);}';
@@ -79,14 +127,21 @@ MP.generateCode = function() {
     code += 'int currentNote = 0;\n';
     code += 'unsigned long noteStart = 0;\n';
     code += 'unsigned long noteDuration = 0;\n';
+    if (repeatCount > 1) code += 'int melodyRepeat = 0;\n';
     code += '\n// Non-blocking melody step — call every loop() iteration while playing\n';
     code += 'void melodyTick() {\n';
     code += '  unsigned long now = millis();\n';
     code += '  if (now - noteStart >= noteDuration) {\n';
-    if (!loopEnabled) {
+    if (loopEnabled) {
+      code += '    if (currentNote >= melodyLength) currentNote = 0;\n';
+    } else if (repeatCount === 1) {
       code += '    if (currentNote >= melodyLength) { noTone(BUZZER_PIN); return; }\n';
     } else {
-      code += '    if (currentNote >= melodyLength) currentNote = 0;\n';
+      code += '    if (currentNote >= melodyLength) {\n';
+      code += '      melodyRepeat++;\n';
+      code += '      if (melodyRepeat >= ' + repeatCount + ') { noTone(BUZZER_PIN); return; }\n';
+      code += '      currentNote = 0;\n';
+      code += '    }\n';
     }
     code += '    int dur = noteDurations[currentNote];\n';
     code += '    int duration = dur > 0 ? (wholenote / dur) : (-wholenote * 3 / (dur * 2));\n';
@@ -102,7 +157,7 @@ MP.generateCode = function() {
     code += '}\n';
     code += '\n// ===== USAGE: call melodyTick() in loop() while playing =====\n';
   }
-  output.value = code;
+  MP._setCodeDisplay(output, code, 'cpp');
   MP._autoSizeTextarea(output);
 
   if (outputMp) {
@@ -116,10 +171,13 @@ MP.generateCode = function() {
     if (mpLoopEnabled) {
       mpCode += 'while True:\n';
       mpCode += '    for i in range(len(melody)):\n';
-    } else {
+    } else if (mpRepeatCount === 1) {
       mpCode += 'for i in range(len(melody)):\n';
+    } else {
+      mpCode += 'for _rep in range(' + mpRepeatCount + '):\n';
+      mpCode += '    for i in range(len(melody)):\n';
     }
-    var indent = mpLoopEnabled ? '        ' : '    ';
+    var indent = (mpLoopEnabled || mpRepeatCount > 1) ? '        ' : '    ';
     mpCode += indent + 'dur = durations[i]\n';
     mpCode += indent + 'duration = wholenote // dur if dur > 0 else -wholenote * 3 // (dur * 2)\n';
     mpCode += indent + 'if melody[i] > 0:\n';
@@ -131,7 +189,7 @@ MP.generateCode = function() {
     if (!mpLoopEnabled) {
       mpCode += 'pwm.deinit()\n';
     }
-    outputMp.value = mpCode;
+    MP._setCodeDisplay(outputMp, mpCode, 'python');
     MP._autoSizeTextarea(outputMp);
   }
 
