@@ -37,7 +37,7 @@ Create melodies with a piano keyboard and piano roll editor, then export as Ardu
 - 🐍 **MicroPython** — PWM-based codegen for ESP32/RP2040
 - 📱 **RTTTL** — standard ringtone format, paste/drop to import
 - 🎵 **MIDI export** — download as Standard MIDI file
-- 🔌 **Serial upload** — send directly to Arduino (Chromium)
+- 🔌 **Serial upload** — send directly to MCU (Chromium)
 
 </td>
 </tr>

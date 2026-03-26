@@ -1359,7 +1359,15 @@ MP.renderPianoRoll = function() {
 
   container.appendChild(wrapper);
 
-  if (MP._pendingScrollNote) {
+  if (MP._pendingScrollToFit && midiNotes.length > 0) {
+    var fitMinMidi = Math.min.apply(null, midiNotes);
+    var fitMaxMidi = Math.max.apply(null, midiNotes);
+    var fitAvgMidi = (fitMinMidi + fitMaxMidi) / 2;
+    var fitTopPx = MP.PR_TIMELINE_H + (maxMidi - fitAvgMidi) * MP.PR_ROW_H;
+    container.scrollTop = Math.max(0, fitTopPx - container.clientHeight / 2);
+    container.scrollLeft = 0;
+    MP._pendingScrollToFit = false;
+  } else if (MP._pendingScrollNote) {
     var scrollMidi = MP.midiFromName(MP._pendingScrollNote.name);
     var lastN = MP.appState.seq[MP.appState.seq.length - 1];
     if (scrollMidi >= 0 && lastN) {

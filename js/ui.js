@@ -256,6 +256,7 @@ MP.loadRTTTL = function(rtttlString, opts) {
   MP.setBpm(result.bpm);
   var wasPlaying = !!MP.appState.playState;
   MP.stopPlayback();
+  MP._pendingScrollToFit = true;
   MP.updateSequence();
   if (wasPlaying) MP.playSequence();
   return result;
