@@ -1480,8 +1480,9 @@ MP.seqEndBeat = function() {
 };
 
 MP.totalBeats = function() {
-  var minBeats = MP.getTimeSigBeats() * 6;
-  return Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart, minBeats);
+  var end = Math.max(MP.seqEndBeat(), MP.appState.nextNoteStart);
+  if (end <= 0) return MP.getTimeSigBeats() * 6;
+  return end;
 };
 
 MP.seqToFlat = function() {
